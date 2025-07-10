@@ -1,5 +1,12 @@
 <template>
   <div class="comment-container">
+    <!-- 优化和更新 -->
+    <el-alert
+      title="评论功能正在持续优化中，敬请期待新版本"
+      type="warning"
+      :closable="false"
+      style="margin-bottom: 20px"
+    ></el-alert>
     <div class="comment-header">
       <h3 class="comment-title">
         <i class="el-icon-chat-dot-round"></i>
@@ -78,15 +85,7 @@
       </div>
       <!-- 评论背景卡预览状态 -->
       <div class="comment-bg-preview" v-if="selectedBackground">
-        <div
-          class="preview-card"
-          :style="{
-            background: selectedBackground,
-            backgroundSize: 'contain',
-            backgroundPosition: 'right',
-            backgroundRepeat: 'no-repeat',
-          }"
-        >
+        <div class="preview-card" :style="{ background: selectedBackground }">
           <div class="preview-content">
             <div class="preview-user-info">
               <img
@@ -96,7 +95,6 @@
                 "
                 class="preview-avatar"
               />
-              <!-- 删除评论 -->
               <div class="user-detail">
                 <span class="preview-time"
                   >{{ formatDate(new Date()) }} 评论背景卡预览状态</span
@@ -105,8 +103,9 @@
                   <span
                     class="preview-username"
                     :style="{ color: userStore.user?.nicknameColor || '#000' }"
-                    >{{ userStore.user?.nickname || "默认用户" }}</span
                   >
+                    {{ userStore.user?.nickname || "默认用户" }}
+                  </span>
                   <span class="preview-area"
                     >来自{{ userStore.user?.area || "未知" }}</span
                   >
@@ -123,22 +122,19 @@
             </div>
           </div>
           <!-- 爱心点赞按钮 -->
-          <div
-            class="preview-actions"
-            style="display: flex; justify-content: flex-end"
-          >
-            <div type="text" style="margin-right: 10px">
+          <div class="preview-actions">
+            <div class="action-item like">
               <HeartOutlined style="color: #ff4d4f; margin: 0 5px" />
-              <span>{{ 520 }}</span>
+              <span>520</span>
             </div>
             <!-- 评论按钮 -->
-            <div type="text">
+            <div class="action-item reply">
               <MessageOutlined style="color: #666; margin: 0 5px" />
-              <span>{{ 1314 }}</span>
+              <span>1314</span>
             </div>
           </div>
           <el-button type="text" class="clear-bg" @click="clearBackground">
-            <CloseOutlined /> 清除背景
+            清除背景
           </el-button>
         </div>
       </div>
@@ -356,22 +352,7 @@ const deleteComment = async (commentId: number) => {
   }
 };
 const getUser = (uuid: string) => {
-  if (commentList.value.length > 0) {
-    const firstComment = commentList.value.find((c) => c.userId === uuid);
-    if (firstComment && firstComment.uuid) {
-      router.push({
-        name: "users",
-        params: { uuid: String(firstComment.uuid) },
-      });
-
-      // 跳转到用户详情页
-      console.log("用户详情页跳转成功", firstComment.uuid);
-    } else {
-      ElMessage.warning("未找到对应用户的评论数据");
-    }
-  } else {
-    ElMessage.warning("当前无评论数据");
-  }
+  ElMessage.warning("用户详情功能正在优化中，请稍后尝试");
 };
 // 提交评论
 const submitComment = async () => {
