@@ -65,3 +65,7 @@ node: v20.11.0
 请查看 https://mm.edrawsoft.cn/app/editor/j57n3hk1Ur24Bp32qFDlH7snLWnncdT5?ivt=3R0NdCMdqGvHZIxIJNFI3zBjCpIJcVjT009&page=8889934692
 或者
 https://mm.edrawsoft.cn/app/editor/1p92bJ75iWL3QEs8d6LCa2fVNl51BUXV?ivt=IS5CWemzHJk8s76zHCAj6TXZHmV2Nlje001&page=8889934692
+
+<!-- git拉取项目 -->
+
+https://github.com/return-Liu/Deep-Sea-blog.git
