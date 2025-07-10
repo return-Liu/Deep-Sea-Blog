@@ -157,6 +157,7 @@ import {
 } from "../../utils/publicuser";
 import Constellation from "../../components/icon/Constellation.vue";
 import Uuid from "../../components/icon/Uuid.vue";
+import { loadUserContents } from "../../utils/publicuser";
 interface User {
   id: number;
   avatar: string;
@@ -217,6 +218,7 @@ const formatDate = (date: string | Date) => {
 
 onMounted(() => {
   fetchUser();
+  loadUserContents();
 });
 </script>
 <style scoped lang="less">
@@ -297,20 +299,9 @@ onMounted(() => {
   object-fit: contain;
 }
 
-.avatar-modal-leave-active {
-  transition: all 0.3s ease;
-}
-
-.avatar-modal-enter-from,
-.avatar-modal-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  transform: scale(0.9);
-}
-
-.avatar-modal-enter-to,
-.avatar-modal-leave-from {
-  opacity: 1;
-  transform: scale(1);
 }
 .user-text {
   display: flex;
