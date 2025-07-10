@@ -259,6 +259,7 @@ import { YkEmpty } from "@yike-design/ui";
 import { useUserStore } from "../../store/userStore";
 import { backgrounds as bgList } from "../../utils/backgrounds";
 import { emojis } from "../../utils/emojis";
+import { modelURL } from "../../config";
 import {
   HeartOutlined,
   MessageOutlined,
@@ -318,22 +319,25 @@ const clearBackground = () => {
   selectedBgId.value = null;
 };
 // 获取评论列表
+// 获取评论列表（维护中时禁止请求）
 const fetchComments = async () => {
   try {
-    loadmore.value = false; // 开始加载时设置为 false
+    loadmore.value = false;
+
     const response = await axiosConfig.get(`/admin/comment/${messageId}`);
-    console.log(response);
 
-    commentList.value = response.data.data.comments.map((comment: any) => ({
-      ...comment,
-    }));
-    console.log(response);
+    // 更新评论列表
+    commentList.value =
+      response.data.data?.comments?.map((comment: any) => ({
+        ...comment,
+      })) || [];
 
-    loadmore.value = true; // 数据加载完成后设置为 true
+    loadmore.value = true;
   } catch (error) {
     console.error("获取评论失败:", error);
-    ElMessage.error("获取评论失败");
-    loadmore.value = true; // 即使失败也要设置为 true，避免永久加载状态
+    ElMessage.error("获取评论失败，请稍后再试");
+    commentList.value = []; // 清空列表，避免旧数据残留
+    loadmore.value = true;
   }
 };
 // 获取回复评论
@@ -352,7 +356,16 @@ const deleteComment = async (commentId: number) => {
   }
 };
 const getUser = (uuid: string) => {
-  ElMessage.warning("用户详情功能正在优化中，请稍后尝试");
+  checkMaintenanceMode();
+};
+// 检查是否处于维护模式，如果是则提示并阻止后续操作
+const checkMaintenanceMode = () => {
+  if (modelURL === "true") {
+    loadmore.value = true;
+    ElMessage.warning("功能迭代中，新版本即将上线，请关注更新公告");
+    return true; // 表示处于维护模式
+  }
+  return false; // 不在维护模式中
 };
 // 提交评论
 const submitComment = async () => {
@@ -360,7 +373,9 @@ const submitComment = async () => {
     ElMessage.warning("请输入评论内容");
     return;
   }
-
+  if (checkMaintenanceMode()) {
+    return;
+  }
   submitting.value = true;
 
   try {
@@ -435,12 +450,7 @@ const likeComment = async (commentId: any) => {
   }
 };
 const chatComment = async (commentId: any) => {
-  // const comment = commentList.value.find((c) => c.id === commentId);
-  // if (comment) {
-  //   replyToUsername.value = comment.username; // 设置回复用户名
-  //   commentContent.value = ""; // 清空输入框内容
-  ElMessage.info("该功能还在开发中，敬请期待！");
-  // }
+  checkMaintenanceMode();
 };
 const inputPlaceholder = computed(() => {
   return replyToUsername.value
