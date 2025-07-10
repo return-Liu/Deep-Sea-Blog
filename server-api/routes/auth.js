@@ -207,7 +207,7 @@ router.post("/sign_in", async (req, res) => {
   try {
     const { login, password } = req.body;
     if (!login) {
-      throw new BadRequestError("邮箱/用户名必须填写!");
+      throw new BadRequestError("账号或手机号或邮箱必须填写!");
     }
     if (!password) {
       throw new BadRequestError("密码必须填写!");
@@ -221,7 +221,11 @@ router.post("/sign_in", async (req, res) => {
     if (!user) throw new NotFoundError("用户不存在, 请先注册账号!");
     // 验证密码是否正确
     const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid) throw new UnauthorizedError("密码错误");
+    if (!login) {
+      throw new BadRequestError("请输入正确的账号或手机号或邮箱");
+    }
+    if (!isPasswordValid)
+      throw new UnauthorizedError("密码错误,请输入正确的密码");
     // 生成身份验证令牌
     const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
       // 设置令牌过期时间 1小时

@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { User, Comment, Wall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
-
 // 获取指定留言墙的评论列表
 router.get("/:wallId", async (req, res) => {
   try {
@@ -14,7 +13,7 @@ router.get("/:wallId", async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["nickname", "avatar", "area", "nicknameColor", "uuid"],
+          attributes: ["nickname", "avatar", "area", "nicknameColor"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -33,7 +32,6 @@ router.get("/:wallId", async (req, res) => {
       area: comment.User.area,
       commentbackground: comment.commentbackground,
       nicknameColor: comment.User.nicknameColor,
-      uuid: comment.User.uuid,
     }));
 
     success(res, "获取评论列表成功", {
@@ -100,7 +98,6 @@ router.get("/user/:uuid", async (req, res) => {
     const user = await User.findOne({
       where: { uuid },
       attributes: [
-        "id",
         "nickname",
         "avatar",
         "area",
