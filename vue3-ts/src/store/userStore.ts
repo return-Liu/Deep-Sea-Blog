@@ -22,6 +22,7 @@ interface User {
   username?: string; // 添加 username 字段
   phone?: string; // 添加 phone 字段
 }
+
 export const useUserStore = defineStore("user", () => {
   const user = ref<User>({
     id: 0,
@@ -40,21 +41,29 @@ export const useUserStore = defineStore("user", () => {
     username: "",
     phone: "", // 初始化 phone 字段
   });
+
+  // 新增 tempUserId 状态
+  const tempUserId = ref<number | null>(null);
+
   const setUser = (userData: User) => {
     user.value = userData;
     if (user.value && "email" in user.value) delete user.value.email;
   };
+
   const getUser = () => user.value;
+
   // 加载用户信息
-  const loadUser = async () => {
+  const loadUser = async (userId?: number) => {
     try {
-      const response = await axiosConfig.get("/users/me");
+      const response = await axiosConfig.get("/users/me", {
+        params: { userId: userId || user.value.uuid },
+      });
       setUser(response.data.data);
-      // console.log("用户信息:", response.data.data);
     } catch (error) {
       console.error("加载用户信息失败:", error);
     }
   };
+
   // 更新用户信息
   const updateUser = (updatedFields: Partial<User>) => {
     if (user.value) {
@@ -129,6 +138,21 @@ export const useUserStore = defineStore("user", () => {
 
   // 获取当前用户信息
   const currentUser = computed(() => user.value);
+
+  // 设置临时用户ID的方法
+  const setTempUserId = (userId: number | null) => {
+    tempUserId.value = userId;
+  };
+
+  // 根据临时用户ID加载用户信息
+  const loadUserByTempId = async () => {
+    if (tempUserId.value !== null) {
+      await loadUser(tempUserId.value);
+    } else {
+      await loadUser();
+    }
+  };
+
   return {
     user,
     setUser,
@@ -137,5 +161,7 @@ export const useUserStore = defineStore("user", () => {
     deleteAllUserImages,
     currentUser,
     getUser,
+    setTempUserId, // 导出 setTempUserId 方法
+    loadUserByTempId, // 导出 loadUserByTempId 方法
   };
 });

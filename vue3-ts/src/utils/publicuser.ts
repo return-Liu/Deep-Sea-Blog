@@ -66,28 +66,23 @@ export const getAllUsers = async () => {
 export const loadUserContents = async (currentPage: number = 1) => {
   const limit = 9;
   const userStore = useUserStore();
-  const userId = userStore.user.id;
-
+  const userId = userStore.user?.id ? String(userStore.user.id) : "";
   try {
     const fetchData = (type: string) =>
       axiosConfig.get(`/admin/${type}`, {
         params: { userId, limit, currentPage },
       });
-
     const [articleRes, photoRes, noteRes] = await Promise.all([
       fetchData("article"),
       fetchData("photography"),
       fetchData("note"),
     ]);
-
     articles.value = articleRes.data.data.articles || [];
     photos.value = photoRes.data.data.photography || [];
     notes.value = noteRes.data.data.notes || [];
-  } catch (error: any) {
-    // 兼容 message 字段
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
+  } catch (error) {
+    const message = parseErrorMessage(error);
+    console.error("加载用户内容失败:", message);
   }
 };
 
