@@ -1,0 +1,98 @@
+.local-resources {
+    padding: 20px;
+
+    .local-resources-header {
+        text-align: center;
+        margin-bottom: 30px;
+
+        h2 {
+            font-size: 2rem;
+            color: var(--color-bg4);
+            margin-bottom: 10px;
+        }
+
+        .local-resources-description {
+            color: var(--color-bg4);
+            font-size: 1rem;
+        }
+    }
+
+    .local-resources-content {
+        display: flex;
+
+        .resource-tree-container {
+            width: 30%;
+            padding-right: 20px;
+
+        }
+
+        :deep(.el-tree) {
+            background: var(--bg2);
+        }
+
+
+        .resource-details-container {
+            width: 70%;
+        }
+
+        .resource-tree {
+            :deep(.el-tree-node__content) {
+                height: auto;
+                padding: 8px 0;
+            }
+
+            .tree-node {
+                width: 100%;
+                padding: 5px 0;
+
+                span {
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+            }
+        }
+
+        .resource-details {
+            .resource-item {
+                display: flex;
+                align-items: center;
+                padding: 8px;
+                border-radius: 4px;
+                background: var(--bg2);
+                margin: 5px 0;
+
+                .resource-image {
+                    width: 100px;
+                    height: 70px;
+                    object-fit: contain;
+                    margin-right: 15px;
+                    cursor: pointer;
+                    border-radius: 10px;
+                }
+
+                .resource-info {
+                    p {
+                        margin: 0;
+                        font-size: 14px;
+                        color: var(--color-bg5);
+
+                        &.file-size {
+                            font-size: 12px;
+                            color: var(--color-bg5);
+                        }
+                    }
+                }
+            }
+        }
+
+        .no-selection {
+            p {
+                color: var(--color-bg4);
+                font-size: 14px;
+                text-align: center;
+                margin-top: 200px;
+                margin-right: 200px;
+            }
+        }
+    }
+}

@@ -1,0 +1,209 @@
+import { Search, Message } from "@element-plus/icons-vue";
+import { ref, computed, onMounted, reactive } from "vue";
+import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
+import axiosConfig from "../utils/request";
+import { useUserStore } from "../store/userStore";
+import { useSearchStore } from "../store/searchStore";
+export default function useHeader() {
+  const router = useRouter();
+  const searchStore = useSearchStore();
+  const userStore = useUserStore();
+  const user = computed(() => userStore.user);
+  // 状态管理
+  const isSearchActive = ref(false);
+  const isScrollingPaused = ref(false);
+  const drawerVisible = ref(false);
+  const direction = ref("rtl");
+  const size = ref("30%");
+  const showInfoCard = ref(false);
+  const updates = ref<Update[]>([]);
+  const showDialog = ref(false);
+  const newUpdate = ref({
+    title: "",
+    content: "",
+    userId: user.value?.id || 4,
+  });
+
+  // 接口定义
+  interface Update {
+    title: string;
+    content: string;
+    createdAt: string;
+    formattedCreatedAt: string;
+  }
+
+  // 消息视图
+  const viewMessage = () => {
+    drawerVisible.value = true;
+  };
+  const handleFocus = () => {
+    isSearchActive.value = true;
+  };
+  const viewAvatar = () => {
+    if (user.value?.avatar) {
+      window.open(user.value.avatar, "_blank");
+    } else {
+      ElMessage.error("头像未设置");
+    }
+  };
+  // 更新处理
+  const handleUpdates = async () => {
+    try {
+      const response = await axiosConfig.get("/admin/update");
+      const updateList = response.data.data.updates;
+      updates.value = formatUpdates(updateList);
+    } catch (error) {
+      handleError("获取更新信息失败", error);
+    }
+  };
+
+  const addUpdate = async () => {
+    try {
+      await axiosConfig.post("/admin/update", newUpdate.value);
+      await handleUpdates();
+      resetNewUpdate();
+      ElMessage.success("新增更新信息成功");
+      closeDialogs();
+    } catch (error) {
+      handleError("新增更新信息失败", error);
+    }
+  };
+
+  // 搜索处理
+  const handleSearch = async () => {
+    try {
+      router.push({
+        name: "search",
+        query: {
+          keyword: searchStore.searchQuery || "",
+        },
+      });
+    } catch (err) {
+      handleError("搜索失败,请稍后再试", err);
+    }
+  };
+  // 输入处理
+  const handleInput = (e: Event) => {
+    searchStore.searchQuery = (e.target as HTMLInputElement).value;
+  };
+
+  const handleBlur = () => {
+    if (!searchStore.searchQuery) {
+      setTimeout(() => {
+        isScrollingPaused.value = false;
+        isSearchActive.value = false;
+      }, 8000);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    isScrollingPaused.value = true;
+  };
+
+  const handleMouseLeave = () => {
+    isScrollingPaused.value = false;
+  };
+
+  // 导航处理
+  const changeSetting = () => {
+    router.push({ path: "/setting/personals" });
+  };
+
+  const viewAccountSecurity = () => {
+    router.push({ path: "/setting/securitys" });
+  };
+
+  const goToLikedArticles = () => {
+    router.push({ path: "/setting/likes" });
+  };
+
+  const openSettings = () => {
+    router.push({ path: "/setting/modes" });
+  };
+  const superColorPalette = () => {
+    router.push({ path: "/setting/languages" });
+  };
+  const goToBlog = () => {
+    window.open("http://localhost:5174/home", "_blank");
+  };
+
+  // 辅助函数
+  const formatUpdates = (updateList: any[]) => {
+    return updateList.map((update: any) => ({
+      ...update,
+      formattedCreatedAt: new Date(update.createdAt).toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }),
+    }));
+  };
+
+  const handleError = (message: string, error: any) => {
+    console.error(message, error);
+    ElMessage.error(message);
+  };
+
+  const resetNewUpdate = () => {
+    newUpdate.value = {
+      title: "",
+      content: "",
+      userId: user.value?.id || 4,
+    };
+  };
+
+  const closeDialogs = () => {
+    drawerVisible.value = false;
+    showDialog.value = false;
+  };
+  onMounted(() => {
+    handleUpdates();
+  });
+
+  // 返回值
+  return {
+    Search,
+    isSearchActive,
+    Message,
+    openSettings,
+    goToLikedArticles,
+    searchStore,
+    isScrollingPaused,
+    text: reactive([
+      { name: "加入日间 夜间 夜间模式跟随系统 欢迎来体验" },
+      { name: "用户建议与反馈系统已上线，期待您的建议" },
+      {
+        name: "搜索功能问题已排除,正常使用即可",
+      },
+      {
+        name: "支持多种语言,欢迎使用 如有问题请反馈",
+      },
+    ]),
+    handleInput,
+    changeSetting,
+    viewAccountSecurity,
+    handleFocus,
+    handleBlur,
+    handleMouseEnter,
+    handleMouseLeave,
+    viewMessage,
+    handleSearch,
+    direction,
+    size,
+    addUpdate,
+    showDialog,
+    showInfoCard,
+    newUpdate,
+    user,
+    drawerVisible,
+    updates,
+    superColorPalette,
+    goToBlog,
+    viewAvatar,
+  };
+}

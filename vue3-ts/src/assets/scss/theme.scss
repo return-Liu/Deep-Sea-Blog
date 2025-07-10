@@ -1,0 +1,55 @@
+// 亮色主题和暗色主题
+$light-theme: (
+  color-bg2: -webkit-linear-gradient(rgba(219, 15, 234, 0.5), rgb(20, 197, 241)),
+  color-bg3: #000,
+  color-bg4: #000,
+  color-bg5: #000,
+  color-bg6: #000,
+  color-bg7: #000,
+  color-bg8: #000,
+  bg1: #fff,
+  bg2: #fff,
+  bg3: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%),
+  bg4: #3f3f47,
+  border: #000,
+  gradient-bg: linear-gradient(to bottom, #fafafa, #f5f5f5),
+  gradient-bg1: linear-gradient(135deg, #4a69bd, #2c3e50),
+  gradient-bg2: linear-gradient(135deg, #ff9966, #ff4d4d),
+  gradient-bg3: linear-gradient(135deg, #80ff80, #40c440),
+);
+
+$dark-theme: (
+  color-bg2: -webkit-linear-gradient(rgba(219, 15, 234, 0.5), rgb(20, 197, 241)),
+  color-bg3: #fff,
+  color-bg4: #fff,
+  color-bg5: #f8f7f7,
+  color-bg6: #000,
+  color-bg7: #000,
+  color-bg8: #fff,
+  bg1: #1e2025,
+  bg2: #2d2f33,
+  bg3: #222324,
+  bg4: #cd9292,
+  border: #fff,
+  gradient-bg: linear-gradient(to bottom, #2d2f33, #1e2025),
+  gradient-bg1: linear-gradient(135deg, #2c3e50, #34495e),
+  gradient-bg2: linear-gradient(135deg, #2c3e50, #273c75),
+  gradient-bg3: linear-gradient(135deg, #2c3e50, #34495e),
+);
+
+// 创建一个混合器(mixin)来应用主题 接收一个主题配置map作为参数
+@mixin theme-vars($theme) {
+  // 遍历map中的所有键值对
+  @each $name, $value in $theme {
+    // 将每个键值对转换为 CSS 自定义属性（CSS 变量）
+    --#{$name}: #{$value};
+  }
+}
+// 应用默认亮色主题
+:root {
+  @include theme-vars($light-theme);
+}
+// 应用暗色主题
+html[data-theme="dark"] {
+  @include theme-vars($dark-theme);
+}

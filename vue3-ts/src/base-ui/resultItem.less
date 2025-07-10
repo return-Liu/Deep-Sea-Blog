@@ -1,0 +1,71 @@
+.result-item {
+  width: 1150px;
+  height: 150px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.result-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.result-image {
+  width: 200px;
+  /* 调整图片宽度 */
+  height: 150px;
+  /* 调整图片高度 */
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 使用 cover 保持图片比例并覆盖整个区域 */
+  }
+}
+
+.result-details {
+  flex: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.result-title {
+  font-size: 18px;
+  margin: 0 0 10px;
+  color: #333;
+}
+
+.result-content {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  max-height: 60px;
+  /* 限制内容高度 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.result-label {
+  font-size: 14px;
+  color: #409eff;
+  margin-bottom: 10px;
+}
+
+.result-date {
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+}

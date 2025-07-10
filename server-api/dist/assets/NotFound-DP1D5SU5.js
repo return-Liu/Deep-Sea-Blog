@@ -1,0 +1,1 @@
+import{d as t,e as n,k as s,r,o as a}from"./index-BDg1WjkS.js";import{_ as c}from"./_plugin-vue_export-helper-DlAUqK2U.js";const p=t({__name:"NotFound",setup(_){const o=n("404 页面走丢了");return(m,d)=>{const e=r("el-empty");return a(),s(e,{description:o.value},null,8,["description"])}}}),f=c(p,[["__scopeId","data-v-5e4ea237"]]);export{f as default};
