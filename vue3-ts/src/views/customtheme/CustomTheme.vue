@@ -1,5 +1,12 @@
 <template>
   <div class="custom-theme">
+    <!-- 优化和更新 -->
+    <el-alert
+      title="个性化皮肤功能持续优化中，更多精彩即将上线～"
+      type="warning"
+      :closable="false"
+      style="margin-bottom: 20px"
+    ></el-alert>
     <h2>选择你喜欢的个性化皮肤 —— 展示青春与活力风格</h2>
 
     <div class="tab-container">
@@ -59,12 +66,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useThemeStore } from "../../store/themeStore";
+import { ElMessage } from "element-plus";
 const fileInput = ref<HTMLInputElement | null>(null);
 const themeStore = useThemeStore();
 const tabs = ["推荐"];
 const activeTab = ref(0);
 const user = ref<number | null>(null);
-
+import { modelURL } from "../../config";
 const changeTab = (index: number) => {
   activeTab.value = index;
 };
@@ -115,7 +123,17 @@ const triggerFileInput = () => {
     fileInput.value.click();
   }
 };
+const checkMaintenanceMode = () => {
+  if (modelURL === "true") {
+    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
+    return true; // 表示处于维护模式
+  }
+  return false; // 不在维护模式中
+};
 const handleFileChange = (event: Event) => {
+  if (checkMaintenanceMode()) {
+    return;
+  }
   const input = event.target as HTMLInputElement;
   if (input.files && input.files[0]) {
     const file = input.files[0];
