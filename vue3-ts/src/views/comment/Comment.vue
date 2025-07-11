@@ -362,7 +362,7 @@ const getUser = (uuid: string) => {
 const checkMaintenanceMode = () => {
   if (modelURL === "true") {
     loadmore.value = true;
-    ElMessage.warning("功能迭代中，新版本即将上线，请关注更新公告");
+    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
     return true; // 表示处于维护模式
   }
   return false; // 不在维护模式中

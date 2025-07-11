@@ -472,7 +472,7 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const themeStore = useThemeStore();
-
+import { modelURL } from "../../config";
 const { toggleTheme } = themeStore;
 const isSunLight = computed(() => themeStore.currentThemeMode === "light");
 const isMoonDark = computed(() => themeStore.currentThemeMode === "dark");
@@ -568,6 +568,13 @@ const tabs = [
     icon: SwapOutlined,
   },
 ];
+const checkMaintenanceMode = () => {
+  if (modelURL === "true") {
+    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
+    return true; // 表示处于维护模式
+  }
+  return false; // 不在维护模式中
+};
 const addNewAccount = () => {
   logout();
 };
@@ -575,6 +582,9 @@ const switchAccount = async (id: string) => {
   try {
     if (userStore.user.id === Number(id)) {
       ElMessage.info("你已经在该账号下登录啦~");
+      return;
+    }
+    if (checkMaintenanceMode()) {
       return;
     }
     const response = await axiosConfig.post("/auth/switch-account", {
@@ -612,6 +622,9 @@ const changePassword = () => {
 };
 
 const submitUpload = () => {
+  if (checkMaintenanceMode()) {
+    return;
+  }
   uploadRef.value.submit();
 };
 
@@ -671,6 +684,9 @@ const changeLanguage = (lang: string) => {
   }
 };
 const beforeUpload = (file: File) => {
+  if (checkMaintenanceMode()) {
+    return;
+  }
   const allowedTypes = [
     "image/jpeg",
     "image/png",
@@ -728,6 +744,9 @@ const handleSuccess = (response: any, file: File) => {
 // 更新信息
 const updateUserInfo = async () => {
   // 检查信息是否发生更改
+  if (checkMaintenanceMode()) {
+    return;
+  }
   if (
     nickname.value === initialUserInfo.value.nickname &&
     sex.value === initialUserInfo.value.sex &&
