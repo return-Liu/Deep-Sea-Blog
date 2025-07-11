@@ -7,8 +7,15 @@
           <div v-if="user" class="user-info">
             <div class="avatar-container">
               <img
-                :src="user.avatar"
-                alt="Avatar"
+                v-if="
+                  user?.avatar ||
+                  'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+                "
+                v-lazy="
+                  user?.avatar ||
+                  'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+                "
+                alt="头像"
                 class="avatar"
                 @click="handleAvatarClick"
               />
