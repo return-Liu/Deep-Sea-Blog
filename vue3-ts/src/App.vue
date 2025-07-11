@@ -37,9 +37,7 @@ watch(
     themeStore.loadTheme();
     if (newUser) {
       themeStore.setUser(newUser.uuid);
-      if (themeStore.customTheme) {
-        themeStore.applyCustomTheme(themeStore.customTheme);
-      }
+
       const savedLanguage = localStorage.getItem(`language-${newUser.uuid}`);
       if (savedLanguage) {
         locale.value = savedLanguage;

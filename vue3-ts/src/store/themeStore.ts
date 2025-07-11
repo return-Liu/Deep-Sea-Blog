@@ -5,17 +5,8 @@ export const useThemeStore = defineStore("theme", () => {
   const followSystem = ref<boolean>(false);
   const currentTheme = ref<"light" | "dark" | "auto">("auto");
   const user = ref<number | null>(null);
-  const customTheme = ref<string | null>(null);
   // 切换主题 系统主题 亮色主题 暗色主题
   const toggleTheme = (mode: "auto" | "light" | "dark") => {
-    // 移除个性化皮肤设置
-    if (customTheme.value) {
-      document.body.style.backgroundImage = "none";
-      document.body.style.backgroundColor = "";
-      document.documentElement.style.setProperty("--bgColor1", "");
-      customTheme.value = null;
-    }
-
     followSystem.value = mode === "auto";
     currentTheme.value = mode;
     if (mode === "auto") {
@@ -42,15 +33,6 @@ export const useThemeStore = defineStore("theme", () => {
   const setTheme = (mode: "light" | "dark") => {
     document.documentElement.setAttribute("data-theme", mode);
   };
-  const setCustomTheme = (theme: string) => {
-    customTheme.value = theme;
-    if (user.value) {
-      localStorage.setItem(`theme-${user.value}`, theme); // 使用相同的 key 存储
-      // console.log(user.value);
-    }
-    applyCustomTheme(theme);
-  };
-
   const applyCustomTheme = (theme: string) => {
     if (theme.startsWith("#")) {
       document.body.style.backgroundImage = "none";
@@ -90,8 +72,6 @@ export const useThemeStore = defineStore("theme", () => {
     if (savedTheme) {
       if (["auto", "light", "dark"].includes(savedTheme)) {
         toggleTheme(savedTheme as "auto" | "light" | "dark");
-      } else {
-        setCustomTheme(savedTheme);
       }
     } else {
       toggleTheme("light");
@@ -131,8 +111,6 @@ export const useThemeStore = defineStore("theme", () => {
   });
 
   return {
-    customTheme,
-    setCustomTheme,
     applyCustomTheme,
     followSystem,
     currentTheme,

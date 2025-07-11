@@ -83,11 +83,6 @@ const routers = [
     component: () => import("../views/users/Users.vue"),
   },
   {
-    path: "/customTheme",
-    name: "customTheme",
-    component: () => import("../views/customtheme/CustomTheme.vue"),
-  },
-  {
     path: "/faqcomponent",
     name: "faqcomponent",
     component: () => import("../views/faqcomponent/FaqComponent.vue"),
