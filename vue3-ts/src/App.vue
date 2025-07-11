@@ -8,15 +8,15 @@ import { useUserStore } from "./store/userStore";
 import { useThemeStore } from "./store/themeStore";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, loadUserContents } from "./utils/publicuser";
+import { ElMessage } from "element-plus";
+
 const userStore = useUserStore();
 const themeStore = useThemeStore();
 const { locale } = useI18n();
 onMounted(async () => {
   await userStore.loadUser();
-  setTimeout(async () => {
-    await getAllUsers();
-    await loadUserContents();
-  }, 1000);
+  await getAllUsers();
+  await loadUserContents();
   if (userStore.user?.uuid) {
     const savedLanguage = localStorage.getItem(
       `language-${userStore.user.uuid}`
