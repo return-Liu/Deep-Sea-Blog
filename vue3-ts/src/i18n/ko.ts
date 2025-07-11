@@ -51,7 +51,6 @@ export const ko = {
       followSystem: "시스템에 따라 야간 모드",
       dayMode: "주간 모드",
       nightMode: "야간 모드",
-      customMode: "Deep Sea 스킨 수집 대회",
     },
     language: {
       title: "언어 선택",

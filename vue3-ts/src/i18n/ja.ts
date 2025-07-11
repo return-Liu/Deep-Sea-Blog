@@ -53,7 +53,6 @@ export const ja = {
       followSystem: "システムに従う夜間モード",
       dayMode: "日中モード",
       nightMode: "夜間モード",
-      customMode: "深海スキンコレクションコンテスト",
     },
     language: {
       title: "言語の選択",

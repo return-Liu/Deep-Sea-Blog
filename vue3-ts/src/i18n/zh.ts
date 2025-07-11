@@ -51,7 +51,6 @@ export const zh = {
       followSystem: "夜间模式跟随系统",
       dayMode: "日间模式",
       nightMode: "夜间模式",
-      customMode: "Deep Sea 皮肤征集大赛",
     },
     language: {
       title: "选择语言",

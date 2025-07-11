@@ -54,7 +54,6 @@ export const es = {
       followSystem: "Modo Nocturno Sigue el Sistema",
       dayMode: "Modo Diurno",
       nightMode: "Modo Nocturno",
-      customMode: "Concurso de Colección de Pieles del Mar Profundo",
     },
     language: {
       title: "Selección de Idiomas",

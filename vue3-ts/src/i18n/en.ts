@@ -52,7 +52,6 @@ export const en = {
       followSystem: "Night Mode Follow System",
       dayMode: "Day Mode",
       nightMode: "Night Mode",
-      customMode: "Deep Sea Skin Collection Contest",
     },
     language: {
       title: "Selection Languages",

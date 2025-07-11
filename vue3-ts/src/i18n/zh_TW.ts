@@ -49,7 +49,6 @@ export const zh_TW = {
       followSystem: "夜间模式跟隨系統",
       dayMode: "日間模式",
       nightMode: "夜间模式",
-      customMode: "Deep Sea 皮膚徵集大賽",
     },
     language: {
       title: "選擇語言",
