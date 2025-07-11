@@ -621,9 +621,6 @@ const changePassword = () => {
 };
 
 const submitUpload = () => {
-  if (checkMaintenanceMode()) {
-    return;
-  }
   uploadRef.value.submit();
 };
 
@@ -683,9 +680,6 @@ const changeLanguage = (lang: string) => {
   }
 };
 const beforeUpload = (file: File) => {
-  if (checkMaintenanceMode()) {
-    return;
-  }
   const allowedTypes = [
     "image/jpeg",
     "image/png",
@@ -743,9 +737,6 @@ const handleSuccess = (response: any, file: File) => {
 // 更新信息
 const updateUserInfo = async () => {
   // 检查信息是否发生更改
-  if (checkMaintenanceMode()) {
-    return;
-  }
   if (
     nickname.value === initialUserInfo.value.nickname &&
     sex.value === initialUserInfo.value.sex &&
