@@ -267,7 +267,7 @@ router.post("/email/verify", async (req, res) => {
     const code = createSixNum();
     await user.update({
       code,
-      codeExpire: new Date(Date.now() + 1 * 60 * 1000),
+      codeExpire: new Date(Date.now() + 5 * 60 * 1000),
     });
 
     await verifyEmail(email, code);

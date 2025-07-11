@@ -22,7 +22,7 @@ function send(mail, code) {
   const mailContent = `
 <p>您正在尝试重置Deep Sea账户的密码。为了确保是您本人操作，请使用以下验证码完成验证：</p>
 <p><span style="font-weight: bold; color: #DC143C;">${code}</span></p>
-<p>验证码有效期为1分钟，请尽快完成操作。</p>
+<p>验证码有效期为五分钟，请尽快完成操作。</p>
 <p>如果您并未发起此请求，请忽略本邮件，并检查您的账户安全。</p>
 <p>祝您生活愉快！</p>
     `;
@@ -46,7 +46,7 @@ function send(mail, code) {
 }
 // 邮箱验证
 function verifyEmail(mail, code) {
-  const mailContent = `你的验证码是：${code}，请在一分钟内使用。`;
+  const mailContent = `你的验证码是：${code}，请在五分钟内使用。`;
   // 邮箱信息
   let mailobj = {
     from: "Deep Sea项目组<2286223728@qq.com>", // 发送者，更改为与授权用户一致的邮箱地址

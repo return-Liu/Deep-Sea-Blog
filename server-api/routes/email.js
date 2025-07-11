@@ -25,7 +25,7 @@ router.post("/getemail", async (req, res) => {
     // 更新验证码和有效期（1分钟）
     await user.update({
       code,
-      codeExpire: new Date(Date.now() + 1 * 60 * 1000),
+      codeExpire: new Date(Date.now() + 5 * 60 * 1000),
     });
 
     await send(email, code);
