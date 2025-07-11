@@ -293,16 +293,6 @@
                   </el-icon>
                 </div>
               </div>
-
-              <div class="mode-item" style="position: relative">
-                <p
-                  @click="cosumTheme"
-                  style="position: absolute; top: 50%; left: 40%"
-                  class="mode-label"
-                >
-                  {{ t("settings.mode.customMode") }}
-                </p>
-              </div>
             </div>
           </div>
           <!-- 多种语言模式 -->
