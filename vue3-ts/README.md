@@ -60,12 +60,12 @@ node: v20.11.0
 
 <!-- 或者可以使用 nvm 安装 node -->
 
-<!-- 主要功能 Deep Sea博客系统技术选型和产品设计 -->
+主要功能 Deep Sea 博客系统技术选型和产品设计
 
 请查看 https://mm.edrawsoft.cn/app/editor/j57n3hk1Ur24Bp32qFDlH7snLWnncdT5?ivt=3R0NdCMdqGvHZIxIJNFI3zBjCpIJcVjT009&page=8889934692
 或者
 https://mm.edrawsoft.cn/app/editor/1p92bJ75iWL3QEs8d6LCa2fVNl51BUXV?ivt=IS5CWemzHJk8s76zHCAj6TXZHmV2Nlje001&page=8889934692
 
-<!-- git拉取项目 -->
+git 拉取项目
 
 https://github.com/return-Liu/Deep-Sea-blog.git
