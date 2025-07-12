@@ -151,7 +151,7 @@ const introduceMore = () => {
     flex-direction: column;
     align-items: center;
     padding: 40px;
-    background: rgba(255, 255, 255, 0.2);
+    background-color: var(--bg2);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -175,13 +175,13 @@ const introduceMore = () => {
     h2 {
       font-size: 24px;
       margin-bottom: 15px;
-      color: #2d3748;
+      color: var(--color-bg4);
       font-weight: 600;
     }
 
     p {
       font-size: 16px;
-      color: #4a5568;
+      color: var(--color-bg4);
       line-height: 1.6;
     }
 
@@ -198,7 +198,7 @@ const introduceMore = () => {
       border: none;
       border-radius: 30px;
       background: linear-gradient(to right, #6ee7b7, #a855f7);
-      color: white;
+      color: var(--color-bg4);
       cursor: pointer;
       position: relative;
       overflow: hidden;
