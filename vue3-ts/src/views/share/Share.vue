@@ -69,8 +69,8 @@
         <div
           v-for="item in currentContent"
           :key="item.id"
-          class="content-card"
           @click="editContent(item)"
+          class="content-card"
           @mouseenter="handleMouseEnter(item)"
           :title="`用户${user?.nickname || '默认用户'}的${
             contentTypeMap[item.type] || '个人分享'
@@ -148,115 +148,28 @@
         <p>没有更多内容</p>
       </div>
     </div>
-    <el-drawer
-      v-model="drawerVisible"
-      :direction="direction"
-      :before-close="handleCloseDrawer"
-      :close-on-click-modal="false"
-    >
-      <EditOutlined style="position: fixed; top: 23px; color: skyblue" />
-      <el-form :model="editingContent" label-width="80px">
-        <el-form-item
-          label="标题"
-          v-if="
-            editingContent.type === 'essay' || editingContent.type === 'notes'
-          "
-        >
-          <el-input v-model="editingContent.title" />
-        </el-form-item>
-        <el-form-item
-          label="内容"
-          v-if="
-            editingContent.type === 'essay' ||
-            editingContent.type === 'photography' ||
-            editingContent.type === 'notes'
-          "
-        >
-          <el-input v-model="editingContent.content" type="textarea" />
-        </el-form-item>
-        <el-form-item label="图库">
-          <el-upload
-            class="article-uploader"
-            :action="`${apiUrl}/admin/upload`"
-            :show-file-list="false"
-            :before-upload="beforeUpload"
-            :on-success="handleSuccess"
-            method="post"
-            :data="{ userId: userId }"
-            name="image"
-            :auto-upload="false"
-            ref="uploadRef"
-            @change="handleChange"
-          >
-            <div class="upload-container">
-              <img
-                v-if="editingContent.image"
-                v-lazy="editingContent.image"
-                class="uploaded-image"
-              />
-              <div v-else class="upload-placeholder">
-                <el-icon class="upload-icon"><Plus /></el-icon>
-                <span class="upload-text">点击上传图片</span>
-              </div>
-            </div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="标签" v-if="editingContent.type === 'essay'">
-          <el-input v-model="editingContent.label"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <DeleteOutlined
-            type="danger"
-            @click="handleDeleteContent"
-            style="
-              width: 100%;
-              display: flex;
-              justify-content: flex-end;
-              color: #b04343;
-            "
-          />
-        </el-form-item>
-        <el-form-item style="position: fixed; bottom: 0; right: 10px">
-          <div
-            type="primary"
-            class="avatar-upload"
-            @click="saveContent"
-            style="right: 20px"
-          >
-            <el-icon><SuccessFilled /></el-icon>
-            <span>保存</span>
-          </div>
-          <div
-            v-if="showUploadButton"
-            class="avatar-upload"
-            @click="submitUpload"
-          >
-            <el-icon><Upload /></el-icon>
-            <span>上传</span>
-          </div>
-        </el-form-item>
-      </el-form>
-    </el-drawer>
+    <div v-if="selectedContent" class="content-detail">
+      <ContentDisplay
+        :content-type="selectedContent.type"
+        :content="selectedContent"
+      />
+    </div>
   </div>
 </template>
+
 <script setup lang="ts" name="Share">
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axiosConfig from "../../utils/request";
+import { formatDistanceToNow } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { YkEmpty } from "@yike-design/ui";
 import { EyeOutlined } from "@ant-design/icons-vue";
 import { apiUrl } from "../../config";
-import { ElMessage, ElInput, ElForm, ElFormItem } from "element-plus";
-import {
-  HeartOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons-vue";
-import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
 import BlogIcon from "../../components/icon/Blog.vue";
 import PhotographyIcon from "../../components/icon/Photography.vue";
 import NoteIcon from "../../components/icon/Note.vue";
+import { ElMessage } from "element-plus";
 const tabs = [
   { id: "essays", text: "博客文章", icon: BlogIcon },
   { id: "photographys", text: "摄影图库", icon: PhotographyIcon },
@@ -269,6 +182,7 @@ const userStore = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
+const selectedContent = ref<Article | Photography | Note | null>(null);
 interface Article {
   id: number;
   title: string;
@@ -309,13 +223,6 @@ const articleTotal = ref(0);
 const photographyTotal = ref(0);
 const noteTotal = ref(0);
 let userId = ref<number | null>(null);
-let drawerVisible = ref(false);
-let direction = ref<"ltr" | "rtl" | "ttb" | "btt">("rtl");
-let editingContent = ref<any>({
-  size: 0,
-});
-let originalContent = ref<any>({}); // 记录原始内容
-let currentContentType = ref<string>("");
 userId.value = user.value?.id || null;
 const viewAvatar = () => {
   if (user.value?.avatar) {
@@ -323,23 +230,6 @@ const viewAvatar = () => {
   } else {
     ElMessage.error("头像未设置");
   }
-};
-
-// 检测内容是否被修改
-const isContentModified = () => {
-  return (
-    editingContent.value.title !== originalContent.value.title ||
-    editingContent.value.content !== originalContent.value.content ||
-    editingContent.value.label !== originalContent.value.label ||
-    editingContent.value.image !== originalContent.value.image
-  );
-};
-
-const submitUpload = () => {
-  uploadRef.value.submit();
-};
-const handleChange = (file: File, fileList: File[]) => {
-  showUploadButton.value = fileList.length > 0;
 };
 
 // 获取文章、摄影、随记数据
@@ -406,7 +296,21 @@ const handleMouseEnter = async (item: any) => {
     }
   }
 };
+const editContent = (content: Article | Photography | Note) => {
+  const validTypes = ["essay", "photography", "notes"];
+  if (!validTypes.includes(content.type)) {
+    ElMessage.error("不支持的内容类型");
+    return;
+  }
 
+  router.push({
+    name: "overview",
+    query: {
+      id: String(content.id),
+      type: content.type,
+    },
+  });
+};
 onMounted(async () => {
   await fetchData();
 
@@ -499,152 +403,6 @@ async function handleLike(id: number, isLiked: boolean) {
     ElMessage.error("点赞/取消点赞失败，请稍后再试");
   }
 }
-// 修改编辑方法
-const editContent = (content: any) => {
-  editingContent.value = { ...content };
-  originalContent.value = { ...content }; // 记录原始内容
-  currentContentType.value = content.type; // 使用内容自身的类型
-  drawerVisible.value = true;
-  router.push({
-    name: "share",
-    params: { tab: activeTab.value },
-    query: { id: content.id.toString() },
-  });
-};
-// 保存逻辑优化
-async function saveContent() {
-  try {
-    if (!isContentModified()) {
-      ElMessage.info("没有发现任何更改，请修改后再来保存");
-      drawerVisible.value = false;
-      return;
-    }
-
-    const { id, type, size } = editingContent.value;
-    let endpoint = "";
-    let data: any = {};
-
-    switch (type) {
-      case "essay":
-        endpoint = `/admin/article/${id}`;
-        data = {
-          title: editingContent.value.title,
-          content: editingContent.value.content,
-          label: editingContent.value.label,
-          image: editingContent.value.image,
-          size: size,
-        };
-        break;
-      case "photography":
-        endpoint = `/admin/photography/${id}`;
-        data = {
-          image: editingContent.value.image,
-          content: editingContent.value.content,
-          size: size,
-        };
-        break;
-      case "notes":
-        endpoint = `/admin/note/${id}`;
-        data = {
-          title: editingContent.value.title,
-          content: editingContent.value.content,
-          image: editingContent.value.image,
-          size: size,
-        };
-        break;
-    }
-    await axiosConfig.put(endpoint, data);
-    ElMessage.success("更新成功");
-    // 提交上传
-    submitUpload();
-    fetchData();
-    drawerVisible.value = false;
-  } catch (error) {
-    console.error("保存失败:", error);
-    ElMessage.error("保存失败，请检查数据格式");
-  }
-}
-const handleCloseDrawer = async (done: () => void) => {
-  drawerVisible.value = false;
-  showUploadButton.value = false;
-  router.push({
-    name: "share",
-    params: { tab: activeTab.value },
-  });
-  done();
-};
-const handleDeleteContent = () => {
-  const id = editingContent.value?.id;
-  if (id !== undefined) {
-    deleteContent(id);
-  } else {
-    ElMessage.error("无法获取内容 ID，请重试");
-  }
-};
-let deleteContent = async (id: number) => {
-  try {
-    let endpoint = "";
-    // 根据实际内容类型判断
-    switch (editingContent.value.type) {
-      case "essay":
-        endpoint = `/admin/article/${id}`;
-        break;
-      case "photography":
-        endpoint = `/admin/photography/${id}`;
-        break;
-      case "notes":
-        endpoint = `/admin/note/${id}`;
-        break;
-    }
-
-    // 修正图片删除路径
-    if (editingContent.value.image) {
-      const imageName = editingContent.value.image.split("/").pop();
-      await axiosConfig.delete(`/admin/upload/image/${imageName}`);
-    }
-    await axiosConfig.delete(endpoint);
-    fetchData();
-    ElMessage.success("删除成功");
-    drawerVisible.value = false;
-  } catch (error) {
-    console.error("删除失败", error);
-    ElMessage.error("删除失败，请稍后再试");
-  }
-};
-const beforeUpload = (file: File) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  const isAllowedType = allowedTypes.includes(file.type);
-  const isLt2M = file.size / 1024 / 1024 < 2;
-  if (!isAllowedType) {
-    ElMessage.error("上传图片只能是 JPG 或 PNG 或 WEBP 或 GIF 格式!");
-  }
-  if (!isLt2M) {
-    ElMessage.error("上传图片大小不能超过 2MB!");
-  }
-  // 检查 userId 是否存在
-  if (!userId.value) {
-    ElMessage.error("ID未找到，请重新登录");
-    return false;
-  }
-  editingContent.value.size = file.size;
-  // 上传新图片时，删除旧图片
-  if (editingContent.value.image) {
-    const oldImagePath = editingContent.value.image;
-    const oldImageName = oldImagePath.split("/").pop();
-    axiosConfig.delete(`${apiUrl}/admin/upload/image/${oldImageName}`);
-    ElMessage.error("旧图片已删除,已重新上传新图片");
-  }
-  return isAllowedType && isLt2M;
-};
-const handleSuccess = (response: any, file: File) => {
-  editingContent.value.image = `${apiUrl}/image/${response.data.image}`;
-  ElMessage.success("图片上传成功");
-  // 清空文件列表
-  uploadRef.value.clearFiles();
-
-  // 隐藏上传按钮
-  showUploadButton.value = false;
-};
 // 获取标签名
 const getTabName = (tab: string) => {
   return tabs.find((t) => t.id === tab)?.text || "";
@@ -679,6 +437,7 @@ const getLikesCount = (item: any) => {
   return (item as Article).likesCount;
 };
 </script>
+
 <style scoped lang="less">
 @import "../../base-ui/share.less";
 </style>

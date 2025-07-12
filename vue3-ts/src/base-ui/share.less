@@ -158,15 +158,19 @@
         font-size: 1.1rem;
         font-weight: bold;
         color: var(--color-bg1);
+        text-align: center;
       }
 
       .excerpt {
         margin: 0.5rem 0;
         line-height: 1.4;
         color: var(--color-bg5);
-
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 5;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-
 
       .card-actions {
         display: flex;

@@ -92,5 +92,10 @@ const routers = [
     name: "supportwe",
     component: () => import("../views/supportwe/SupportWe.vue"),
   },
+  {
+    path: "/overview/:id?",
+    name: "overview",
+    component: () => import("../views/overview/OverView.vue"),
+  },
 ];
 export default routers;

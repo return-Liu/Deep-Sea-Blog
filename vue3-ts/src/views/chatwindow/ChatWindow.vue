@@ -92,8 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineExpose } from "vue";
-defineExpose();
+import { ref, onMounted } from "vue";
 import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
