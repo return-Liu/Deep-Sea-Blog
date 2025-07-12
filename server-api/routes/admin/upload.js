@@ -48,7 +48,7 @@ const fileFilter = (req, file, cb) => {
 
 // 文件大小限制（例如 2MB）
 const limits = {
-  fileSize: 2 * 1024 * 1024,
+  fileSize: 5 * 1024 * 1024,
 };
 
 const upload = multer({ storage, fileFilter, limits });
@@ -78,7 +78,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   } catch (error) {
     if (error instanceof multer.MulterError) {
       if (error.code === "LIMIT_FILE_SIZE") {
-        return failure(res, 400, "文件大小超过限制（2MB）");
+        return failure(res, 400, "文件大小超过限制（5MB）");
       }
     }
     failure(res, 500, "服务器内部错误");
