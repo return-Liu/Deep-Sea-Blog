@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-Deep Sea 管理端是一个基于 Vue3+ts+ElementPlus 的管理端，用于管理 Deep Sea 的后台数据。
+Deep Sea 管理端是一个基于 Vue3+ts+ElementPlus 的管理端，后端采用node.js+模型Sequelize ORM 数据库采用mysql 是一个很完整的项目 可以用于毕设或实习项目。
 
 ## 项目结构
 
