@@ -110,7 +110,7 @@
 
   .content-card {
     width: 1200px;
-    height: 200px;
+    height: 220px;
     overflow: hidden;
     border-radius: 10px;
     background: var(--bg1);
@@ -159,6 +159,11 @@
         font-weight: bold;
         color: var(--color-bg1);
         text-align: center;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .excerpt {
@@ -175,8 +180,19 @@
       .card-actions {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: space-between; // 左右对齐
         margin-top: 0.5rem;
+
+        .left-actions {
+          display: flex;
+          align-items: center;
+        }
+
+        .right-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px; // 控制元素之间的间距
+        }
 
         .tag {
           font-size: 14px;
@@ -184,47 +200,46 @@
           background-color: #e8f4ff;
           padding: 2px 8px;
           border-radius: 4px;
-        }
-
-        .action-buttons {
           display: flex;
           align-items: center;
-          gap: 10px;
+          justify-content: center;
+          height: 32px; // 统一高度
+        }
 
-          .like-btn,
-          .views-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: none;
-            background: #f5f5f5;
-            border-radius: 20px;
+        .like-btn,
+        .views-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border: none;
+          background: #f5f5f5;
+          border-radius: 20px;
+          transition: all 0.3s ease;
+          height: 32px; // 统一高度
+
+          &:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+          }
+
+          .anticon {
+            font-size: 16px;
+            color: var(--color-bg6);
             transition: all 0.3s ease;
 
-            &:hover {
-              background: #f0f0f0;
-              transform: scale(1.05);
+            &.liked {
+              color: #ff4d4f;
+              animation: heartBeat 0.3s ease-in-out;
             }
+          }
 
-            .anticon {
-              font-size: 16px;
-              color: var(--color-bg6);
-              transition: all 0.3s ease;
-
-              &.liked {
-                color: #ff4d4f;
-                animation: heartBeat 0.3s ease-in-out;
-              }
-            }
-
-            .like-count,
-            .views-count {
-              font-size: 14px;
-              color: var(--color-bg6);
-              min-width: 20px;
-              text-align: left;
-            }
+          .like-count,
+          .views-count {
+            font-size: 14px;
+            color: var(--color-bg6);
+            min-width: 20px;
+            text-align: left;
           }
         }
       }

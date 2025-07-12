@@ -94,10 +94,12 @@
               <p class="excerpt">{{ getContent(item) }}</p>
             </template>
             <div class="card-actions">
-              <span v-if="item.type === 'essay'" class="tag">{{
-                getLabel(item)
-              }}</span>
-              <div class="action-buttons">
+              <div class="left-actions">
+                <span v-if="item.type === 'essay'" class="tag">{{
+                  getLabel(item)
+                }}</span>
+              </div>
+              <div class="right-actions">
                 <button
                   v-if="item.type === 'essay'"
                   class="like-btn"
@@ -164,7 +166,7 @@ import axiosConfig from "../../utils/request";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { YkEmpty } from "@yike-design/ui";
-import { EyeOutlined } from "@ant-design/icons-vue";
+import { EyeOutlined, HeartOutlined } from "@ant-design/icons-vue";
 import { apiUrl } from "../../config";
 import BlogIcon from "../../components/icon/Blog.vue";
 import PhotographyIcon from "../../components/icon/Photography.vue";
