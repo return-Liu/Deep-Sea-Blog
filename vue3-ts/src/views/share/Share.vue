@@ -216,8 +216,6 @@ interface Note {
   image: string;
   type: string;
 }
-const uploadRef = ref<any>(null);
-let showUploadButton = ref(false);
 let essay = ref<Article[]>([]);
 let photography = ref<Photography[]>([]);
 let notes = ref<Note[]>([]);
@@ -276,9 +274,11 @@ async function fetchData(currentPage: number = 1) {
     articleTotal.value = responseArticles.data.data.pagination.total;
     photographyTotal.value = responsePhotography.data.data.pagination.total;
     noteTotal.value = responseNotes.data.data.pagination.total;
-  } catch (error) {
-    console.error("获取数据失败:", error);
-    ElMessage.error("获取数据失败，请稍后再试");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 }
 const handleMouseEnter = async (item: any) => {
@@ -293,8 +293,11 @@ const handleMouseEnter = async (item: any) => {
         essay.value[index].views += 1;
         essay.value[index].isViewed = true;
       }
-    } catch (error) {
-      console.error("更新浏览量失败:", error);
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   }
 };
@@ -400,9 +403,11 @@ async function handleLike(id: number, isLiked: boolean) {
       essay.value[index].likesCount = response.data.likeCount;
     }
     ElMessage.success(response.data.message);
-  } catch (error) {
-    console.error("点赞/取消点赞失败", error);
-    ElMessage.error("点赞/取消点赞失败，请稍后再试");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 }
 // 获取标签名

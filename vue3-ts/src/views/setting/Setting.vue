@@ -602,10 +602,6 @@ const switchAccount = async (id: string) => {
   }
 };
 
-// 自定义主题
-const cosumTheme = () => {
-  router.push({ name: "customTheme" });
-};
 const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
@@ -839,13 +835,15 @@ const deleteAccount = async () => {
 };
 const fetchLikedArticles = async () => {
   try {
-    if (!uuid.value) {
+    if (!userStore.user.id) {
       ElMessage.error("用户ID获取失败");
       return;
     }
     const response = await axiosConfig.get("/admin/article", {
-      params: { userId: uuid.value },
+      params: { userId: userStore.user.id },
     });
+    console.log(response);
+
     const articles = response.data.data.articles;
     likedArticles.value = articles
       .filter((article: any) => article.likesCount === 1)

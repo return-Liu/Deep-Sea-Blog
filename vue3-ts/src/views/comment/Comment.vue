@@ -333,9 +333,11 @@ const fetchComments = async () => {
       })) || [];
 
     loadmore.value = true;
-  } catch (error) {
-    console.error("获取评论失败:", error);
-    ElMessage.error("获取评论失败，请稍后再试");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
     commentList.value = []; // 清空列表，避免旧数据残留
     loadmore.value = true;
   }
@@ -350,9 +352,11 @@ const deleteComment = async (commentId: number) => {
     ElMessage.success(response.data.message);
     // 重新获取评论列表
     await fetchComments();
-  } catch (error) {
-    console.error("删除评论失败:", error);
-    ElMessage.error("删除评论失败");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 const getUser = (uuid: string) => {
@@ -419,9 +423,11 @@ const submitComment = async () => {
     selectedBackground.value = null;
     replyToUsername.value = null;
     await fetchComments();
-  } catch (error) {
-    console.error("提交评论失败:", error);
-    ElMessage.error("提交评论失败");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   } finally {
     submitting.value = false;
   }
@@ -444,9 +450,11 @@ const likeComment = async (commentId: any) => {
       return comment;
     });
     ElMessage.success(response.data.message);
-  } catch (error) {
-    console.error("点赞评论/取消点赞评论失败", error);
-    ElMessage.error("点赞评论/取消点赞评论失败，请稍后再试");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 const chatComment = async (commentId: any) => {
