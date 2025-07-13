@@ -120,12 +120,12 @@ export default function useHome(uploadRef: any) {
   const beforeUpload = (file: File): boolean => {
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     const isAllowedType = allowedTypes.includes(file.type);
-    const isLt2M = file.size / 1024 / 1024 < 2;
+    const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isAllowedType) {
       ElMessage.error("上传图片只能是 JPG 或 PNG 或 WEBP 或 GIF 格式!");
     }
-    if (!isLt2M) {
-      ElMessage.error("上传图片大小不能超过 2MB!");
+    if (!isLt5M) {
+      ElMessage.error("上传图片大小不能超过 5MB!");
     }
     // 检查 userId 是否存在
     if (!userId.value) {
@@ -136,7 +136,7 @@ export default function useHome(uploadRef: any) {
     formData.value.size = file.size;
     // 判断如果已经上传了图片 再次上传一张新图片 把旧图片删除
     deleteNewImage(true);
-    return isAllowedType && isLt2M;
+    return isAllowedType && isLt5M;
   };
 
   const handleSuccess = (response: any, file: File) => {
