@@ -191,20 +191,18 @@ import { ref, onMounted, computed } from "vue";
 import { EyeOutlined, HeartOutlined } from "@ant-design/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import type { UploadFile } from "element-plus";
-import { ElMessage, ElUpload } from "element-plus";
+import { ElMessage, ElUpload, ElMessageBox } from "element-plus";
 import { Upload } from "@element-plus/icons-vue";
 import axiosConfig from "../../utils/request";
 import { format } from "date-fns";
 import { apiUrl } from "../../config";
 import { useUserStore } from "../../store/userStore";
-import { log } from "console";
-
 const router = useRouter();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 
-// Refs for upload components
+// 定义上传组件的引用
 const essayUploadRef = ref<InstanceType<typeof ElUpload>>();
 const photoUploadRef = ref<InstanceType<typeof ElUpload>>();
 const notesUploadRef = ref<InstanceType<typeof ElUpload>>();
@@ -239,6 +237,17 @@ const formatContent = (text: string) => {
 };
 const deleteContent = async (contentId: number) => {
   try {
+    // 弹出确认对话框
+    await ElMessageBox.confirm(
+      "确定要删除这项内容吗？此操作无法撤销。",
+      "提示",
+      {
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
+        type: "warning",
+      }
+    );
+
     const endpointMap = {
       essay: `/admin/article`,
       photography: `/admin/photography`,
@@ -252,21 +261,22 @@ const deleteContent = async (contentId: number) => {
       return;
     }
 
-    await axiosConfig.delete(`${endpoint}/${contentId}`);
+    const response = await axiosConfig.delete(`${endpoint}/${contentId}`);
     // 删除图片
     if (content.value?.image) {
       deleteOldImage(content.value.image);
     }
-    ElMessage.success("删除成功");
+    ElMessage.success(response.data.message);
 
     // 可选：跳转到列表页或刷新页面
     router.push({ path: "/share/essay" }); // 跳转到内容管理页
   } catch (error: any) {
-    console.error("删除失败", error);
-    ElMessage.error(error.response?.data?.message || "删除失败，请重试");
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
-
 // 保存文章 摄影 随记
 const handleSave = async () => {
   if (!hasContentChanged()) {
@@ -336,18 +346,19 @@ const handleSave = async () => {
     }
 
     const endpoint = endpoints[contentType.value as keyof typeof endpoints];
-    await axiosConfig.put(`${endpoint}/${id}`, payload);
+    const response = await axiosConfig.put(`${endpoint}/${id}`, payload);
 
-    ElMessage.success("保存成功");
-
+    ElMessage.success(response.data.message);
     // 保存成功后隐藏“更新图片”按钮
     showUploadButton.value = false;
 
     // 可选：更新原始内容以避免重复提示“已修改”
     originalContent.value = JSON.parse(JSON.stringify(content.value));
   } catch (error: any) {
-    console.error("保存失败", error);
-    ElMessage.error(error.response?.data?.message || "保存失败，请重试");
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 const handleChange = (uploadFile?: UploadFile) => {
@@ -370,8 +381,31 @@ const submitUpload = (type: string) => {
       break;
   }
 };
+const typeNameMap = {
+  essay: "文章",
+  photography: "摄影作品",
+  notes: "随笔",
+};
 
-const beforeUpload = (file: File) => {
+const typeText =
+  typeNameMap[contentType.value as keyof typeof typeNameMap] || "内容";
+
+const beforeUpload = async (file: File) => {
+  try {
+    await ElMessageBox.confirm(
+      `您正在更换${typeText}封面图片，原图将被删除，是否继续？`,
+      "提示",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }
+    );
+  } catch {
+    // 用户点击取消或关闭弹窗
+    return false;
+  }
+
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
   const isAllowedType = allowedTypes.includes(file.type);
   const isLt5M = file.size / 1024 / 1024 < 5;
@@ -408,8 +442,10 @@ const deleteOldImage = async (imageUrl: string) => {
       return;
     }
 
-    await axiosConfig.delete(`${apiUrl}/admin/upload/image/${imageName}`);
-    ElMessage.success("旧图片已删除，正在上传新图片");
+    const response = await axiosConfig.delete(
+      `${apiUrl}/admin/upload/image/${imageName}`
+    );
+    ElMessage.success(response.data.message);
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "删除旧图片失败";
@@ -453,15 +489,17 @@ onMounted(async () => {
     };
 
     response = await axiosConfig.get(endpoints[type as keyof typeof endpoints]);
-
+    ElMessage.success(response.data.message);
     if (response?.data?.data) {
       const fetchedContent = response.data.data[contentKey[type]];
       content.value = { ...fetchedContent };
       originalContent.value = JSON.parse(JSON.stringify(fetchedContent)); // 深拷贝
     }
-  } catch (error) {
-    console.error("Failed to fetch content:", error);
-    ElMessage.error("加载内容失败");
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 });
 // 新增一个函数：检查是否有更改

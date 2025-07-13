@@ -165,6 +165,7 @@ import {
 import Constellation from "../../components/icon/Constellation.vue";
 import Uuid from "../../components/icon/Uuid.vue";
 import { loadUserContents } from "../../utils/publicuser";
+import { ElMessage } from "element-plus";
 interface User {
   id: number;
   avatar: string;
@@ -194,8 +195,11 @@ const fetchUser = async () => {
     if (response.data && response.data.data) {
       user.value = response.data.data;
     }
-  } catch (error) {
-    console.error("获取用户信息失败:", error);
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 
