@@ -4,6 +4,7 @@ const { Wall, User, Report, LikesWall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
 const { sendEmail } = require("../../utils/email");
+const { notifyWallOwner } = require("../../utils/email");
 // 查询留言墙列表
 router.get("/", async (req, res) => {
   const query = req.query;
@@ -173,48 +174,43 @@ router.get("/report", async (req, res) => {
   }
 });
 // 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
-router.delete("/delete/:id", async (req, res) => {
-  const id = req.params.id;
-
-  if (isNaN(id)) {
-    return failure(res, "无效的ID");
-  }
-
+// 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
+router.post("/delete/:id", async (req, res) => {
+  const { id } = req.params;
+  const { email } = req.body; // 可选：用于验证或额外通知
   try {
-    const report = await Report.findOne({
+    // 1. 查询留言墙信息
+    const wall = await Wall.findOne({
       where: { id },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "email", "nickname"],
+        },
+      ],
     });
 
-    if (!report) {
-      return failure(res, "举报留言墙不存在");
+    if (!wall) {
+      failure(res, 404, "留言墙不存在");
     }
 
-    await sendEmail(
-      report.email,
-      "你的留言墙被删除了",
-      `你的留言墙被删除了，请及时处理`
-    );
+    // 2. 获取留言墙作者信息
+    const wallOwner = wall.User;
+    if (!wallOwner) {
+      failure(res, 404, "留言墙作者不存在");
+    }
 
-    await Wall.destroy({ where: { id: report.wallId } });
-    await Report.destroy({ where: { id } });
+    // 3. 发送邮件通知墙主
+    await notifyWallOwner(wallOwner.email, wall.content);
 
-    success(res, "已通知墙主并删除留言墙");
-  } catch (error) {
-    failure(res, error);
-  }
-});
-
-// 删除举报留言墙列表
-router.delete("/report/:id", async (req, res) => {
-  const id = req.params.id;
-  try {
-    await Report.destroy({
-      where: {
-        id,
-      },
+    // 4. 返回成功响应
+    success(res, "已成功通知墙主处理留言墙", {
+      wallId: wall.id,
+      wallContent: wall.content,
+      notifiedEmail: wallOwner.email,
     });
-    success(res, "删除举报留言墙列表成功");
   } catch (error) {
+    console.error("删除留言墙或发送邮件失败:", error);
     failure(res, error);
   }
 });

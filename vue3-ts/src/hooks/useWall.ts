@@ -1,6 +1,6 @@
 import { ref, onMounted, watch, computed, defineProps } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage, ElDrawer } from "element-plus";
+import { ElMessage, ElDrawer, ElMessageBox } from "element-plus";
 import { Plus, Edit, SuccessFilled } from "@element-plus/icons-vue";
 import axiosConfig from "../utils/request";
 import { apiUrl } from "../config";
@@ -138,7 +138,7 @@ export default function useWall() {
   const reportedMessages = ref<Set<string>>(new Set<string>());
   const user = computed(() => userStore.user);
   const contentRef = ref<HTMLDivElement>();
-  userId.value = user.value?.id || null;
+  userId.value = user.value?.uuid || null;
   const search = ref("");
 
   const updateContent = (e: Event) => {
@@ -238,14 +238,10 @@ export default function useWall() {
         }
       }
     } catch (error: any) {
-      if (error.response && error.response.data) {
-        const responseData = error.response.data;
-        if (responseData.errors) {
-          responseData.errors.forEach((error: string) => {
-            ElMessage.error(error);
-          });
-        }
-      }
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
 
@@ -300,16 +296,10 @@ export default function useWall() {
       }
       ElMessage.success(response.data.message);
     } catch (error: any) {
-      if (error.response && error.response.data) {
-        const responseData = error.response.data;
-        if (responseData.errors) {
-          responseData.errors.forEach((error: string) => {
-            ElMessage.error(error);
-          });
-        } else {
-          ElMessage.error("点赞失败,请稍后再试");
-        }
-      }
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
   const chatMessage = (messageId: string) => {
@@ -320,7 +310,17 @@ export default function useWall() {
   };
   // 通知该墙主撕掉留言墙
   const reportQQ = async (messageId: string) => {
-    ElMessage.info("目前还在开发中,请耐心等待");
+    try {
+      const response = await axiosConfig.post(
+        `/admin/wall/delete/${messageId}`
+      );
+      ElMessage.success(response.data.message);
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
+    }
   };
   const reportMessage = async (messageId: string) => {
     // 从 localStorage 加载已举报的留言 ID
@@ -347,14 +347,27 @@ export default function useWall() {
       );
       // 提示用户举报成功
       ElMessage.success("举报成功,感谢你的举报");
-    } catch (error) {
-      console.error("举报失败:", error);
-      ElMessage.error("举报失败，请重试");
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
 
   const deleteMessage = async (messageId: string) => {
     try {
+      // 弹出确认对话框
+      await ElMessageBox.confirm(
+        "确定要删除这条留言吗？此操作将删除留言及其所有评论。",
+        "提示",
+        {
+          confirmButtonText: "删除",
+          cancelButtonText: "取消",
+          type: "warning",
+        }
+      );
+
       // 删除留言下的所有评论
       await deleteCommentsByWallId(messageId);
 
@@ -364,10 +377,14 @@ export default function useWall() {
       if (index !== -1) {
         messages.value.splice(index, 1);
       }
+
       ElMessage.success(response.data.message);
       showMessageDrawer.value = false;
-    } catch (error) {
-      console.error("删除失败:", error);
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
 
@@ -380,8 +397,11 @@ export default function useWall() {
       if (response.data.status) {
         ElMessage.success("留言下的评论已全部删除");
       }
-    } catch (error) {
-      console.error("删除评论失败:", error);
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
 
@@ -458,7 +478,10 @@ export default function useWall() {
       query: { category: activeCategory.value },
     });
   };
-
+  // 字体颜色根据留言背景主动改变
+  const changeFontColor = (color: string) => {
+    messageForm.value.backgroundColor = color;
+  };
   // 统一的提交方法
   const handleSubmit = async () => {
     try {
@@ -524,8 +547,11 @@ export default function useWall() {
       handleCloseDrawer();
       // 刷新数据
       fetchWallData();
-    } catch (error) {
-      console.error(isEdit.value ? "更新留言失败:" : "保存留言失败:", error);
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
 
@@ -562,9 +588,11 @@ export default function useWall() {
       const response = await axiosConfig.get(`/admin/comment/count/${wallId}`);
       // 直接返回评论数量
       return response.data.data.count;
-    } catch (error) {
-      console.error("获取评论数量失败:", error);
-      return 0;
+    } catch (error: any) {
+      // 兼容 message 字段
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
     }
   };
   return {
