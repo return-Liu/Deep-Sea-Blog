@@ -45,79 +45,38 @@ router.put("/info", async (req, res) => {
 });
 // 注销账号
 router.delete("/delete", async (req, res) => {
+  // 使用事务代理
+  const transaction = await sequelize.transaction();
   try {
-    const user = await getCurrentUser(req);
+    const user = await getCurrentUser(req, true);
 
-    // 1. 处理用户点赞过的留言
-    const userLikedWalls = await LikesWall.findAll({
+    // 1. 删除点赞记录
+    await LikesWall.destroy({ where: { userId: user.id }, transaction });
+    await Like.destroy({ where: { userId: user.id }, transaction });
+
+    // 2. 删除留言及关联点赞
+    const walls = await Wall.findAll({
       where: { userId: user.id },
-      include: [{ model: Wall }],
+      transaction,
     });
-
-    // 更新被用户点赞过的留言的点赞数
-    for (const likedWall of userLikedWalls) {
-      if (likedWall.Wall) {
-        await likedWall.Wall.update({
-          likesCount: likedWall.Wall.likesCount - 1,
-        });
-      }
+    const wallIds = walls.map((w) => w.id);
+    if (wallIds.length > 0) {
+      await LikesWall.destroy({ where: { wallsId: wallIds }, transaction });
     }
+    await Wall.destroy({ where: { userId: user.id }, transaction });
 
-    // 2. 删除用户的点赞记录(留言)
-    await LikesWall.destroy({
-      where: { userId: user.id },
-    });
-    // 2.1 删除用户的点赞记录(文章)
-    await Like.destroy({
-      where: { userId: user.id },
-    });
-    const userWalls = await Wall.findAll({
-      where: { userId: user.id },
-      include: [{ model: LikesWall }],
-    });
+    // 3. 删除内容
+    await Article.destroy({ where: { userId: user.id }, transaction });
+    await Photography.destroy({ where: { userId: user.id }, transaction });
+    await Note.destroy({ where: { userId: user.id }, transaction });
 
-    // 删除用户留言的所有点赞记录
-    for (const wall of userWalls) {
-      await LikesWall.destroy({
-        where: { wallsId: wall.id },
-      });
-    }
+    // 4. 删除用户
+    await user.destroy({ transaction });
 
-    // 3.1 处理用户发布的文章
-    const userArticles = await Article.findAll({
-      where: { userId: user.id },
-      include: [{ model: Like }],
-    });
-    // 删除用户文章的所有点赞记录
-    for (const article of userArticles) {
-      await Like.destroy({
-        where: { articleId: article.id },
-      });
-    }
-
-    // 删除用户的所有留言
-    await Wall.destroy({
-      where: { userId: user.id },
-    });
-
-    // 4. 删除用户其他内容
-    await Article.destroy({
-      where: { userId: user.id },
-    });
-
-    await Photography.destroy({
-      where: { userId: user.id },
-    });
-
-    await Note.destroy({
-      where: { userId: user.id },
-    });
-
-    // 5. 最后删除用户账号
-    await user.destroy();
-
+    await transaction.commit();
     success(res, "注销账号成功");
   } catch (error) {
+    await transaction.rollback();
     failure(res, error);
   }
 });

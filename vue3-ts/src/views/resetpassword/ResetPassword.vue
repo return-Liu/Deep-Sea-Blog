@@ -101,7 +101,7 @@ const countdown = ref(60);
 // 验证函数
 const validateEmail = () => {
   if (!email.value) {
-    ElMessage.error("邮箱不能为空");
+    ElMessage.error("请输入你的邮箱");
     return false;
   }
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -114,7 +114,7 @@ const validateEmail = () => {
 
 const validateVerificationCode = () => {
   if (!verificationCode.value) {
-    ElMessage.error("验证码不能为空");
+    ElMessage.error("请输入你的验证码");
     return false;
   }
   return true;
@@ -122,7 +122,7 @@ const validateVerificationCode = () => {
 
 const validateNewPassword = () => {
   if (!newPassword.value) {
-    ElMessage.error("新密码不能为空");
+    ElMessage.error("请输入你的新密码");
     return false;
   }
   const strongRegex =
@@ -136,11 +136,11 @@ const validateNewPassword = () => {
 
 const validateConfirmPassword = () => {
   if (!confirmPassword.value) {
-    ElMessage.error("确认密码不能为空");
+    ElMessage.error("请在输入你的新密码");
     return false;
   }
   if (confirmPassword.value !== newPassword.value) {
-    ElMessage.error("两次输入的密码不一致");
+    ElMessage.error("两次输入的密码不一致,请重新输入");
     return false;
   }
   return true;

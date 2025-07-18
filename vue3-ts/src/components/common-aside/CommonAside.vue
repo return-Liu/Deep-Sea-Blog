@@ -49,10 +49,18 @@
         :content="$t('commonaside.home.momentInTime')"
         placement="right"
       >
-        <el-menu-item index="/wall/messages?category=全部">
+        <el-menu-item index="/messagewall/messages?category=全部">
           <el-icon><CameraFilled /></el-icon>
-          <router-link to="/wall/messages?category=全部">{{
+          <router-link to="/messagewall/messages?category=全部">{{
             $t("commonaside.home.momentInTime")
+          }}</router-link>
+        </el-menu-item>
+      </el-tooltip>
+      <el-tooltip :content="$t('commonaside.home.photo')" placement="right">
+        <el-menu-item index="/photowall/photos?category=自然风光">
+          <el-icon><PictureFilled /></el-icon>
+          <router-link to="/photowall/photos?category=自然风光">{{
+            $t("commonaside.home.photo")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
@@ -77,17 +85,6 @@
           <router-link to="/suggestionsfeedbacklist">
             {{ $t("commonaside.home.suggestionsList") }}
           </router-link>
-        </el-menu-item>
-      </el-tooltip>
-      <el-tooltip
-        :content="$t('commonaside.home.faqcomponent')"
-        placement="right"
-      >
-        <el-menu-item index="/faqcomponent">
-          <el-icon><QuestionFilled /></el-icon>
-          <router-link to="/faqcomponent">{{
-            $t("commonaside.home.faqcomponent")
-          }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip :content="$t('commonaside.home.supportwe')" placement="right">

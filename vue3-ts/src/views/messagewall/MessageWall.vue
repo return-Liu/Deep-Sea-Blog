@@ -13,7 +13,7 @@
           <div class="active-indicator"></div>
         </li>
       </ul>
-      <p class="nav-desc">记录美好瞬间，珍藏珍贵回忆</p>
+      <p class="nav-desc">让每一段留言——都有被听见的温度</p>
     </nav>
     <section class="category-filter">
       <keep-alive>
@@ -33,7 +33,7 @@
     <section class="walls-sidebar">
       <el-input
         v-model="search"
-        placeholder="搜索留言 探索未知领域... "
+        placeholder="倾听留言背后的声音..."
         clearable
         class="search"
         @clear="handleSearch"
@@ -57,7 +57,7 @@
             <time>{{ formatDate(message.date) }}</time>
             <span class="message-category">{{ message.category }}</span>
           </header>
-          <div class="card-content">
+          <div class="card-content" :style="{ color: textColor }">
             <p>{{ message.content }}</p>
           </div>
           <div class="message-icon">
@@ -148,7 +148,6 @@
               class="message-content"
               :style="{
                 backgroundColor: messageForm.backgroundColor,
-                color: textColor,
               }"
             >
               <div
@@ -157,6 +156,7 @@
                 :class="{ disabled: !isEditable }"
                 @input="updateContent"
                 ref="contentRef"
+                :style="{ color: textColor }"
               >
                 {{ messageForm.content }}
               </div>
@@ -248,7 +248,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import useWall from "../../hooks/useWall";
+import useMessageWall from "../../hooks/useMessageWall";
 import { YkEmpty } from "@yike-design/ui";
 const {
   props,
@@ -299,8 +299,8 @@ const {
   commentCounts,
   handleColorSelect,
   reportQQ,
-} = useWall();
+} = useMessageWall();
 </script>
 <style lang="less" scoped>
-@import "../../base-ui/wall.less";
+@import "../../base-ui/messagewall.less";
 </style>

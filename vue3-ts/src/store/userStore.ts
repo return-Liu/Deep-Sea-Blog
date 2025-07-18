@@ -42,15 +42,10 @@ export const useUserStore = defineStore("user", () => {
     phone: "", // 初始化 phone 字段
   });
 
-  // 新增 tempUserId 状态
-  const tempUserId = ref<number | null>(null);
-
   const setUser = (userData: User) => {
     user.value = userData;
     if (user.value && "email" in user.value) delete user.value.email;
   };
-
-  const getUser = () => user.value;
 
   // 加载用户信息
   const loadUser = async (userId?: number) => {
@@ -92,8 +87,9 @@ export const useUserStore = defineStore("user", () => {
           const response = await axiosConfig.get(endpoint, {
             params: { userId: user.value.uuid },
           });
+
           response.data.data[key].forEach((item: { image: string }) => {
-            if (item.image) {
+            if (item.image && item.image.startsWith(apiUrl)) {
               imagePaths.add(item.image);
             }
           });
@@ -111,15 +107,13 @@ export const useUserStore = defineStore("user", () => {
       const failedImages: string[] = [];
       const deletePromises = Array.from(imagePaths).map(async (imagePath) => {
         const imageName = imagePath.split("/").pop();
-        if (imageName) {
-          try {
-            await axiosConfig.delete(
-              `${apiUrl}/admin/upload/image/${imageName}`
-            );
-          } catch (error) {
-            console.error(`删除图片 ${imageName} 失败`, error);
-            failedImages.push(imageName);
-          }
+        if (!imageName) return;
+
+        try {
+          await axiosConfig.delete(`${apiUrl}/admin/upload/image/${imageName}`);
+        } catch (error) {
+          console.error(`删除图片 ${imageName} 失败`, error);
+          failedImages.push(imageName);
         }
       });
 
@@ -139,20 +133,6 @@ export const useUserStore = defineStore("user", () => {
   // 获取当前用户信息
   const currentUser = computed(() => user.value);
 
-  // 设置临时用户ID的方法
-  const setTempUserId = (userId: number | null) => {
-    tempUserId.value = userId;
-  };
-
-  // 根据临时用户ID加载用户信息
-  const loadUserByTempId = async () => {
-    if (tempUserId.value !== null) {
-      await loadUser(tempUserId.value);
-    } else {
-      await loadUser();
-    }
-  };
-
   return {
     user,
     setUser,
@@ -160,8 +140,5 @@ export const useUserStore = defineStore("user", () => {
     updateUser,
     deleteAllUserImages,
     currentUser,
-    getUser,
-    setTempUserId, // 导出 setTempUserId 方法
-    loadUserByTempId, // 导出 loadUserByTempId 方法
   };
 });

@@ -229,25 +229,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import debounce from "lodash.debounce";
 import axiosConfig from "../../utils/request";
-import { handleLoginError } from "../../utils/handleLoginError";
-import { handleLoginSuccess } from "../../utils/handleLoginSuccess";
-import Cookies from "js-cookie";
 import { View, Hide } from "@element-plus/icons-vue";
+import QRCode from "qrcode";
+import { handlePostLogin } from "../../utils/handlePostLogin";
+import { handleLoginError } from "../../utils/handleLoginError";
+import { useI18n } from "vue-i18n";
+const { locale } = useI18n();
 const router = useRouter();
 let isInputFocused = ref(false);
 let showQrcode = ref(false);
-let qrcodeUrl = ref("");
 let isSending = ref(false);
 let countdown = ref(60);
 let loading = ref(false);
 const accountsclientFeatureCode = localStorage.getItem("userFeatureCode");
-import { useI18n } from "vue-i18n";
-const { locale } = useI18n();
+const countdownTimer = ref<number | null>(null);
 let activeTab = ref("password");
 let loginForm = ref({
   email: "",
@@ -255,7 +255,6 @@ let loginForm = ref({
 });
 let smsForm = ref({ email: "", code: "" });
 let showPassword = ref(false);
-import QRCode from "qrcode";
 let qrcodeCanvas = ref<HTMLCanvasElement | null>(null);
 let validateEmail = (email: string) => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -286,7 +285,7 @@ watch(showQrcode, async (val) => {
 });
 let validate = () => {
   if (!loginForm.value.email) {
-    ElMessage.error("请你的输入账号/邮箱~");
+    ElMessage.error("请你的输入账号/邮箱/手机号~");
     return false;
   }
   if (!loginForm.value.password) {
@@ -316,52 +315,54 @@ let forgetpassword = () => {
 };
 
 let login = debounce(async () => {
-  if (activeTab.value === "password") {
-    // 密码登录
-    if (!validate()) return;
-    loading.value = true;
-    try {
-      const response = await axiosConfig.post("/auth/sign_in", {
+  if (activeTab.value === "password" && !validate()) return;
+  if (activeTab.value === "sms" && !validateEmailAndCode()) return;
+
+  loading.value = true;
+  try {
+    let response;
+    if (activeTab.value === "password") {
+      // 密码登录
+      response = await axiosConfig.post("/auth/sign_in", {
         login: loginForm.value.email,
         password: loginForm.value.password,
       });
-      loading.value = false;
-
-      Cookies.set("ds-token", response.data.data.token);
-      ElMessage.success(response.data.message);
-
-      const user = (await axiosConfig.get("/users/me")).data.data;
-      handleLoginSuccess(user, { value: locale.value }, router);
-
-      router.push("/home");
-    } catch (error: any) {
-      handleLoginError(error);
-    }
-  } else if (activeTab.value === "sms") {
-    if (!validateEmailAndCode()) return;
-    try {
-      const response = await axiosConfig.post("/auth/email", {
+    } else {
+      // 邮箱验证码登录
+      response = await axiosConfig.post("/auth/email", {
         email: smsForm.value.email,
         code: smsForm.value.code,
         clientFeatureCode: accountsclientFeatureCode,
       });
-      ElMessage.success(response.data.message);
-      loading.value = false;
-      Cookies.set("ds-token", response.data.data.token);
-      const user = (await axiosConfig.get("/users/me")).data.data;
-      handleLoginSuccess(user, { value: locale.value }, router);
-      router.push("/home");
-    } catch (error: any) {
-      // 兼容 message 字段
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "未知错误";
-      ElMessage.error(errorMessage);
     }
+    // 通用登录后处理
+    handlePostLogin(response, locale.value, router);
+  } catch (error: any) {
+    handleLoginError(error);
+  } finally {
+    loading.value = false;
   }
-}, 1000); // 设置 1 秒的延迟
-let sendSmsCode = async () => {
+}, 1000);
+const startCountdown = () => {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value);
+  }
+  countdownTimer.value = window.setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      if (countdownTimer.value) {
+        clearInterval(countdownTimer.value);
+        countdownTimer.value = null;
+      }
+      isSending.value = false;
+      countdown.value = 60;
+    }
+  }, 1000);
+};
+let sendSmsCode = debounce(async () => {
   if (isSending.value) return;
 
+  // 校验邮箱输入
   if (!smsForm.value.email) {
     ElMessage.error("请输入你的邮箱/手机号~");
     return;
@@ -371,39 +372,41 @@ let sendSmsCode = async () => {
     return;
   }
 
-  // 检查 accountsuuid 是否有效
+  // 处理 clientFeatureCode（UUID）
   let clientFeatureCode = accountsclientFeatureCode;
   if (!clientFeatureCode || clientFeatureCode.trim() === "") {
-    clientFeatureCode = null; // 如果无效，设置为 null，让后端生成新的 UUID
+    clientFeatureCode = null; // 让后端生成新的 UUID
   }
 
   isSending.value = true;
+
   try {
     const response = await axiosConfig.post("/auth/email/verify", {
       email: smsForm.value.email,
       clientFeatureCode: clientFeatureCode,
     });
+
     ElMessage.success(response.data.message);
-    let timer = setInterval(() => {
-      countdown.value--;
-      if (countdown.value <= 0) {
-        clearInterval(timer);
-        isSending.value = false;
-        countdown.value = 60;
-      }
-    }, 1000);
+
+    startCountdown(); // 启动倒计时
   } catch (error: any) {
     isSending.value = false;
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
 
-    // 如果是 UUID 冲突错误，提示用户重新生成
+    // 特定错误提示
     if (errorMessage.includes("UUID 已存在")) {
       ElMessage.warning("UUID 已存在，请稍后再试或清除缓存重试。");
     }
   }
-};
+}, 1000); // 防止重复点击
+onUnmounted(() => {
+  // 销毁定时器
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value!);
+  }
+});
 </script>
 
 <style lang="less" scoped>

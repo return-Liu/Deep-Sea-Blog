@@ -40,10 +40,6 @@ export default function useAside() {
     );
   };
 
-  const openReadmeInEditor = () => {
-    window.open("https://yike.design/", "_blank");
-  };
-
   onMounted(() => {
     fetchUserInfo();
   });

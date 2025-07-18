@@ -33,7 +33,7 @@
             @change="handleChange"
           >
             <img
-              :title="'更换博客文章封面'"
+              :title="uploadTip"
               class="photo"
               :src="content.image"
               v-lazy="content.image"
@@ -43,9 +43,9 @@
           <div class="upload-overlay" v-if="showUploadButton">
             <div class="upload-actions">
               <div @click="submitUpload('essay')">
-                <span>更新图片</span>
+                <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">保存</el-button>
+              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -54,7 +54,14 @@
           <div class="author-info">
             <img
               @click="openAuthorProfile()"
-              :src="user.avatar"
+              v-if="
+                user.avatar ||
+                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+              "
+              v-lazy="
+                user.avatar ||
+                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+              "
               :title="'博主头像'"
               class="avatar"
             />
@@ -95,12 +102,15 @@
             @change="handleChange"
           >
             <div class="photo-container">
-              <img
-                :title="'更换摄影图库封面'"
-                v-lazy="content.image"
-                alt="摄影作品"
-                class="photo-image"
-              />
+              <el-tooltip content="点击上传新封面" placement="top">
+                <img
+                  :title="uploadTip"
+                  :src="content.image"
+                  v-lazy="content.image"
+                  class="photo"
+                  alt="博客文章"
+                />
+              </el-tooltip>
 
               <span class="date">{{ formatDate(content.createdAt) }}</span>
               <h2 class="photo-title">{{ content.title || "摄影作品" }}</h2>
@@ -117,9 +127,9 @@
           <div class="upload-overlay" v-if="showUploadButton">
             <div class="upload-actions">
               <div @click="submitUpload('photography')">
-                <span>更新图片</span>
+                <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">保存</el-button>
+              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -155,19 +165,22 @@
             :auto-upload="false"
             @change="handleChange"
           >
-            <img
-              :title="'更换随笔随记封面'"
-              v-lazy="content.image"
-              alt="随笔图片"
-              class="note-photo"
-            />
+            <el-tooltip content="点击上传新封面" placement="top">
+              <img
+                :title="uploadTip"
+                :src="content.image"
+                v-lazy="content.image"
+                class="photo"
+                alt="博客文章"
+              />
+            </el-tooltip>
           </el-upload>
           <div class="upload-overlay" v-if="showUploadButton">
             <div class="upload-actions">
               <div @click="submitUpload('notes')">
-                <span>更新图片</span>
+                <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">保存</el-button>
+              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -222,7 +235,12 @@ const formatDate = (dateString: string) => {
     return dateString;
   }
 };
-
+// 根据不同内容类型返回统一提示语。
+const uploadTip = computed(() => {
+  const baseTip = "点击上传新封面";
+  const currentType = currentTypeText.value;
+  return `${baseTip} - 当前为${currentType}封面`;
+});
 const openAuthorProfile = () => {
   if (userStore.user?.uuid) {
     router.push({
@@ -277,6 +295,7 @@ const deleteContent = async (contentId: number) => {
     ElMessage.error(errorMessage);
   }
 };
+
 // 保存文章 摄影 随记
 const handleSave = async () => {
   if (!hasContentChanged()) {
@@ -380,6 +399,8 @@ const submitUpload = (type: string) => {
       notesUploadRef.value?.submit();
       break;
   }
+  // 更换按钮
+  showUploadButton.value = false;
 };
 const typeNameMap = {
   essay: "文章",
@@ -387,13 +408,13 @@ const typeNameMap = {
   notes: "随笔",
 };
 
-const typeText =
-  typeNameMap[contentType.value as keyof typeof typeNameMap] || "内容";
-
+const currentTypeText = computed(() => {
+  return typeNameMap[contentType.value as keyof typeof typeNameMap] || "内容";
+});
 const beforeUpload = async (file: File) => {
   try {
     await ElMessageBox.confirm(
-      `您正在更换${typeText}封面图片，原图将被删除，是否继续？`,
+      `您正在更换${currentTypeText.value}封面图片，原图将被删除，是否继续？`,
       "提示",
       {
         confirmButtonText: "确定",
@@ -403,6 +424,11 @@ const beforeUpload = async (file: File) => {
     );
   } catch {
     // 用户点击取消或关闭弹窗
+    essayUploadRef.value?.clearFiles();
+    photoUploadRef.value?.clearFiles();
+    notesUploadRef.value?.clearFiles();
+    showUploadButton.value = false;
+    ElMessage.info(`已取消更换${currentTypeText.value}封面图片`);
     return false;
   }
 

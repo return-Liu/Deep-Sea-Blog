@@ -58,12 +58,21 @@ const routers = [
     component: () => import("../views/localresources/LocalResources.vue"),
   },
   {
-    path: "/wall/:tab?",
-    name: "wall",
-    component: () => import("../views/wall/Wall.vue"),
+    path: "/messagewall/:tab?",
+    name: "messagewall",
+    component: () => import("../views/messagewall/MessageWall.vue"),
     props: (route: any) => ({
       tab: route.params.tab,
       category: route.query.id || "全部",
+    }),
+  },
+  {
+    path: "/photowall/:tab?",
+    name: "photowall",
+    component: () => import("../views/photowall/PhotoWall.vue"),
+    props: (route: any) => ({
+      tab: route.params.tab,
+      category: route.query.id || "自然风光",
     }),
   },
   // 处理404问题
@@ -81,11 +90,6 @@ const routers = [
     path: "/users/:uuid",
     name: "users",
     component: () => import("../views/users/Users.vue"),
-  },
-  {
-    path: "/faqcomponent",
-    name: "faqcomponent",
-    component: () => import("../views/faqcomponent/FaqComponent.vue"),
   },
   {
     path: "/supportwe",

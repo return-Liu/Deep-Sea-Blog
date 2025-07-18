@@ -11,7 +11,7 @@ import {
   MessageOutlined,
 } from "@ant-design/icons-vue";
 import { useUserStore } from "../store/userStore";
-export default function useWall() {
+export default function useMessageWall() {
   const props = defineProps({
     tab: {
       type: String,
@@ -269,7 +269,7 @@ export default function useWall() {
     const categoryId = message.id;
     activeCategory.value = categoryId;
     router.replace({
-      name: "wall",
+      name: "messagewall",
       params: { tab: "messages" },
       query: { category: categoryId },
     });
@@ -278,7 +278,7 @@ export default function useWall() {
   const changeTab = (tabId: string) => {
     activeTab.value = tabId;
     const query = route.query.id ? { id: route.query.id } : {};
-    router.replace({ name: "wall", params: { tab: tabId }, query });
+    router.replace({ name: "messagewall", params: { tab: tabId }, query });
   };
 
   const likeMessage = async (messageId: string) => {
@@ -354,7 +354,6 @@ export default function useWall() {
       ElMessage.error(errorMessage);
     }
   };
-
   const deleteMessage = async (messageId: string) => {
     try {
       // 弹出确认对话框
@@ -440,7 +439,7 @@ export default function useWall() {
     // 如果是创建者则可以编辑,否则只能查看
     if (userId.value === message.userId) {
       router.push({
-        name: "wall",
+        name: "messagewall",
         // 拿到当前留言的 分类
         params: { tab: "messages" },
         query: { category: message.category, id: message.id },
@@ -473,14 +472,10 @@ export default function useWall() {
       backgroundColor: predefinedColors[0].color,
     };
     router.push({
-      name: "wall",
+      name: "messagewall",
       params: { tab: "messages" },
       query: { category: activeCategory.value },
     });
-  };
-  // 字体颜色根据留言背景主动改变
-  const changeFontColor = (color: string) => {
-    messageForm.value.backgroundColor = color;
   };
   // 统一的提交方法
   const handleSubmit = async () => {

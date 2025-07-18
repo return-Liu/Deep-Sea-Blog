@@ -133,9 +133,6 @@
               <span>1314</span>
             </div>
           </div>
-          <el-button type="text" class="clear-bg" @click="clearBackground">
-            清除背景
-          </el-button>
         </div>
       </div>
     </div>
@@ -269,8 +266,11 @@ import {
   CloseOutlined,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
+import { log } from "console";
 const router = useRouter();
 const userStore = useUserStore();
+console.log(userStore);
+
 interface Comment {
   id: number;
   username: string;
@@ -313,12 +313,6 @@ const selectBackground = (bg: (typeof backgrounds.value)[0]) => {
   selectedBgId.value = bg.id; // 更新选中的背景ID
   showBg.value = false;
 };
-// 清除背景方法
-const clearBackground = () => {
-  selectedBackground.value = null;
-  selectedBgId.value = null;
-};
-// 获取评论列表
 // 获取评论列表（维护中时禁止请求）
 const fetchComments = async () => {
   try {

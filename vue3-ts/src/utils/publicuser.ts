@@ -1,6 +1,5 @@
 import axiosConfig from "../utils/request";
 import { ref } from "vue";
-import { ElMessage } from "element-plus";
 import { useUserStore } from "../store/userStore";
 /**
  * 用户数据接口

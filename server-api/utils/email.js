@@ -69,20 +69,15 @@ function verifyEmail(mail, code) {
 function notifyWallOwner(mail, content) {
   const mailContent = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
-      <p>你好：</p>
-      <p>我们收到反馈，你创建的留言墙包含以下内容：</p>
-      <blockquote style="padding: 10px 20px; background-color: #f9f9f9; border-left: 4px solid #ccc; font-style: italic; color: #555;">
+   <p>尊敬的用户，您好：</p>
+      <p>我们收到用户反馈，你创建的留言墙包含以下内容：</p>
+      <p>
         ${content}
-      </blockquote>
+      </p>
       <p>这条留言墙可能包含违规内容，已被用户举报，请你尽快核实并处理。</p>
-      <p>如果你没有发布这条留言墙，可能是其他用户误操作或系统异常，你不需要做任何操作。</p>
-      <p>如有疑问或需要沟通，欢迎随时联系：</p>
-      <p><strong>联系邮箱：</strong> <a href="mailto:3829626016@qq.com" style="color: #007BFF; text-decoration: none;">3829626016@qq.com</a></p>
-      <p>感谢你的理解和配合！</p>
-      <br/>
+    <p>若你未发布该留言墙内容，请忽略此邮件通知。</p>
 <p style="color: #888; font-size: 0.9em;">
   📨 本邮件为系统自动发送，请勿直接回复。
-  <a href="mailto:3829626016@qq.com" style="color: #007BFF; text-decoration: underline;">如有问题可点此联系我们</a>。
 </p>
     </div>
   `;

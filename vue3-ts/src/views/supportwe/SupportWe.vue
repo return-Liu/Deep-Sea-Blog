@@ -76,12 +76,6 @@
       </section>
     </main>
 
-    <!-- 赞助商 -->
-    <section class="sponsor-card">
-      <h2>赞助商</h2>
-      <img src="https://element-plus.org/images/jnpfsoft.png" alt="" />
-    </section>
-
     <QRCodeDialog v-if="dialogVisible" :qr-code-img="qrCodeImg" />
     <IntroduceMoreDialog v-model="introduceDialogVisible" />
   </div>
@@ -230,22 +224,6 @@ const introduceMore = () => {
       &:hover {
         box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
       }
-    }
-  }
-
-  .sponsor-card {
-    margin-top: 50px;
-    text-align: center;
-    width: 100%;
-
-    h2 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
     }
   }
 }

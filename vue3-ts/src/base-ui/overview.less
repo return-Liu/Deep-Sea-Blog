@@ -1,436 +1,434 @@
 /* 基础布局 */
 .content-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 :deep(.el-upload) {
-    width: 100%;
-    display: block;
+  width: 100%;
+  display: block;
 }
 
 .content-card {
-    background: var(--bg3);
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    transition: all 0.3s ease;
+  background: var(--bg3);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease;
 
-    &:hover {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
+  &:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .upload-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
 }
 
 .upload-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  div {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    cursor: pointer;
+    color: var(--color-bg4);
 
-    div {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        color: var(--color-bg4);
-
-        &:hover {
-            color: var(--color-bg4);
-        }
+    &:hover {
+      color: var(--color-bg4);
     }
+  }
 
-    .el-button {
-        margin-top: 10px;
-    }
+  .el-button {
+    margin-top: 10px;
+  }
 }
 
 /* 通用样式 */
 .title {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--color-bg4);
-    margin: 1.5rem 0;
-    line-height: 1.3;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-bg4);
+  margin: 1.5rem 0;
+  line-height: 1.3;
 }
 
 .meta-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .category-tag {
-    background: var(--bg3);
-    color: var(--color-bg4);
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
+  background: var(--bg3);
+  color: var(--color-bg4);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .essay-date {
-    color: var(--color-bg4);
-    font-size: 0.9rem;
-    // width: 100%;
-    display: flex;
-    justify-content: flex-end;
-
+  color: var(--color-bg4);
+  font-size: 0.9rem;
+  // width: 100%;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .delete-tag {
-    color: var(--color-bg4);
-    font-size: 0.9rem;
-    position: absolute;
-    right: 120px;
+  color: var(--color-bg4);
+  font-size: 0.9rem;
+  position: absolute;
+  right: 120px;
 }
 
 .note-delete-tag {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .photo-delete-tag {
-    display: flex;
-    justify-content: flex-end;
-    position: absolute;
-    right: 20px;
-    bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  position: absolute;
+  right: 20px;
+  bottom: 10px;
 }
 
 img {
-    max-width: 100%;
-    height: auto;
-    display: block;
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* 文章样式 */
 .essay-content {
-    padding: 2.5rem;
+  padding: 2.5rem;
 
-    .featured-image {
-        position: relative;
-        margin: 2rem 0;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  .featured-image {
+    position: relative;
+    margin: 2rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 
-        .photo {
-            width: 100%;
-            object-fit: cover;
-        }
+    .photo {
+      width: 100%;
+      object-fit: cover;
     }
+  }
 }
 
 .content-text {
-    font-size: 1.1rem;
-    line-height: 1.8;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--color-bg4);
+  margin-bottom: 2rem;
+
+  p {
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    margin: 2rem 0 1rem;
     color: var(--color-bg4);
-    margin-bottom: 2rem;
+  }
 
-    p {
-        margin-bottom: 1.5rem;
-    }
-
-    h2 {
-        font-size: 1.6rem;
-        margin: 2rem 0 1rem;
-        color: var(--color-bg4);
-    }
-
-    blockquote {
-        border-left: 4px solid var(--color-bg4);
-        padding-left: 1.5rem;
-        margin: 1.5rem 0;
-        color: var(--color-bg4);
-        font-style: italic;
-    }
+  blockquote {
+    border-left: 4px solid var(--color-bg4);
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+    color: var(--color-bg4);
+    font-style: italic;
+  }
 }
 
 .footer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-bg4);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+
+  .author-info {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-top: 1px solid var(--color-bg4);
-    padding-top: 1.5rem;
-    margin-top: 2rem;
+    gap: 10px;
 
-    .author-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.3s;
 
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            cursor: pointer;
-            transition: transform 0.3s;
-
-            &:hover {
-                transform: scale(1.1);
-            }
-        }
+      &:hover {
+        transform: scale(1.1);
+      }
     }
+  }
 
-    .action-buttons {
-        display: flex;
-        gap: 20px;
+  .action-buttons {
+    display: flex;
+    gap: 20px;
 
-        button {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 8px 16px;
-            border: none;
-            background-color: transparent;
-            cursor: pointer;
-            color: var(--color-bg4);
-            transition: color 0.3s;
+    button {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 16px;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+      color: var(--color-bg4);
+      transition: color 0.3s;
 
-            &:hover {
-                color: var(--color-bg4);
-            }
-        }
+      &:hover {
+        color: var(--color-bg4);
+      }
     }
+  }
 }
 
 /* 摄影样式 */
 .photo-container {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 .date,
 .photo-title,
 .photo-desc {
-    position: absolute;
-    left: 10px;
-    color: var(--color-bg4);
+  position: absolute;
+  left: 10px;
+  color: var(--color-bg4);
 }
 
 .date {
-    bottom: 10px;
+  bottom: 10px;
 }
 
 .photo-title {
-    bottom: 30px;
+  bottom: 30px;
 }
 
 .photo-desc {
-    bottom: 60px;
+  bottom: 60px;
 }
 
 .photo-image {
-    width: 100%;
-    height: auto;
-    transition: transform 0.3s ease;
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
 }
 
 .photo-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg3);
-    padding: 2rem;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg3);
+  padding: 2rem;
+  color: var(--color-bg4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  .date {
     color: var(--color-bg4);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  }
 
-    .date {
-        color: var(--color-bg4);
-    }
+  .photo-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
 
-    .photo-title {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .photo-desc {
-        font-size: 1rem;
-        opacity: 0.9;
-        margin: 0;
-    }
+  .photo-desc {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+  }
 }
 
 .photo-container:hover {
-    .photo-image {
-        transform: scale(1.05);
-    }
+  .photo-image {
+    transform: scale(1.05);
+  }
 
-    .photo-overlay {
-        opacity: 1;
-    }
+  .photo-overlay {
+    opacity: 1;
+  }
 }
 
 /* 小屏幕适配 */
 @media (max-width: 768px) {
+  .date,
+  .photo-title,
+  .photo-desc {
+    left: 5px;
+  }
 
-    .date,
-    .photo-title,
-    .photo-desc {
-        left: 5px;
-    }
+  .date {
+    bottom: 8px;
+  }
 
-    .date {
-        bottom: 8px;
-    }
+  .photo-title {
+    bottom: 28px;
+  }
 
-    .photo-title {
-        bottom: 28px;
-    }
-
-    .photo-desc {
-        bottom: 48px;
-    }
+  .photo-desc {
+    bottom: 48px;
+  }
 }
 
 /* 笔记样式 */
 .notes-content {
-    padding: 2rem;
+  padding: 2rem;
 
-    .note-header {
-        margin-bottom: 2rem;
+  .note-header {
+    margin-bottom: 2rem;
 
-        .note-title {
-            font-size: 1.8rem;
-            color: var(--color-bg4);
-            margin-bottom: 0.5rem;
-        }
-
-        .note-date {
-            color: var(--color-bg4);
-            font-size: 0.9rem;
-        }
+    .note-title {
+      font-size: 1.8rem;
+      color: var(--color-bg4);
+      margin-bottom: 0.5rem;
     }
 
-    .note-image {
-        margin: 1.5rem 0;
-        border-radius: 8px;
-        overflow: hidden;
-
-        img {
-            width: 100%;
-            object-fit: cover;
-        }
+    .note-date {
+      color: var(--color-bg4);
+      font-size: 0.9rem;
     }
+  }
 
-    .note-text {
-        font-size: 1rem;
-        line-height: 1.7;
+  .note-image {
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .note-text {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--color-bg4);
+    margin-bottom: 2rem;
+  }
+
+  .note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+
+    .tag {
+      background: var(--bg3);
+      color: var(--color-bg4);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      transition: all 0.3s;
+
+      &:hover {
+        background: var(--bg3);
         color: var(--color-bg4);
-        margin-bottom: 2rem;
+      }
     }
-
-    .note-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 1.5rem;
-
-        .tag {
-            background: var(--bg3);
-            color: var(--color-bg4);
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            transition: all 0.3s;
-
-            &:hover {
-                background: var(--bg3);
-                color: var(--color-bg4);
-            }
-        }
-    }
+  }
 }
 
 /* 加载状态 */
 .loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
 
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid var(--color-bg4);
-        border-top: 5px solid var(--color-bg4);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
-    }
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--color-bg4);
+    border-top: 5px solid var(--color-bg4);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
 
-    p {
-        color: var(--color-bg4);
-    }
+  p {
+    color: var(--color-bg4);
+  }
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-    .content-container {
-        padding: 10px;
-    }
+  .content-container {
+    padding: 10px;
+  }
 
-    .essay-content,
-    .notes-content {
-        padding: 1.5rem;
-    }
+  .essay-content,
+  .notes-content {
+    padding: 1.5rem;
+  }
 
-    .title,
-    .note-title,
+  .title,
+  .note-title,
+  .photo-title {
+    font-size: 1.6rem;
+  }
+
+  .photo-overlay {
+    padding: 1rem;
+
     .photo-title {
-        font-size: 1.6rem;
+      font-size: 1.4rem;
     }
+  }
 
-    .photo-overlay {
-        padding: 1rem;
+  .exif-data {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
 
-        .photo-title {
-            font-size: 1.4rem;
-        }
-    }
+  .footer-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 
-    .exif-data {
-        grid-template-columns: 1fr;
-        padding: 1rem;
-    }
-
-    .footer-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .action-buttons {
-        width: 100%;
-        justify-content: space-between;
-    }
+  .action-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
 }

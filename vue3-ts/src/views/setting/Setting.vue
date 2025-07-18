@@ -635,7 +635,7 @@ const fetchUserInfo = async () => {
     nicknameColor.value = userInfo.nicknameColor || "#000000";
     phone.value = userInfo.phone || "";
     themeStore.user = userInfo.uuid.toString();
-    getAllUsers();
+
     // 记录初始状态
     initialUserInfo.value = {
       nickname: nickname.value,
@@ -764,6 +764,8 @@ const updateUserInfo = async () => {
     area.value = updatedUserInfo.area || "";
     phone.value = updatedUserInfo.phone || "";
     userStore.setUser(updatedUserInfo);
+    getAllUsers();
+    userStore.loadUser();
     // 更新初始状态
     initialUserInfo.value = {
       nickname: nickname.value,
@@ -837,12 +839,10 @@ const deleteAccount = async () => {
 
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
-
-    // 删除主题
-    localStorage.removeItem(`theme-${uuid.value}`);
-
     // 删除账户
     await axiosConfig.delete("/users/delete");
+    // 删除主题
+    localStorage.removeItem(`theme-${uuid.value}`);
 
     // 删除头像
     if (
@@ -901,6 +901,7 @@ onMounted(() => {
   fetchUserInfo().then(() => {
     fetchLikedArticles();
     getAllUsers();
+    userStore.loadUser();
   });
 });
 </script>
