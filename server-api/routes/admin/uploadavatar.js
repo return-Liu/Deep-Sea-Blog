@@ -134,4 +134,34 @@ router.post("/cropAvatar", async (req, res) => {
     failure(res, 500, "服务器内部错误");
   }
 });
+// 检查头像是否存在文件夹
+// 修改 GET /avatar/:filename 路由
+router.get("/avatar/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(uploadDir, filename);
+
+    // 如果文件不存在，返回默认头像
+    if (!fs.existsSync(filePath)) {
+      const defaultAvatarPath = path.join(
+        uploadDir,
+        "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png"
+      ); // 默认头像路径
+      if (fs.existsSync(defaultAvatarPath)) {
+        const defaultFile = await promisify(fs.readFile)(defaultAvatarPath);
+        return success(res, "使用默认头像", defaultFile);
+      } else {
+        return failure(res, 404, "默认头像也不存在");
+      }
+    }
+
+    // 正常读取头像
+    const file = await promisify(fs.readFile)(filePath);
+    success(res, "获取头像成功", file);
+  } catch (error) {
+    console.error(`读取文件失败: ${error}`);
+    failure(res, 500, "服务器内部错误");
+  }
+});
+
 module.exports = router;

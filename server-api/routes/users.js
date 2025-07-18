@@ -152,6 +152,40 @@ router.delete("/resources", async (req, res) => {
     failure(res, error);
   }
 });
+// 检查用户资源是否有
+router.get("/resources/exist", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+
+    if (!userId) {
+      return failure(res, new Error("缺少用户ID"));
+    }
+
+    // 检查用户是否存在
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new NotFoundError("用户不存在");
+    }
+
+    // 检查用户是否有资源
+    const hasArticles = (await Article.count({ where: { userId } })) > 0;
+    const hasPhotography = (await Photography.count({ where: { userId } })) > 0;
+    const hasNotes = (await Note.count({ where: { userId } })) > 0;
+
+    const hasResources = hasArticles || hasPhotography || hasNotes;
+
+    success(res, "检查用户资源成功", {
+      exist: hasResources,
+      resources: {
+        articles: hasArticles,
+        photography: hasPhotography,
+        notes: hasNotes,
+      },
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 公共方法 查询当前用户
 async function getCurrentUser(req, showPassword = false) {
   const id = req.userId;

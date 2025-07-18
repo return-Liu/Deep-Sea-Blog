@@ -23,14 +23,8 @@
             >
               <div class="avatar-container">
                 <img
-                  v-if="
-                    avatar ||
-                    'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-                  "
-                  v-lazy="
-                    avatar ||
-                    'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-                  "
+                  v-if="avatar || defaultAvatar"
+                  v-lazy="avatar || defaultAvatar"
                   class="avatar"
                 />
                 <div class="avatar-mask">
@@ -431,6 +425,7 @@ import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Camera, User, Lock, Check } from "@element-plus/icons-vue";
+import withMaintenanceMode from "../../utils/withMaintenanceMode";
 import {
   HeartOutlined,
   SkinOutlined,
@@ -458,6 +453,8 @@ interface Article {
   likesCount: number;
   label: string;
 }
+const defaultAvatar =
+  "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
@@ -571,9 +568,6 @@ const switchAccount = async (id: string) => {
   try {
     if (userStore.user.id === Number(id)) {
       ElMessage.info("你已经在该账号下登录啦~");
-      return;
-    }
-    if (checkMaintenanceMode()) {
       return;
     }
     const response = await axiosConfig.post("/auth/switch-account", {
@@ -698,6 +692,15 @@ const beforeUpload = (file: File) => {
 };
 const deleteOldAvatar = async (isReupload: boolean) => {
   try {
+    // 如果是默认头像，直接跳过删除
+    if (
+      !avatar.value ||
+      avatar.value.includes(
+        "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png"
+      )
+    ) {
+      return;
+    }
     const url = new URL(avatar.value);
     const avatarFileName = url.pathname.split("/").pop();
     await axiosConfig.delete(
@@ -792,46 +795,80 @@ const updateUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
-
+// 检查用户资源是否存在
+const hasUserResources = async (userId: number): Promise<boolean> => {
+  try {
+    const response = await axiosConfig.get("/users/resources/exist", {
+      params: { userId },
+    });
+    ElMessage.success(response.data.message);
+    return response.data.exist;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
+    return false;
+  }
+};
+// 检查用户评论是否存在
+const hasUserComments = async (userId: number): Promise<boolean> => {
+  try {
+    const response = await axiosConfig.get(`/admin/comment/${userId}/exist`);
+    ElMessage.success(response.data.message);
+    return response.data.exist;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
+    return false;
+  }
+};
+// 注销账号
 // 注销账号
 const deleteAccount = async () => {
-  // try {
-  //   await ElMessageBox.confirm(
-  //     "您确定要注销账号吗？您的所有资源将被删除。请谨慎操作。",
-  //     "确认注销",
-  //     {
-  //       confirmButtonText: "确定",
-  //       cancelButtonText: "取消",
-  //       type: "warning",
-  //     }
-  //   );
-  //   // 删除用户所有图片
-  //   await userStore.deleteAllUserImages();
-  //   // 删除用户资源
-  //   await axiosConfig.delete("/users/resources", {
-  //     data: { userId: userStore.user.id },
-  //   });
-  //   // 删除主题
-  //   localStorage.removeItem(`theme-${uuid.value}`);
-  //   // 删除账户
-  //   await axiosConfig.delete("/users/delete");
-  //   // 存在评论时执行删除
-  //   await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
-  //   // 清除 cookie
-  //   Cookies.remove("ds-token");
-  //   // 删除头像
-  //   deleteOldAvatar(false);
-  //   // 清除主题
-  //   themeStore.clearUserTheme();
-  //   // 清除举报留言缓存
-  //   localStorage.removeItem("reportedMessages");
-  //   ElMessage.success("账号已注销");
-  //   router.push({ name: "login/index" });
-  // } catch (error) {
-  //   ElMessage.error("注销失败,请稍后再试");
-  //   console.log("注销账号失败", error);
-  // }
-  ElMessage.info("注销功能已关闭,等待进一步优化");
+  try {
+    await ElMessageBox.confirm(
+      "您确定要注销账号吗？您的所有资源将被删除。请谨慎操作。",
+      "确认注销",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }
+    );
+
+    const userId = userStore.user.id;
+    // 判断并删除用户资源
+    if (await hasUserResources(userId)) {
+      await axiosConfig.delete("/users/resources", {
+        data: { userId },
+      });
+    }
+    // 判断并删除用户评论
+    if (await hasUserComments(userId)) {
+      await axiosConfig.delete(`/admin/comment/${userId}/exist`);
+    }
+    // 删除主题
+    localStorage.removeItem(`theme-${uuid.value}`);
+    // 删除账户
+    await axiosConfig.delete("/users/delete");
+    // 仅在有头像的情况下才删除头像文件
+    if (
+      avatar.value &&
+      !avatar.value.includes(
+        "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png"
+      )
+    ) {
+      await deleteOldAvatar(false);
+    }
+    themeStore.clearUserTheme();
+    localStorage.removeItem("reportedMessages");
+    ElMessage.success("账号已注销");
+    router.push({ name: "login/index" });
+  } catch (error) {
+    ElMessage.error("注销失败，请稍后再试");
+    console.error("注销账号失败", error);
+  }
 };
 const fetchLikedArticles = async () => {
   try {

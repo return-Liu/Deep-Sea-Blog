@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { User, Comment, Wall } = require("../../models");
+const { User, Comment, Wall, Like, LikesWall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 // 获取指定留言墙的评论列表
 router.get("/:wallId", async (req, res) => {
@@ -215,6 +215,40 @@ router.delete("/user/:id", async (req, res) => {
     }
   } catch (error) {
     console.error("删除用户评论失败:", error);
+    failure(res, error);
+  }
+});
+// 检查用户是否有评论（留言、点赞等）
+router.get("/:id/exist", async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (!userId) {
+      return failure(res, new Error("缺少用户ID"));
+    }
+
+    // 检查用户是否存在
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new NotFoundError("用户不存在");
+    }
+
+    // 检查用户是否有评论数据
+    const hasWalls = (await Wall.count({ where: { userId } })) > 0;
+    const hasLikes = (await Like.count({ where: { userId } })) > 0;
+    const hasLikesWall = (await LikesWall.count({ where: { userId } })) > 0;
+
+    const hasComments = hasWalls || hasLikes || hasLikesWall;
+
+    success(res, "检查用户评论成功", {
+      exist: hasComments,
+      comments: {
+        walls: hasWalls,
+        likes: hasLikes,
+        likesWall: hasLikesWall,
+      },
+    });
+  } catch (error) {
     failure(res, error);
   }
 });
