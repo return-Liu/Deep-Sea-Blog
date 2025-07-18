@@ -86,19 +86,18 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 // 删除图片文件
+// uploadavatar.js
 router.delete("/image/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadDir, filename);
 
-    // 检查文件是否存在
     if (!fs.existsSync(filePath)) {
       return failure(res, 404, "文件不存在");
     }
 
-    // 删除文件
     await promisify(fs.unlink)(filePath);
-    success(res, "删除图片成功");
+    success(res, "图片删除成功");
   } catch (error) {
     console.error("删除图片失败:", error);
     failure(res, 500, "服务器内部错误");

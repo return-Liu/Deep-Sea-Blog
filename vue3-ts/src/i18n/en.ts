@@ -6,6 +6,7 @@ export const en = {
       likes: "My Likes",
       modes: "Mode Selection",
       languages: "More Languages and Translations",
+      toggleaccount: "Toggle Account",
       changenicknamecolor: "Choose NickName Color",
     },
     profile: {
@@ -84,9 +85,9 @@ export const en = {
       localResources: "Local Files",
       personalShare: "Personal Share",
       momentInTime: "Moment in Time",
+      photo: "Frozen Moments",
       suggestions: "Suggestions",
       suggestionsList: "SuggestionsList",
-      faqcomponent: "FAQ Component",
       supportwe: "Support Us",
       expand: "Expand",
       collapse: "Collapse",

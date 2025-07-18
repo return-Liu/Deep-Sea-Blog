@@ -7,6 +7,7 @@ export const ja = {
       likes: "私のいいね",
       modes: "モード選択",
       languages: "多言語と翻訳",
+      toggleaccount: "アカウント切り替え",
       changenicknamecolor: "ニックネームの色を選択",
     },
     profile: {
@@ -77,9 +78,10 @@ export const ja = {
       localResources: "ローカルファイル",
       personalShare: "個人共有",
       momentInTime: "瞬間時刻",
+      photo: "定格時刻",
       suggestions: "提案",
       suggestionsList: "提案リスト",
-      faqcomponent: "よくある質問",
+
       supportwe: "私たちをサポート",
       expand: "展開",
       collapse: "折りたたみ",

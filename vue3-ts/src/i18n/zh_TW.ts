@@ -6,6 +6,7 @@ export const zh_TW = {
       likes: "我的讚",
       modes: "模式選擇",
       languages: "多种語言和翻譯",
+      toggleaccount: "切換帳號",
       changenicknamecolor: "選擇你的暱稱顏色",
     },
     profile: {
@@ -71,9 +72,9 @@ export const zh_TW = {
       localResources: "本地檔案",
       personalShare: "個人分享",
       momentInTime: "一刻時光",
+      photo: "定格時光",
       suggestions: "建議與反饋",
       suggestionsList: "建議與反饋列表",
-      faqcomponent: "常見問題",
       supportwe: "支持我們",
       expand: "展開",
       collapse: "收起",

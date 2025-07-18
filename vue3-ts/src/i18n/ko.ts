@@ -6,6 +6,7 @@ export const ko = {
       likes: "내 좋아요",
       modes: "모드 선택",
       languages: "다국어 및 번역",
+      toggleaccount: "계정 전환",
       changenicknamecolor: "닉네임 색상 선택",
     },
     profile: {
@@ -75,9 +76,9 @@ export const ko = {
       localResources: "로컬 파일",
       personalShare: "개인 공유",
       momentInTime: "순간의 시간",
+      photo: "정성의 시간",
       suggestions: "건의사항",
       suggestionsList: "건의사항 목록",
-      faqcomponent: "자주 묻는 질문",
       supportwe: "우리를 지원하세요",
       expand: "확장",
       collapse: "접기",

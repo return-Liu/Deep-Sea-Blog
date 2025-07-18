@@ -425,7 +425,7 @@ import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Camera, User, Lock, Check } from "@element-plus/icons-vue";
-import withMaintenanceMode from "../../utils/withMaintenanceMode";
+
 import {
   HeartOutlined,
   SkinOutlined,
@@ -635,6 +635,7 @@ const fetchUserInfo = async () => {
     nicknameColor.value = userInfo.nicknameColor || "#000000";
     phone.value = userInfo.phone || "";
     themeStore.user = userInfo.uuid.toString();
+    getAllUsers();
     // 记录初始状态
     initialUserInfo.value = {
       nickname: nickname.value,
@@ -795,35 +796,18 @@ const updateUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
-// 检查用户资源是否存在
 const hasUserResources = async (userId: number): Promise<boolean> => {
-  try {
-    const response = await axiosConfig.get("/users/resources/exist", {
-      params: { userId },
-    });
-    ElMessage.success(response.data.message);
-    return response.data.exist;
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-    return false;
-  }
+  const response = await axiosConfig.get("/users/resources/exist", {
+    params: { userId },
+  });
+  return response.data.data.exist;
 };
-// 检查用户评论是否存在
 const hasUserComments = async (userId: number): Promise<boolean> => {
-  try {
-    const response = await axiosConfig.get(`/admin/comment/${userId}/exist`);
-    ElMessage.success(response.data.message);
-    return response.data.exist;
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-    return false;
-  }
+  const response = await axiosConfig.get(`/admin/comment/${userId}/exist`, {
+    params: { userId },
+  });
+  return response.data.data.exist;
 };
-// 注销账号
 // 注销账号
 const deleteAccount = async () => {
   try {
@@ -838,21 +822,29 @@ const deleteAccount = async () => {
     );
 
     const userId = userStore.user.id;
-    // 判断并删除用户资源
+
+    // 删除用户资源（先检查是否存在）
     if (await hasUserResources(userId)) {
       await axiosConfig.delete("/users/resources", {
         data: { userId },
       });
     }
-    // 判断并删除用户评论
+
+    // 删除用户评论（先检查是否存在）
     if (await hasUserComments(userId)) {
-      await axiosConfig.delete(`/admin/comment/${userId}/exist`);
+      await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
     }
+
+    // 删除用户所有图片
+    await userStore.deleteAllUserImages();
+
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
+
     // 删除账户
     await axiosConfig.delete("/users/delete");
-    // 仅在有头像的情况下才删除头像文件
+
+    // 删除头像
     if (
       avatar.value &&
       !avatar.value.includes(
@@ -861,8 +853,12 @@ const deleteAccount = async () => {
     ) {
       await deleteOldAvatar(false);
     }
+
+    // 清除 cookie 和缓存
+    Cookies.remove("ds-token");
     themeStore.clearUserTheme();
     localStorage.removeItem("reportedMessages");
+
     ElMessage.success("账号已注销");
     router.push({ name: "login/index" });
   } catch (error) {
