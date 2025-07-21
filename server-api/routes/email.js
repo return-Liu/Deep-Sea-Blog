@@ -1,15 +1,56 @@
-// routes/email.js
 const express = require("express");
 const router = express.Router();
 const { User } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { createSixNum, send } = require("../utils/email");
 const bcrypt = require("bcryptjs");
-const { BadRequestError } = require("../utils/errors");
-// 发送邮件
+const { canSendCode } = require("../utils/rateLimiter");
+
+// 用于记录密码重置频率（key: userId）
+const passwordResetRecords = {};
+
+/**
+ * 判断是否允许重置密码
+ * @param {number} userId 用户ID
+ * @returns {boolean}
+ */
+function canResetPassword(userId) {
+  const now = Date.now();
+  const key = `user:${userId}`;
+  const record = passwordResetRecords[key] || {
+    count: 0,
+    firstResetTime: now,
+  };
+
+  if (now - record.firstResetTime > 60 * 60 * 1000) {
+    passwordResetRecords[key] = {
+      count: 1,
+      firstResetTime: now,
+    };
+    return true;
+  }
+
+  if (record.count >= 3) {
+    return false; // 每小时最多重置3次
+  }
+
+  record.count += 1;
+  passwordResetRecords[key] = record;
+  return true;
+}
+
+// ========== 路由定义 ==========
+
+// 发送邮件验证码
 router.post("/getemail", async (req, res) => {
   try {
     const email = req.body.email;
+
+    const key = `email:${email}`;
+    if (!canSendCode(key)) {
+      return failure(res, new Error("请求频繁，请明天再试"));
+    }
+
     const code = createSixNum();
     const user = await User.findOne({ where: { email } });
 
@@ -22,13 +63,14 @@ router.post("/getemail", async (req, res) => {
 
     console.log("Generated code:", code);
 
-    // 更新验证码和有效期（1分钟）
+    // 更新验证码和有效期（5分钟）
     await user.update({
       code,
       codeExpire: new Date(Date.now() + 5 * 60 * 1000),
     });
 
     await send(email, code);
+
     success(res, "验证码已发送，请查收您的邮箱");
   } catch (error) {
     console.error(error);
@@ -57,6 +99,7 @@ router.post("/checkemail", async (req, res) => {
     failure(res, error);
   }
 });
+
 // 重置密码
 router.post("/resetpassword", async (req, res) => {
   try {
@@ -64,29 +107,37 @@ router.post("/resetpassword", async (req, res) => {
     if (!email) throw new Error("邮箱不能为空");
     if (!code) throw new Error("验证码不能为空");
     if (!password) throw new Error("密码不能为空");
-    console.log("Received email:", email);
-    console.log("Received code:", code);
+
     const user = await User.findOne({ where: { email } });
     if (!user) throw new Error("用户不存在");
+
     if (user.code !== code) throw new Error("验证码错误");
     if (new Date() > user.codeExpire) throw new Error("验证码已过期");
-    // 比较新密码和旧密码
+
+    // 判断是否允许重置密码
+    if (!canResetPassword(user.id)) {
+      throw new Error("操作频繁，请稍后再试");
+    }
+
     const isSamePassword = await bcrypt.compare(password, user.password);
     if (isSamePassword) {
       throw new Error("新密码不能与旧密码相同");
     }
-    // 哈希处理新密码
+
     const hashedPassword = await bcrypt.hash(password, 10);
     await user.update({
       password: hashedPassword,
       code: null,
       codeExpire: null,
     });
+
     success(res, "密码重置成功");
   } catch (error) {
     console.error("Error in resetpassword:", error.message);
     failure(res, error);
   }
 });
+
+// ========== 导出模块 ==========
 
 module.exports = router;

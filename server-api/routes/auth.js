@@ -4,6 +4,7 @@ const router = express.Router();
 const { User } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { createSixNum, verifyEmail } = require("../utils/email");
+const { canSendCode } = require("../utils/rateLimiter");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -14,6 +15,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
+// 用于记录验证码发送记录，
+const verificationCodeRecords = {};
 // 生成一个随机的特征码
 function generateFeatureCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -21,31 +24,102 @@ function generateFeatureCode() {
 // 生成一个随机的昵称
 function generateNickname() {
   const adjectives = [
-    "快乐",
-    "阳光",
-    "梦想",
-    "未来",
-    "星辰",
-    "微笑",
-    "旅行",
-    "自由",
+    "星尘",
+    "极光",
+    "深海",
+    "云端",
+    "迷雾",
+    "幻影",
+    "星轨",
+    "流光",
+    "梦境",
+    "暗夜",
+    "星河",
+    "风语",
+    "晨曦",
+    "暮光",
+    "荒原",
+    "孤岛",
+    "星火",
+    "月影",
   ];
   const nouns = [
-    "小猫",
-    "小狗",
-    "飞鸟",
-    "大海",
-    "山川",
-    "星空",
-    "花园",
-    "风筝",
+    "旅者",
+    "诗人",
+    "观测者",
+    "旅人",
+    "画师",
+    "歌者",
+    "守望者",
+    "拾光者",
+    "漫游者",
+    "造梦师",
+    "引路者",
+    "夜行者",
+    "追光者",
+    "拾忆者",
+    "星语者",
+    "光之子",
+    "风之灵",
+    "海之子",
+    "梦之翼",
+  ];
+  const modifiers = [
+    "·",
+    "_",
+    "°",
+    "·",
+    "の",
+    "·",
+    "·",
+    "°",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+  ];
+  const suffixes = [
+    "Ⅰ",
+    "Ⅱ",
+    "Ⅲ",
+    "X",
+    "Z",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
+    "·",
   ];
 
   const randomAdjective =
     adjectives[Math.floor(Math.random() * adjectives.length)];
   const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+  const randomModifier =
+    modifiers[Math.floor(Math.random() * modifiers.length)];
+  const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
 
-  return `${randomAdjective}${randomNoun}`; // 组合生成四位昵称
+  // 90% 概率加修饰符
+  const hasModifier = Math.random() > 0.1;
+
+  // 30% 概率加后缀
+  const hasSuffix = Math.random() > 0.7;
+
+  let nickname =
+    randomAdjective + (hasModifier ? randomModifier : "") + randomNoun;
+  if (hasSuffix) {
+    nickname += randomSuffix;
+  }
+
+  return nickname;
 }
 // 随机生成一个密码
 function generatePassword() {
@@ -238,10 +312,22 @@ router.post("/sign_in", async (req, res) => {
     failure(res, error);
   }
 });
-// 邮箱验证码登录 - 发送验证码
+// 邮箱验证码登录 - 发送验证码（带频率限制）
 router.post("/email/verify", async (req, res) => {
   try {
     const { email, clientFeatureCode } = req.body;
+
+    const key = `email:${email}`;
+    if (!canSendCode(key)) {
+      throw new BadRequestError("请求频繁，请明天再试");
+    }
+
+    if (clientFeatureCode) {
+      const featureKey = `feature:${clientFeatureCode}`;
+      if (!canSendCode(featureKey)) {
+        throw new BadRequestError("请求频繁，请明天再试");
+      }
+    }
 
     let user = await User.findOne({ where: { email } });
 
