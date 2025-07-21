@@ -58,7 +58,7 @@
             <span class="message-category">{{ message.category }}</span>
           </header>
           <div class="card-content" :style="{ color: textColor }">
-            <p>{{ message.content }}</p>
+            <blockquote>{{ message.content }}</blockquote>
           </div>
           <div class="message-icon">
             <div
@@ -83,6 +83,7 @@
             </div>
 
             <h3
+              v-if="message"
               class="message-title"
               :style="{ color: message.nicknameColor || '#000' }"
             >
@@ -123,9 +124,9 @@
       :title="
         messageForm.id
           ? isEditable
-            ? ' 编辑你的留言故事 在编辑模式下,你可以修改留言内容、选择标签和颜色'
-            : ' 查看留言详情 如发现违规内容,请及时举报 我们将会严肃处理'
-          : ' 添加新的留言 如有违规内容,我们将会删除该留言,请注意文明留言！'
+            ? '重新点亮你的故事 · 修改内容、标签与颜色，让它更贴近你的心'
+            : '倾听他人的心声 · 若发现不合适的内容，请帮助我们维护这片温暖留言墙'
+          : '写下你的心里话 · 每一条留言都值得被温柔以待，请与我们一起守护这片墙'
       "
       direction="rtl"
       size="40%"
@@ -150,16 +151,14 @@
                 backgroundColor: messageForm.backgroundColor,
               }"
             >
-              <div
+              <textarea
+                v-model="messageForm.content"
+                placeholder="想说什么呢？这里是你自由表达的空间..."
                 class="editable-content"
-                contenteditable="true"
-                :class="{ disabled: !isEditable }"
-                @input="updateContent"
+                :disabled="!isEditable"
                 ref="contentRef"
                 :style="{ color: textColor }"
-              >
-                {{ messageForm.content }}
-              </div>
+              ></textarea>
               <div class="message-footer">
                 <div
                   class="signature-input"
@@ -238,7 +237,11 @@
             <span>删除留言</span>
           </button>
           <!-- 保存修改 -->
-          <button type="submit" class="submit-btn">
+          <button
+            type="submit"
+            class="submit-btn"
+            :disabled="!messageForm.content.trim()"
+          >
             <el-icon style="right: 5px; top: 2px"><SuccessFilled /></el-icon>
             <span>{{ isEdit ? "保存修改" : "保存留言" }}</span>
           </button>
