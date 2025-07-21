@@ -45,38 +45,79 @@ router.put("/info", async (req, res) => {
 });
 // 注销账号
 router.delete("/delete", async (req, res) => {
-  // 使用事务代理
-  const transaction = await sequelize.transaction();
   try {
-    const user = await getCurrentUser(req, true);
+    const user = await getCurrentUser(req);
 
-    // 1. 删除点赞记录
-    await LikesWall.destroy({ where: { userId: user.id }, transaction });
-    await Like.destroy({ where: { userId: user.id }, transaction });
-
-    // 2. 删除留言及关联点赞
-    const walls = await Wall.findAll({
+    // 1. 处理用户点赞过的留言
+    const userLikedWalls = await LikesWall.findAll({
       where: { userId: user.id },
-      transaction,
+      include: [{ model: Wall }],
     });
-    const wallIds = walls.map((w) => w.id);
-    if (wallIds.length > 0) {
-      await LikesWall.destroy({ where: { wallsId: wallIds }, transaction });
+
+    // 更新被用户点赞过的留言的点赞数
+    for (const likedWall of userLikedWalls) {
+      if (likedWall.Wall) {
+        await likedWall.Wall.update({
+          likesCount: likedWall.Wall.likesCount - 1,
+        });
+      }
     }
-    await Wall.destroy({ where: { userId: user.id }, transaction });
 
-    // 3. 删除内容
-    await Article.destroy({ where: { userId: user.id }, transaction });
-    await Photography.destroy({ where: { userId: user.id }, transaction });
-    await Note.destroy({ where: { userId: user.id }, transaction });
+    // 2. 删除用户的点赞记录(留言)
+    await LikesWall.destroy({
+      where: { userId: user.id },
+    });
+    // 2.1 删除用户的点赞记录(文章)
+    await Like.destroy({
+      where: { userId: user.id },
+    });
+    const userWalls = await Wall.findAll({
+      where: { userId: user.id },
+      include: [{ model: LikesWall }],
+    });
 
-    // 4. 删除用户
-    await user.destroy({ transaction });
+    // 删除用户留言的所有点赞记录
+    for (const wall of userWalls) {
+      await LikesWall.destroy({
+        where: { wallsId: wall.id },
+      });
+    }
 
-    await transaction.commit();
+    // 3.1 处理用户发布的文章
+    const userArticles = await Article.findAll({
+      where: { userId: user.id },
+      include: [{ model: Like }],
+    });
+    // 删除用户文章的所有点赞记录
+    for (const article of userArticles) {
+      await Like.destroy({
+        where: { articleId: article.id },
+      });
+    }
+
+    // 删除用户的所有留言
+    await Wall.destroy({
+      where: { userId: user.id },
+    });
+
+    // 4. 删除用户其他内容
+    await Article.destroy({
+      where: { userId: user.id },
+    });
+
+    await Photography.destroy({
+      where: { userId: user.id },
+    });
+
+    await Note.destroy({
+      where: { userId: user.id },
+    });
+
+    // 5. 最后删除用户账号
+    await user.destroy();
+
     success(res, "注销账号成功");
   } catch (error) {
-    await transaction.rollback();
     failure(res, error);
   }
 });
@@ -107,40 +148,6 @@ router.delete("/resources", async (req, res) => {
     });
 
     success(res, "删除用户资源成功");
-  } catch (error) {
-    failure(res, error);
-  }
-});
-// 检查用户资源是否有
-router.get("/resources/exist", async (req, res) => {
-  try {
-    const userId = req.query.userId;
-
-    if (!userId) {
-      return failure(res, new Error("缺少用户ID"));
-    }
-
-    // 检查用户是否存在
-    const user = await User.findByPk(userId);
-    if (!user) {
-      throw new NotFoundError("用户不存在");
-    }
-
-    // 检查用户是否有资源
-    const hasArticles = (await Article.count({ where: { userId } })) > 0;
-    const hasPhotography = (await Photography.count({ where: { userId } })) > 0;
-    const hasNotes = (await Note.count({ where: { userId } })) > 0;
-
-    const hasResources = hasArticles || hasPhotography || hasNotes;
-
-    success(res, "检查用户资源成功", {
-      exist: hasResources,
-      resources: {
-        articles: hasArticles,
-        photography: hasPhotography,
-        notes: hasNotes,
-      },
-    });
   } catch (error) {
     failure(res, error);
   }

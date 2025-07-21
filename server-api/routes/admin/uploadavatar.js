@@ -135,7 +135,6 @@ router.post("/cropAvatar", async (req, res) => {
   }
 });
 // 检查头像是否存在文件夹
-// 修改 GET /avatar/:filename 路由
 router.get("/avatar/:filename", async (req, res) => {
   try {
     const { filename } = req.params;

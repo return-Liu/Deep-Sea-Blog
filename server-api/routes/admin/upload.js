@@ -86,18 +86,38 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 // 删除图片文件
-// uploadavatar.js
+function isValidFilename(filename) {
+  return /^[a-zA-Z0-9._-]+$/.test(filename);
+}
+
 router.delete("/image/:filename", async (req, res) => {
+  const { filename } = req.params;
+  const userId = req.userId; // 假设通过 JWT 获取用户 ID
+
+  if (!isValidFilename(filename)) {
+    return failure(res, 400, "无效的文件名");
+  }
+
+  const filePath = path.join(uploadDir, filename);
+
+  // 检查文件是否存在
+  if (!fs.existsSync(filePath)) {
+    return failure(res, 404, "文件不存在");
+  }
+
+  // 检查文件是否属于当前用户（需结合数据库）
+  const fileRecord = await FileModel.findOne({
+    where: { filename, userId },
+  });
+
+  if (!fileRecord) {
+    return failure(res, 403, "无权删除此文件");
+  }
+
   try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
-
-    if (!fs.existsSync(filePath)) {
-      return failure(res, 404, "文件不存在");
-    }
-
     await promisify(fs.unlink)(filePath);
-    success(res, "图片删除成功");
+    await fileRecord.destroy(); // 同时删除数据库记录
+    success(res, "删除图片成功");
   } catch (error) {
     console.error("删除图片失败:", error);
     failure(res, 500, "服务器内部错误");
