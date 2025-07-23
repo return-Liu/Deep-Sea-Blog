@@ -393,12 +393,6 @@
     right: 200px;
 }
 
-.message-like {
-    color: #e5171e;
-    position: absolute;
-    left: -450px;
-    bottom: 5px;
-}
 
 .message-form {
     padding: 20px;
@@ -440,6 +434,12 @@
             bottom: 0;
             right: 0;
             padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            /* 元素在主轴（这里是水平轴）上两端对齐 */
+            align-items: center;
+            /* 在交叉轴（这里是垂直轴）上居中对齐 */
+            width: 100%;
 
             .signature-input {
                 width: 120px;
@@ -455,13 +455,24 @@
 
                     &:disabled {
                         opacity: 0.7;
-                        background: transparent; // 保持透明背景
+                        background: transparent;
+                        /* 保持透明背景 */
                     }
 
                     &::placeholder {
                         color: rgba(0, 0, 0, 0.3);
                     }
                 }
+            }
+
+            .message-like {
+                color: #e5171e;
+                /* 爱心颜色 */
+                display: flex;
+                justify-content: flex-start;
+                /* 确保内部元素垂直居中 */
+
+
             }
         }
     }

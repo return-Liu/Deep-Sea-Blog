@@ -1,230 +1,299 @@
 <template>
   <div class="support-we">
+    <!-- 创意头部 -->
     <header class="support-header">
-      <h1>赞助 Deep Sea 的研发</h1>
+      <h1>携手 Deep Sea，共探博客新世界</h1>
       <p class="description">
-        Deep Sea 是一个由 Vue3 与 Node
-        驱动的开源项目，始终坚持免费开放、透明共享的原则。
-        您的每一份支持，都是我们探索技术深海的动力源泉，让我们一起扬帆远航！
+        Deep Sea —— 一个由 Vue3 和 Node.js
+        驱动的博客记录网站，坚持免费开放、透明共享。
+        您的支持是我们不断前行的动力，让我们一起探索无限可能！
       </p>
     </header>
 
-    <main class="support-options">
-      <section class="option-card one-time">
-        <svg
-          t="1752071697467"
-          class="icon"
-          viewBox="0 0 1024 1024"
-          version="1.1"
-          xmlns="http://www.w3.org/2000/svg"
-          p-id="5227"
-          width="200"
-          height="200"
-        >
-          <path
-            d="M876.088889 967.111111h-750.933333a91.022222 91.022222 0 0 1-91.022223-91.022222v-750.933333a91.022222 91.022222 0 0 1 91.022223-91.022223h750.933333a91.022222 91.022222 0 0 1 91.022222 91.022223v750.933333a91.022222 91.022222 0 0 1-91.022222 91.022222z m-443.073422-457.386667l-57.412267 211.808712h91.022222l8.305778-33.723734 23.643022 23.074134h220.091734l8.283022-59.164445h-101.1712l8.305778-60.939378h89.929955l7.691378-56.888889h-89.361067l7.099734-48.514844h90.5216l24.849066-178.676622h-329.545955l19.547022 22.482489-21.890845 156.171377h115.370667l-21.2992 147.911112-31.857778-30.196623 22.482489-93.479822z m-128.978489-121.878755l-46.739911 333.641955h105.312711l49.698133-355.578311 9.466311-68.039111-140.811378 28.376178-10.057955 68.039111 33.109333-6.485333z m351.4368 43.758933h-121.878756l10.057956-71.588978h121.878755l-10.057955 71.566223z"
-            fill="#222222"
-            p-id="5228"
-          ></path>
-        </svg>
-        <h2>一次性赞助</h2>
-        <p>微信收款二维码</p>
-        <div class="button-container">
-          <button class="sponsor-button" @click="open">立即赞助</button>
+    <!-- 主要功能模块 -->
+    <section class="main-features">
+      <h2>Deep Sea 的核心功能</h2>
+      <div class="feature-cards">
+        <div class="feature-card">
+          <i class="fas fa-images"></i>
+          <h3>图片管理</h3>
+          <p>轻松上传和管理图片，为您的博客文章增添色彩。</p>
         </div>
-      </section>
 
-      <section class="option-card recurring">
-        <svg
-          t="1752071770588"
-          class="icon"
-          viewBox="0 0 1228 1024"
-          version="1.1"
-          xmlns="http://www.w3.org/2000/svg"
-          p-id="6315"
-          width="200"
-          height="200"
-        >
-          <path
-            d="M892.928 591.872l-14.336 4.096c-28.672 98.304-108.544 174.08-206.848 200.704-100.352 24.576-206.848-2.048-280.576-71.68l-14.336 4.096c57.344 57.344 135.168 90.112 217.088 90.112 139.264 0 262.144-92.16 299.008-227.328z"
-            fill="#0478C5"
-            p-id="6316"
-          ></path>
-          <path
-            d="M595.968 997.376c-169.984 0-319.488-86.016-407.552-217.088l-26.624 6.144c94.208 149.504 258.048 237.568 432.128 237.568 276.48 0 501.76-217.088 514.048-489.472l-26.624 6.144c-14.336 253.952-227.328 456.704-485.376 456.704z m552.96-804.864l-129.536 34.816c-95.232-141.312-253.44-227.328-425.472-227.328-270.336 0-493.056 210.944-511.488 477.696l-82.432 22.016 79.872 301.056 1148.928-307.2-79.872-301.056z m-555.008-167.936c167.936 0 312.32 83.968 398.848 209.408l-192 51.2c-54.272-49.664-128-80.896-207.36-80.896-134.656 0-252.416 86.528-293.376 214.528l-191.488 51.2c20.48-248.832 230.912-445.44 485.376-445.44z m193.536 264.192l-471.552 125.952c31.744-91.136 107.008-160.768 202.24-185.856 95.232-25.088 194.56-2.048 269.312 59.904z m-771.072 221.184l781.824-211.456 0.512 0.512 5.632-2.048 214.016-57.856 7.68-1.536 112.64-30.72 73.728 276.48-1122.304 301.056-73.728-274.432z"
-            fill="#0478C5"
-            p-id="6317"
-          ></path>
-          <path
-            d="M708.608 905.216l22.528 26.624 6.144-32.768 32.768-12.288-30.72-16.384-2.048-32.768-26.624 22.528-30.72-12.288 14.336 30.72-18.432 30.72zM888.832 780.288l-18.432-30.72-12.288 32.768-30.72 8.192 26.624 22.528-2.048 32.768 28.672-18.432 28.672 12.288-8.192-32.768 22.528-24.576zM391.168 798.72l-16.384-30.72-16.384 30.72-32.768 6.144 24.576 24.576-6.144 32.768 30.72-16.384 30.72 16.384-6.144-32.768 24.576-24.576zM964.608 675.84l14.336 34.816 18.432-30.72 34.816-2.048-22.528-26.624 8.192-32.768-32.768 12.288-28.672-18.432 2.048 34.816-26.624 20.48zM544.768 866.304l-26.624-22.528-2.048 34.816-28.672 18.432 32.768 12.288 8.192 32.768 20.48-26.624 34.816 2.048-18.432-28.672 12.288-32.768z"
-            fill="#0478C5"
-            p-id="6318"
-          ></path>
-          <path
-            d="M401.92 449.536l36.352 16.896-4.096 8.192-76.8 20.48 11.776 44.544 46.592-12.288 13.824-31.232 37.376 17.92-3.584 8.192-91.648 24.064c15.872 13.312 32.256 22.016 49.664 26.624 14.336 4.608 33.792 6.144 57.856 4.608l1.536 6.656c-9.216 9.216-12.8 26.112-10.752 50.688-26.112-6.656-46.08-16.384-59.904-28.672-12.8-10.752-24.064-24.064-33.28-38.912l25.088 95.744-40.448 16.384-18.432-69.12c-2.56 5.632-5.632 10.752-8.704 15.36-14.848 22.528-34.816 42.496-59.392 60.416l-4.608-5.12c14.848-19.968 25.6-38.912 31.744-56.832 5.12-14.848 9.216-35.84 12.288-62.464l-64 16.896-4.608-6.144 81.408-21.504-11.776-44.544-67.584 17.92-4.608-6.144 70.656-18.432-10.752-41.472 42.496-8.192c7.168-1.536 10.752-1.024 11.776 1.536 0.512 2.56-2.048 6.144-8.192 11.264l6.656 26.112 32.768-8.704 13.312-30.72zM672.768 388.608c-12.288 5.632-24.064 10.752-34.816 15.36l12.8 49.152 10.24-2.56 10.24-21.504 27.136 11.776-2.048 7.68-43.52 11.776 16.384 61.44 14.848-4.096 7.168-28.672 28.672 18.432-2.56 8.704-94.72 25.088-7.168 13.824-40.448-6.656 9.216-17.408-8.704-32.768c-1.536 1.024-3.584 2.56-6.144 4.096 2.048 16.384 2.56 32.256 1.536 47.104-0.512 8.192-1.536 15.872-3.584 22.528 13.312 0.512 29.184-1.536 47.616-6.144l110.08-29.184 1.024 4.608c-5.12 6.144-5.632 17.408-2.048 34.304l-98.304 26.112c-20.992 5.632-42.496 4.608-62.976-3.072-2.048-0.512-3.584-1.536-5.632-2.048-4.096 7.68-9.728 14.336-15.872 20.48-9.728 9.216-18.432 15.36-26.112 18.944l-1.024-4.608c5.12-6.656 9.216-12.8 12.288-17.92 4.096-9.216 7.168-18.944 8.704-29.696-13.312-9.728-26.112-22.528-38.4-38.912l3.072-4.096c11.776 10.752 24.064 18.944 36.864 24.064v-13.312c-0.512-15.872-2.56-32.256-5.12-49.152l-6.656 1.536-6.144 17.408-33.792-6.656 6.656-12.8 2.56-66.048-25.088 6.656-4.608-5.632 28.672-7.68 6.656-15.872 28.672 6.656c3.072 0.512 4.608 1.536 5.12 4.096 0.512 2.048-1.536 5.12-6.656 8.704l-2.048 64 4.608-1.024 10.24-17.408 32.256 13.312-11.264-41.984 35.328-8.704c4.096-1.024 6.144 0 6.656 2.56 0.512 3.072-1.024 6.144-5.632 9.216l21.504 81.92 11.264-3.072-29.696-112.128c-22.016 8.704-39.936 14.848-53.76 18.432l-2.048-3.072c36.864-21.504 66.56-44.544 89.088-69.12l44.032 16.384c2.56 1.024 4.608 2.048 4.608 3.584 0.512 2.048-0.512 3.072-3.072 3.584 1.024 0-1.536 0-6.144-0.512zM807.424 346.624l14.336 8.704-8.704-32.256 39.936 6.144 16.384-4.096 11.776-18.944 29.696 9.216c4.096 1.024 6.144 2.56 6.144 4.096 0.512 1.536-1.536 4.608-5.12 9.728l45.056 170.496c1.536 5.632 0.512 11.264-3.072 15.872-3.584 5.632-15.36 10.752-34.304 15.872-5.632-17.92-14.848-27.136-28.16-27.136l-1.024-4.608 25.088-6.656-14.848-56.32-18.944 5.12c1.536 14.336 1.024 28.672-2.048 42.496-4.608 23.04-16.896 46.08-36.352 68.608l-4.608-1.536c7.68-15.872 12.288-32.768 13.312-50.688 0.512-7.168 0-15.872-1.536-25.088l-115.2 30.208-4.608-5.632 14.848-4.096-27.136-102.4-9.216 2.56-4.096-5.632 11.776-3.072-9.216-34.304 36.352-6.656c4.608-0.512 6.656 0 7.168 2.048 0.512 2.048-1.536 4.608-6.656 8.704l5.632 21.504 18.432-5.12-9.216-34.304 33.28-6.656c4.608-1.024 7.68-0.512 8.192 1.536 0.512 1.536-1.536 3.584-5.12 6.144l6.144 23.04 5.632-16.896z m-49.152 155.648l35.84 5.632c4.608 0.512 7.168 2.048 7.68 3.584 0.512 2.56-1.536 5.12-7.168 7.168-12.8 23.552-26.112 42.496-40.448 56.32l-3.072-3.072c3.584-17.92 5.632-40.96 7.168-69.632z m1.024-89.6l18.432-5.12-7.168-28.16-18.432 5.12 7.168 28.16z m9.728 36.352l18.432-5.12-7.68-29.696-18.432 5.12 7.68 29.696z m9.728 37.888l18.432-5.12-8.192-31.744-18.432 5.12 8.192 31.744z m24.576 6.656c16.384 0 27.136 1.024 33.28 4.096s9.216 7.168 10.752 11.776c1.536 5.12 1.024 10.752-1.536 16.384-3.072 5.632-6.656 8.704-10.24 9.728-4.608 1.024-9.216-3.072-13.824-13.312-5.12-10.752-11.776-19.456-20.48-25.088l2.048-3.584z m44.544-33.792c-1.536-9.216-4.096-18.944-6.656-29.184l-17.408-65.024-20.48 5.632 27.136 102.4h1.024l5.632-19.456 10.752 5.632z m19.456-77.312l17.408-4.608-12.288-46.592-17.408 4.608 12.288 46.592z m13.312 51.712l18.432-4.608-11.776-45.568-17.408 4.608 8.704 32.768c0.512 4.096 1.024 8.704 2.048 12.8z"
-            fill="#0F71B7"
-            p-id="6319"
-          ></path>
-        </svg>
-        <h2>周期性赞助</h2>
-        <p>每月自动捐助，可获得专属回馈：名字上 GitHub、官网 Logo 展示等。</p>
-        <div class="button-container">
-          <button class="sponsor-button" @click="introduceMore">
-            了解更多
-          </button>
+        <div class="feature-card">
+          <i class="fas fa-adjust"></i>
+          <h3>日间/夜间模式/系统模式</h3>
+          <p>自由切换日间和夜间模式，阅读体验更舒适。</p>
         </div>
-      </section>
-    </main>
+        <div class="feature-card">
+          <i class="fas fa-language"></i>
+          <h3>多语言支持</h3>
+          <p>支持多种语言，满足不同用户的需求。</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-user"></i>
+          <h3>切换账号</h3>
+          <p>轻松切换不同账号，管理多个博客空间。</p>
+        </div>
+      </div>
+    </section>
 
-    <QRCodeDialog v-if="dialogVisible" :qr-code-img="qrCodeImg" />
-    <IntroduceMoreDialog v-model="introduceDialogVisible" />
+    <!-- 支持方式 -->
+    <!-- 支持方式 -->
+    <section class="support-options">
+      <h2>让 Deep Sea 更强大的力量，源自每一位你的支持</h2>
+      <div class="option-cards">
+        <div class="option-card">
+          <h3>与我们同行</h3>
+          <p>加入我们的社交圈，第一时间掌握 Deep Sea 的成长轨迹与未来蓝图。</p>
+          <div class="social-links">
+            <a href="#" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-github"></i> GitHub
+            </a>
+          </div>
+        </div>
+
+        <div class="option-card">
+          <h3>共建未来</h3>
+          <p>
+            用你的才华点亮 Deep
+            Sea，无论是代码、文档，还是想法，我们都期待你的加入。
+          </p>
+          <button class="contribute-button">加入共建计划</button>
+        </div>
+
+        <div class="option-card">
+          <h3>传递热爱</h3>
+          <p>
+            将 Deep Sea 分享给志同道合的朋友，让更多人一起参与这场技术旅程。
+          </p>
+          <button class="share-button">分享给朋友</button>
+        </div>
+      </div>
+    </section>
+    <!-- 项目愿景 -->
+    <section class="vision">
+      <h2>我们的愿景</h2>
+      <p>
+        Deep Sea 致力于打造一个开放的技术生态，推动前端与后端技术的融合与创新。
+        我们相信，开源是技术进步的基石，而您的支持是我们前进的灯塔。
+      </p>
+    </section>
   </div>
 </template>
-<script lang="ts" setup>
-import { ref } from "vue";
-import QRCodeDialog from "./QRCodeDialog.vue";
-import qrCodeImg from "../../assets/img/7AFF4A6B1D658AD3B59958FD850DD1C6.jpg";
-import IntroduceMoreDialog from "./IntroduceMoreDialog.vue";
-const dialogVisible = ref(false);
-const introduceDialogVisible = ref(false);
-const open = () => {
-  dialogVisible.value = true;
-};
-
-const introduceMore = () => {
-  introduceDialogVisible.value = true;
-};
-</script>
 <style lang="less" scoped>
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
 .support-we {
   min-height: 100vh;
   padding: 80px 20px 60px;
-  font-family: "Inter", sans-serif;
+  font-family: "Roboto", sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
 
-  .support-header {
-    text-align: center;
-    margin-bottom: 60px;
-    max-width: 700px;
+.support-header {
+  text-align: center;
+  margin-bottom: 60px;
+  max-width: 700px;
 
-    h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
-      background: linear-gradient(to right, #4f46e5, #9333ea);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    .description {
-      font-size: 16px;
-      color: #4b5563;
-      line-height: 1.8;
-    }
+  h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    background: linear-gradient(to right, #4f46e5, #9333ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
   }
 
-  .support-options {
+  .description {
+    font-size: 16px;
+    color: #4b5563;
+    line-height: 1.8;
+  }
+}
+
+.main-features {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 60px;
+
+  h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .feature-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    justify-content: center;
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .feature-card {
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: translateY(-8px);
+      }
+
+      i {
+        font-size: 48px;
+        color: #4f46e5;
+        margin-bottom: 16px;
+      }
+
+      h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+      }
+
+      p {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 20px;
+      }
+    }
+  }
+}
+
+.support-options {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 60px;
+
+  h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .option-cards {
     display: flex;
     gap: 40px;
-    width: 100%;
-    max-width: 1200px;
     justify-content: center;
-    margin-top: 50px;
 
     @media (max-width: 768px) {
       flex-direction: column;
       gap: 30px;
     }
+
+    .option-card {
+      flex: 1;
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: translateY(-8px);
+      }
+
+      h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+      }
+
+      p {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 20px;
+      }
+
+      .social-links {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        a {
+          display: flex;
+          align-items: center;
+          color: #4f46e5;
+          text-decoration: none;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: #9333ea;
+          }
+
+          i {
+            font-size: 18px;
+            margin-right: 8px;
+          }
+        }
+      }
+
+      .contribute-button,
+      .share-button {
+        display: inline-block;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 30px;
+        background: linear-gradient(to right, #6ee7b7, #a855f7);
+        color: #fff;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+        transition: all 0.3s ease;
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 300%;
+          height: 300%;
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 70%
+          );
+          transform: translate(-50%, -50%) scale(0);
+          transition: transform 0.3s ease;
+          border-radius: 50%;
+          z-index: 0;
+        }
+
+        &:hover::before {
+          transform: translate(-50%, -50%) scale(1);
+        }
+
+        &:hover {
+          box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+        }
+      }
+    }
+  }
+}
+
+.vision {
+  width: 100%;
+  max-width: 700px;
+  text-align: center;
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 16px;
   }
 
-  .option-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px;
-    background-color: var(--bg2);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-    text-align: center;
-
-    &:hover {
-      transform: translateY(-10px);
-    }
-
-    .icon {
-      width: 80px;
-      height: 80px;
-      transition: transform 0.3s ease;
-
-      &:hover {
-        transform: scale(1.1);
-      }
-    }
-
-    h2 {
-      font-size: 24px;
-      margin-bottom: 15px;
-      color: var(--color-bg4);
-      font-weight: 600;
-    }
-
-    p {
-      font-size: 16px;
-      color: var(--color-bg4);
-      line-height: 1.6;
-    }
-
-    .button-container {
-      margin-top: auto;
-      width: 100%;
-    }
-
-    .sponsor-button {
-      width: 100%;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      border-radius: 30px;
-      background: linear-gradient(to right, #6ee7b7, #a855f7);
-      color: var(--color-bg4);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-      transition: all 0.3s ease;
-
-      &::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 300%;
-        height: 300%;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.3) 0%,
-          transparent 70%
-        );
-        transform: translate(-50%, -50%) scale(0);
-        transition: transform 0.3s ease;
-        border-radius: 50%;
-        z-index: 0;
-      }
-
-      &:hover::before {
-        transform: translate(-50%, -50%) scale(1);
-      }
-
-      &:hover {
-        box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
-      }
-    }
+  p {
+    font-size: 16px;
+    color: #4b5563;
+    line-height: 1.8;
   }
 }
 </style>
