@@ -59,7 +59,6 @@ node: v20.11.0
 如果您的 node 版本不是 v20.11.0，请先安装 v20.11.0 版本的 node,或者更高版本的 node。
 
 <!-- 或者可以使用 nvm 安装 node -->
-后端也有readme.md文档 有数据库的一系列接口和数据库表
 主要功能 Deep Sea 博客系统技术选型和产品设计
 
 请查看 https://mm.edrawsoft.cn/app/editor/j57n3hk1Ur24Bp32qFDlH7snLWnncdT5?ivt=3R0NdCMdqGvHZIxIJNFI3zBjCpIJcVjT009&page=8889934692
@@ -70,3 +69,4 @@ git 拉取项目
 
 https://github.com/return-Liu/Deep-Sea-blog.git
 
+<img width="192" height="192" alt="logo-O35E636P" src="https://github.com/user-attachments/assets/d0e4884f-4d80-447a-b2ce-2d489ab2fa9e" />
