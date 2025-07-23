@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-Deep Sea 管理端是一个基于 Vue3+ts+ElementPlus 的管理端，用于管理 Deep Sea 的后台数据。
+Deep Sea 管理端是一个基于 Vue3+ts+ElementPlus 的管理端，用于管理 Deep Sea 的后台数据 有很完整的功能 之后可能会上线 具体等更新。
 
 ## 项目结构
 
@@ -69,4 +69,3 @@ git 拉取项目
 
 https://github.com/return-Liu/Deep-Sea-blog.git
 
-<img width="192" height="192" alt="logo-O35E636P" src="https://github.com/user-attachments/assets/d0e4884f-4d80-447a-b2ce-2d489ab2fa9e" />
