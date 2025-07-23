@@ -69,3 +69,4 @@ https://mm.edrawsoft.cn/app/editor/1p92bJ75iWL3QEs8d6LCa2fVNl51BUXV?ivt=IS5CWemz
 git 拉取项目
 
 https://github.com/return-Liu/Deep-Sea-blog.git
+后端也有readme.md文档 有数据库的一系列接口和数据库表
