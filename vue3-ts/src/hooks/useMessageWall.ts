@@ -223,7 +223,7 @@ export default function useMessageWall() {
             isLiked: false,
             date: wall.createdAt,
             backgroundColor: wall.backgroundColor,
-            nicknameColor: wall.User.nicknameColor || "#000000", // 使用用户的昵称颜色
+            nicknameColor: userStore.user?.nicknameColor || "#000000", // 使用用户的昵称颜色
           }));
 
           // 获取每个留言的评论数据

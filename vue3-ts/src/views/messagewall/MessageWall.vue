@@ -160,6 +160,14 @@
                 :style="{ color: textColor }"
               ></textarea>
               <div class="message-footer">
+                <div class="message-like">
+                  <div class="message-likes">
+                    <HeartOutlined />
+                    <span style="margin-left: 5px" class="likes-count">{{
+                      messageForm.likesCount
+                    }}</span>
+                  </div>
+                </div>
                 <div
                   class="signature-input"
                   :style="{ color: messageForm.nicknameColor || '#000' }"
@@ -171,14 +179,6 @@
                     :disabled="!isEditable"
                     class="form-input"
                   />
-                </div>
-                <div class="message-like">
-                  <div class="message-likes">
-                    <HeartOutlined />
-                    <span style="margin-left: 5px" class="likes-count">{{
-                      messageForm.likesCount
-                    }}</span>
-                  </div>
                 </div>
               </div>
             </div>
