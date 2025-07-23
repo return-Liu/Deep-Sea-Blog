@@ -39,7 +39,7 @@ export default function useHome(uploadRef: any) {
 
   userId.value = user.value?.id || null;
   let wall = () => {
-    router.push("/wall/messages?category=全部");
+    router.push("/messagewall/messages?category=全部");
   };
 
   const incrementCounter = (target: number, current: any) => {
