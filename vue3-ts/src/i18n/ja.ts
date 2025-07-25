@@ -53,11 +53,12 @@ export const ja = {
       description: "夜間モード",
       followSystem: "システムに従う夜間モード",
       dayMode: "日中モード",
-      nightMode: "夜間モード",
+      nightMode: "夜間モード ベータ版",
     },
     language: {
       title: "言語の選択",
-      description: "好みの言語を選択してください。この機能はテスト版です。",
+      description:
+        "好みの言語を選択してください。この機能はベータ版です。問題を報告してください。",
       zh: "簡体中国語",
       en: "英語",
       zh_TW: "繁体中国語",

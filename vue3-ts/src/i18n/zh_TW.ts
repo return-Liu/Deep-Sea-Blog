@@ -49,11 +49,11 @@ export const zh_TW = {
       description: "夜间模式",
       followSystem: "夜间模式跟隨系統",
       dayMode: "日間模式",
-      nightMode: "夜间模式",
+      nightMode: "夜间模式 內測中",
     },
     language: {
       title: "選擇語言",
-      description: "選擇你偏好的一種語言 此功能為測試版 僅供參考",
+      description: "選擇你偏好的一種語言 此功能為內測功能，請及時反饋問題。",
       zh: "簡體中文",
       en: "English",
       zh_TW: "繁體中文",

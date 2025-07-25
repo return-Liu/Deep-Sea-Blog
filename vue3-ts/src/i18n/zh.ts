@@ -50,12 +50,11 @@ export const zh = {
       description: "夜间模式",
       followSystem: "夜间模式跟随系统",
       dayMode: "日间模式",
-      nightMode: "夜间模式",
+      nightMode: "夜间模式 内测中",
     },
     language: {
       title: "选择语言",
-      description:
-        "选择你偏好的一种语言 此功能为测试版 仅供参考 如有翻译请反馈",
+      description: "选择你偏好的一种语言 此功能为内测功能，请及时反馈问题。",
       zh: "简体中文",
       en: "English",
       zh_TW: "繁体中文",

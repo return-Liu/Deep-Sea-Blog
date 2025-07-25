@@ -51,11 +51,12 @@ export const ko = {
       description: "야간 모드",
       followSystem: "시스템에 따라 야간 모드",
       dayMode: "주간 모드",
-      nightMode: "야간 모드",
+      nightMode: "야간 모드 베타",
     },
     language: {
       title: "언어 선택",
-      description: "선호하는 언어를 선택하십시오. 이 기능은 베타입니다.",
+      description:
+        "선호하는 언어를 선택하십시오. 이 기능은 베타 버전입니다. 문제를 보고해 주세요.",
       zh: "중국어 간체",
       en: "영어",
       zh_TW: "중국어 번체",

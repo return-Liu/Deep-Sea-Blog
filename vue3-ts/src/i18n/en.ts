@@ -51,12 +51,13 @@ export const en = {
       mode: "mode Selection",
       description: "nightMode",
       followSystem: "Night Mode Follow System",
-      dayMode: "Day Mode",
+      dayMode: "Day Mode Beta",
       nightMode: "Night Mode",
     },
     language: {
       title: "Selection Languages",
-      description: "Choose your preference language. This feature is in beta.",
+      description:
+        "Choose your preference language. This feature is beta. Please report any issues.",
       zh: "Simplified Chinese",
       en: "English",
       zh_TW: "Traditional Chinese",

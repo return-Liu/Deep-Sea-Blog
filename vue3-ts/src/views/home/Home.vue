@@ -124,7 +124,7 @@
         <div class="dialog-content">
           <div class="header">
             <h3 style="margin-top: -15px">
-              智能体深度推理模型X1 测试版
+              智能体深度推理模型X1 内测版
               <span style="font-size: 14px; color: #e67e22; margin-left: 10px"
                 >嘿～我正在学习中，有问题尽管问！</span
               >
