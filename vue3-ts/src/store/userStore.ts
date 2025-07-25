@@ -21,6 +21,7 @@ interface User {
   uuid: number;
   username?: string; // 添加 username 字段
   phone?: string; // 添加 phone 字段
+  theme?: string; // 添加 theme 字段
 }
 
 export const useUserStore = defineStore("user", () => {
@@ -39,7 +40,8 @@ export const useUserStore = defineStore("user", () => {
     area: "",
     uuid: 0,
     username: "",
-    phone: "", // 初始化 phone 字段
+    phone: "",
+    theme: "",
   });
 
   const setUser = (userData: User) => {

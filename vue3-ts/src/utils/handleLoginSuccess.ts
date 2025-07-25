@@ -22,6 +22,7 @@ export const handleLoginSuccess = (
     uuid: user.uuid,
     username: user.username,
     phone: user.phone, // 添加 phone 字段
+    theme:user.theme
   });
 
   themeStore.setUser(user.uuid);

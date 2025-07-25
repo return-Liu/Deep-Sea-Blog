@@ -8,7 +8,6 @@ import { useUserStore } from "./store/userStore";
 import { useThemeStore } from "./store/themeStore";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, loadUserContents } from "./utils/publicuser";
-import { ElMessage } from "element-plus";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -17,13 +16,14 @@ onMounted(async () => {
   await userStore.loadUser();
   await getAllUsers();
   await loadUserContents();
+  await themeStore.loadTheme();
   if (userStore.user?.uuid) {
     const savedLanguage = localStorage.getItem(
-      `language-${userStore.user.uuid}`
+      `language-style-${userStore.user.uuid}`
     );
     locale.value = savedLanguage || "zh";
     if (!savedLanguage) {
-      localStorage.setItem(`language-${userStore.user.uuid}`, "zh");
+      localStorage.setItem(`language-style-${userStore.user.uuid}`, "zh");
     }
   }
 });
@@ -34,10 +34,7 @@ watch(
       getAllUsers();
       loadUserContents();
     }
-    themeStore.loadTheme();
     if (newUser) {
-      themeStore.setUser(newUser.uuid);
-
       const savedLanguage = localStorage.getItem(`language-${newUser.uuid}`);
       if (savedLanguage) {
         locale.value = savedLanguage;

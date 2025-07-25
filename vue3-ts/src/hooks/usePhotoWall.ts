@@ -21,6 +21,40 @@ export default function usePhotoWall() {
       title: "照片墙",
     },
   ];
+  // 合并后的照片表单数据
+  const PhotoForm = ref<{
+    id: string | null;
+    title: string;
+    description: string;
+    userId: number | null;
+    category: string | null;
+    imageUrl: string;
+    tags: string[];
+    date: Date;
+  }>({
+    id: null,
+    title: "",
+    userId: null,
+    description: "",
+    category: null,
+    imageUrl: "",
+    tags: [],
+    date: new Date(),
+  });
+  const photos = ref<
+    {
+      id: string;
+      title: string;
+      description: string;
+      userId: number;
+      category: string | null;
+      imageUrl: string;
+      tags: string[];
+      date: string;
+    }[]
+  >([]);
+  // 是否为编辑状态
+  const isEdit = ref<boolean>(false);
   const showMessageDrawer = ref<boolean>(false);
   const showPhotoDrawer = ref(false);
   const route = useRoute();
@@ -40,10 +74,30 @@ export default function usePhotoWall() {
     });
   };
   const handleSearch = () => {};
-  const showAddMessage = withMaintenanceMode(() => {
-    showMessageDrawer.value = true;
+  const filteredMessages = computed(() => {
+    let filtered = photos.value;
+    if (activeCategory.value !== "自然风光") {
+      filtered = filtered.filter(
+        (photo) => photo.category === activeCategory.value
+      );
+    }
+    if (search.value) {
+      const keyword = search.value.toLowerCase();
+      filtered = filtered.filter(
+        (photo) =>
+          photo.title.toLowerCase().includes(keyword) ||
+          photo.description.toLowerCase().includes(keyword) ||
+          (photo.category && photo.category.toLowerCase().includes(keyword))
+      );
+    }
+    return filtered;
   });
-  const handleCloseDrawer = () => {};
+  const showAddMessage = () => {
+    showMessageDrawer.value = true;
+  };
+  const handleCloseDrawer = () => {
+    showMessageDrawer.value = false;
+  };
   return {
     tabs,
     activeTab,

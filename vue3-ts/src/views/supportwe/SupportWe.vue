@@ -109,7 +109,7 @@
 
   .description {
     font-size: 16px;
-    color: #4b5563;
+    color: var(--color-bg8);
     line-height: 1.8;
   }
 }
@@ -136,7 +136,7 @@
     }
 
     .feature-card {
-      background-color: #fff;
+      background: var(--bg3);
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
@@ -160,7 +160,7 @@
 
       p {
         font-size: 14px;
-        color: #6b7280;
+        background: var(--bg3);
         margin-bottom: 20px;
       }
     }
@@ -190,7 +190,7 @@
 
     .option-card {
       flex: 1;
-      background-color: #fff;
+      background: var(--bg3);
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
@@ -208,7 +208,7 @@
 
       p {
         font-size: 14px;
-        color: #6b7280;
+        color: var(--color-bg8);
         margin-bottom: 20px;
       }
 
@@ -243,7 +243,7 @@
         border: none;
         border-radius: 30px;
         background: linear-gradient(to right, #6ee7b7, #a855f7);
-        color: #fff;
+        color: var(--color-bg8);
         cursor: pointer;
         position: relative;
         overflow: hidden;
@@ -292,7 +292,7 @@
 
   p {
     font-size: 16px;
-    color: #4b5563;
+    color: var(--color-bg8);
     line-height: 1.8;
   }
 }

@@ -229,16 +229,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from "vue";
+import { ref, watch, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import debounce from "lodash.debounce";
 import axiosConfig from "../../utils/request";
 import { View, Hide } from "@element-plus/icons-vue";
 import QRCode from "qrcode";
+import { useUserStore } from "../../store/userStore";
 import { handlePostLogin } from "../../utils/handlePostLogin";
 import { handleLoginError } from "../../utils/handleLoginError";
 import { useI18n } from "vue-i18n";
+import Cookies from "js-cookie";
 const { locale } = useI18n();
 const router = useRouter();
 let isInputFocused = ref(false);
@@ -246,7 +248,10 @@ let showQrcode = ref(false);
 let isSending = ref(false);
 let countdown = ref(60);
 let loading = ref(false);
-const accountsclientFeatureCode = localStorage.getItem("userFeatureCode");
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
+
+const accountsclientFeatureCode = Cookies.get("userFeatureCode");
 const countdownTimer = ref<number | null>(null);
 let activeTab = ref("password");
 let loginForm = ref({
@@ -375,7 +380,7 @@ let sendSmsCode = debounce(async () => {
   // 处理 clientFeatureCode（UUID）
   let clientFeatureCode = accountsclientFeatureCode;
   if (!clientFeatureCode || clientFeatureCode.trim() === "") {
-    clientFeatureCode = null; // 让后端生成新的 UUID
+    clientFeatureCode = undefined; // 让后端生成新的 UUID
   }
 
   isSending.value = true;

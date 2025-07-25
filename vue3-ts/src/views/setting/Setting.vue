@@ -566,26 +566,35 @@ const addNewAccount = () => {
 };
 const switchAccount = async (id: string) => {
   try {
+    const user = userStore.user;
     if (userStore.user.id === Number(id)) {
       ElMessage.info("你已经在该账号下登录啦~");
       return;
     }
+
+    if (user && user.id) {
+      localStorage.removeItem(`theme-style-${user.id}`);
+    }
+
     const response = await axiosConfig.post("/auth/switch-account", {
       userId: id,
     });
 
-    const user = response.data.data;
+    // 更新 user.value
+    themeStore.setUser(Number(id));
+
+    const userData = response.data.data;
     // 刷新主题
-    themeStore.user = userStore.user.uuid;
+    await themeStore.loadTheme(); // 重新加载主题
+
     // 更新 token 和 uuid 到本地存储
-    Cookies.set("ds-token", user.token); // 设置新的 token
+    Cookies.set("ds-token", userData.token);
     ElMessage.success(response.data.message);
+
     // 刷新用户信息，确保 UI 数据同步
     fetchUserInfo();
     getAllUsers(); // 重新获取账号列表
-    // 刷新用户信息
     userStore.loadUser();
-
     // 跳转到首页或其他页面
     router.push("/home");
   } catch (error: any) {
@@ -875,8 +884,6 @@ const fetchLikedArticles = async () => {
     const response = await axiosConfig.get("/admin/article", {
       params: { userId: userStore.user.id },
     });
-    console.log(response);
-
     const articles = response.data.data.articles;
     likedArticles.value = articles
       .filter((article: any) => article.likesCount === 1)

@@ -1,6 +1,7 @@
 import axiosConfig from "../utils/request";
 import { ref } from "vue";
 import { useUserStore } from "../store/userStore";
+import Cookies from "js-cookie";
 /**
  * 用户数据接口
  */
@@ -40,10 +41,10 @@ export const getAllUsers = async () => {
 
     if (users.length > 0) {
       const currentUserUuid = users[0].clientFeatureCode;
-      const savedUuid = localStorage.getItem("userFeatureCode");
+      const savedUuid = Cookies.set("userFeatureCode", currentUserUuid || "");
 
       if (!savedUuid) {
-        localStorage.setItem("userFeatureCode", currentUserUuid || "");
+        Cookies.set("userFeatureCode", "");
       }
 
       accounts.value = users;

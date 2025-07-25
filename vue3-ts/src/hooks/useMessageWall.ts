@@ -168,12 +168,9 @@ export default function useMessageWall() {
         (message) =>
           message.content.toLowerCase().includes(keyword) ||
           message.name.toLowerCase().includes(keyword) ||
-          (message.category && // 检查 category 是否存在
-            message.category.toLowerCase().includes(keyword))
+          (message.category && message.category.toLowerCase().includes(keyword))
       );
     }
-    // console.log(search.value);
-
     return filtered;
   });
   const handleSearch = () => {

@@ -1,4 +1,3 @@
-// 亮色主题优化
 $light-theme: (
   color-bg2: -webkit-linear-gradient(rgba(219, 15, 234, 0.5), rgb(20, 197, 241)),
   color-bg3: #333333,
@@ -17,8 +16,6 @@ $light-theme: (
   gradient-bg2: linear-gradient(135deg, #ff9966, #ff4d4d),
   gradient-bg3: linear-gradient(135deg, #80ff80, #40c440),
 );
-
-// 暗色主题优化
 $dark-theme: (
   color-bg2: -webkit-linear-gradient(rgba(219, 15, 234, 0.5), rgb(20, 197, 241)),
   color-bg3: #eeeeee,
@@ -27,22 +24,18 @@ $dark-theme: (
   color-bg6: #999999,
   color-bg7: #666666,
   color-bg8: #ffffff,
-  bg1: #1a1c23,
-  bg2: #25282f,
+  bg1: #1e2022,
+  bg2: #232527,
   bg3: #1f2124,
   bg4: #3b3d44,
-  border: #444444,
+  border: #232527,
   gradient-bg: linear-gradient(to bottom, #2a2d34, #1f2124),
   gradient-bg1: linear-gradient(135deg, #34495e, #2c3e50),
   gradient-bg2: linear-gradient(135deg, #273c75, #1e272e),
   gradient-bg3: linear-gradient(135deg, #34495e, #2c3e50),
 );
-
-// 创建一个混合器(mixin)来应用主题 接收一个主题配置map作为参数
 @mixin theme-vars($theme) {
-  // 遍历map中的所有键值对
   @each $name, $value in $theme {
-    // 将每个键值对转换为 CSS 自定义属性（CSS 变量）
     --#{$name}: #{$value};
   }
 }
@@ -50,6 +43,7 @@ $dark-theme: (
 :root {
   @include theme-vars($light-theme);
 }
+
 // 应用暗色主题
 html[data-theme="dark"] {
   @include theme-vars($dark-theme);

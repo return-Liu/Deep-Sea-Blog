@@ -1,26 +1,13 @@
 import { defineStore } from "pinia";
 import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useUserStore } from "./userStore";
+import { ElMessage } from "element-plus";
+import axiosConfig from "../utils/request";
+
 export const useThemeStore = defineStore("theme", () => {
   const followSystem = ref<boolean>(false);
   const currentTheme = ref<"light" | "dark" | "auto">("auto");
   const user = ref<number | null>(null);
-  // 切换主题 系统主题 亮色主题 暗色主题
-  const toggleTheme = (mode: "auto" | "light" | "dark") => {
-    followSystem.value = mode === "auto";
-    currentTheme.value = mode;
-    if (mode === "auto") {
-      addSystemThemeChangeListener();
-      handleSystemThemeChange();
-    } else {
-      removeSystemThemeChangeListener();
-      setTheme(mode);
-    }
-    if (user.value) {
-      localStorage.setItem(`theme-${user.value}`, mode);
-      // console.log("user.value:", user.value);
-    }
-  };
 
   const handleSystemThemeChange = () => {
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -33,51 +20,76 @@ export const useThemeStore = defineStore("theme", () => {
   const setTheme = (mode: "light" | "dark") => {
     document.documentElement.setAttribute("data-theme", mode);
   };
-  const applyCustomTheme = (theme: string) => {
-    if (theme.startsWith("#")) {
-      document.body.style.backgroundImage = "none";
-      document.body.style.backgroundColor = theme;
-      document.documentElement.style.setProperty("--bgColor1", theme);
+  const toggleTheme = async (mode: "auto" | "light" | "dark") => {
+    followSystem.value = mode === "auto";
+    currentTheme.value = mode;
+    if (mode === "auto") {
+      addSystemThemeChangeListener();
+      handleSystemThemeChange();
     } else {
-      document.body.style.backgroundImage = `url(${theme})`;
-      document.body.style.backgroundSize = "100% 100%";
-      document.body.style.backgroundRepeat = "no-repeat";
-      document.documentElement.style.setProperty("--bgColor1", theme);
-      document.documentElement.style.setProperty("--color-bg4", theme);
-      document.documentElement.style.setProperty("--color-bg3", theme);
+      removeSystemThemeChangeListener();
+      setTheme(mode);
+    }
+
+    // 确保 user 已被初始化
+    if (user.value) {
+      try {
+        await updateThemeInDatabase(user.value, mode);
+        if (typeof mode === "string" && mode.trim() !== "") {
+          localStorage.setItem(`theme-style-${user.value}`, mode);
+        }
+      } catch (error) {
+        console.error("Failed to update theme in database:", error);
+      }
     }
   };
 
-  const loadTheme = () => {
+  const loadTheme = async () => {
     const userStore = useUserStore();
     const userFromStore = userStore.user.uuid;
 
-    // console.log("用户ID:", userFromStore);
-
     if (!userFromStore) {
-      // console.log("用户未登录");
-      toggleTheme("light");
+      const savedTheme = localStorage.getItem(`theme-style-${user.value}`);
+      const validTheme = (
+        ["auto", "light", "dark"].includes(savedTheme as any)
+          ? savedTheme
+          : "light"
+      ) as "auto" | "light" | "dark";
+      await toggleTheme(validTheme);
       return;
     }
+
     user.value = userFromStore;
-    // console.log("用户ID:", user.value);
 
-    const savedTheme = localStorage.getItem(`theme-${user.value}`) as
-      | "auto"
-      | "light"
-      | "dark"
-      | string
-      | null;
-
-    if (savedTheme) {
-      if (["auto", "light", "dark"].includes(savedTheme)) {
-        toggleTheme(savedTheme as "auto" | "light" | "dark");
+    try {
+      const theme = await getThemeFromDatabase(user.value);
+      if (theme && typeof theme === "string" && theme.trim() !== "") {
+        localStorage.setItem(`theme-style-${user.value}`, theme);
+        await toggleTheme(
+          (["auto", "light", "dark"].includes(theme as any)
+            ? theme
+            : "light") as "auto" | "light" | "dark"
+        );
+      } else {
+        const savedTheme = localStorage.getItem(`theme-style-${user.value}`);
+        const fallbackTheme = (
+          ["auto", "light", "dark"].includes(savedTheme as any)
+            ? savedTheme
+            : "light"
+        ) as "auto" | "light" | "dark";
+        await toggleTheme(fallbackTheme);
       }
-    } else {
-      toggleTheme("light");
+    } catch (error) {
+      console.error("Failed to load theme from database:", error);
+      const savedTheme = userStore.user.theme;
+      const fallbackTheme = (
+        ["auto", "light", "dark"].includes(savedTheme as any)
+          ? savedTheme
+          : "light"
+      ) as "auto" | "light" | "dark";
+      await toggleTheme(fallbackTheme);
     }
   };
-
   const addSystemThemeChangeListener = () => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
@@ -92,26 +104,59 @@ export const useThemeStore = defineStore("theme", () => {
 
   const setUser = (userId: number | null) => {
     user.value = userId;
-    // console.log("用户ID:", userId);
   };
 
-  const clearUserTheme = () => {
+  const clearUserTheme = async () => {
     if (user.value) {
-      localStorage.removeItem(`theme-${user.value}`);
+      try {
+        await clearThemeInDatabase(user.value);
+      } catch (error) {
+        console.error("Failed to clear theme in database:", error);
+      }
       toggleTheme("light");
     }
   };
 
-  onMounted(() => {
-    loadTheme();
+  onMounted(async () => {
+    await loadTheme(); // 确保 loadTheme 先加载用户信息
   });
 
   onUnmounted(() => {
     removeSystemThemeChangeListener();
   });
-
+  const updateThemeInDatabase = async (userId: number, theme: string) => {
+    try {
+      await axiosConfig.put(`/theme/${userId}/style`, {
+        theme,
+      });
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
+    }
+  };
+  const getThemeFromDatabase = async (userId: number) => {
+    try {
+      const response = await axiosConfig.get(`/theme/${userId}/style`);
+      return response.data.theme;
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
+    }
+  };
+  const clearThemeInDatabase = async (userId: number) => {
+    try {
+      await axiosConfig.delete(`/theme/${userId}/style`);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "未知错误";
+      ElMessage.error(errorMessage);
+    }
+  };
   return {
-    applyCustomTheme,
+    getThemeFromDatabase,
+    updateThemeInDatabase, // 添加这一行
     followSystem,
     currentTheme,
     user,

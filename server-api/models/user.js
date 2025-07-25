@@ -21,9 +21,14 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init(
     {
+      theme: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "light", // 默认主题设置
+      },
       phone: {
         type: DataTypes.STRING,
-        allowNull: true, // 可根据需求设为 false 以强制填写
+        allowNull: false,
         validate: {
           is: {
             args: [/^1[3-9]\d{9}$/], // 简单的中国大陆手机号格式校验
