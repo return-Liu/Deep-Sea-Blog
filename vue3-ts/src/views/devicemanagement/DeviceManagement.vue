@@ -1,7 +1,9 @@
 <template>
   <div class="device-management">
     <div class="header-section">
-      <h1 class="page-title">登录设备管理</h1>
+      <h1 class="page-title">
+        登录设备管理 <el-tag type="warning">设备名称功能完善中</el-tag>
+      </h1>
       <p class="page-description">
         管理和监控所有已登录您账户的设备，确保只有您信任的设备可以访问您的账户。
       </p>
