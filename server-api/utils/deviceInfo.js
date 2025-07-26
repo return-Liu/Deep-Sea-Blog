@@ -1,4 +1,3 @@
-// utils/deviceInfo.js
 const { getIPGeoLocation } = require("./ipGeo");
 const UAParser = require("ua-parser-js");
 
