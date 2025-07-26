@@ -366,33 +366,8 @@ router.post("/sign_in", async (req, res) => {
           { username: login.trim() },
           { phone: login.trim() },
         ],
-        status: "active", // 添加状态检查，确保是活跃用户
       },
-      attributes: ["id", "password", "locked", "loginAttempts"], // 只查询必要字段
     });
-
-    // 3. 用户验证
-    if (!user) throw new NotFoundError("用户不存在或账号未激活");
-
-    // 检查账号是否被锁定
-    if (user.locked) {
-      const lockTime = new Date(user.lockUntil);
-      throw new UnauthorizedError(
-        `账号已锁定，请 ${lockTime.toLocaleTimeString()} 后再试`
-      );
-    }
-
-    // 4. 密码验证
-    const isPasswordValid = await bcrypt.compare(
-      password.trim(),
-      user.password
-    );
-    if (!isPasswordValid) {
-      // 记录错误尝试
-      await handleFailedLoginAttempt(user);
-      throw new UnauthorizedError("账号或密码错误");
-    }
-
     // 5. 登录成功处理
     await handlePostLogin(user, req, res);
 
@@ -471,13 +446,14 @@ router.post("/email/verify", async (req, res) => {
 });
 
 // 登录设备管理
+// 登录设备管理
 router.post("/login/device", async (req, res) => {
   try {
     // 获取当前用户
     const currentUser = await getCurrentUser(req);
 
     // 提取设备信息
-    const deviceInfo = extractDeviceInfo(req);
+    const deviceInfo = await extractDeviceInfo(req);
     const deviceId = generateDeviceId(
       currentUser.id,
       deviceInfo.userAgent,
@@ -495,14 +471,17 @@ router.post("/login/device", async (req, res) => {
       device = await Device.create({
         userId: currentUser.id,
         deviceId: deviceId,
-        deviceName: deviceInfo.deviceName,
-        deviceType: deviceInfo.deviceType,
-        os: deviceInfo.os,
-        browser: deviceInfo.browser,
+        deviceName:
+          deviceInfo.deviceName || deviceInfo.deviceType || "未知设备",
+        deviceType: deviceInfo.deviceType || "unknown",
+        os: deviceInfo.os || "unknown",
+        browser: deviceInfo.browser || "unknown",
         ip: deviceInfo.ip,
         lastLoginTime: new Date(),
         isTrusted: false,
         userAgent: deviceInfo.userAgent,
+        location: deviceInfo.geoLocation || null,
+        geoInfo: deviceInfo.geoInfo || null,
       });
     } else {
       // 更新最后登录时间
@@ -516,6 +495,7 @@ router.post("/login/device", async (req, res) => {
       isTrusted: device.isTrusted,
     });
   } catch (error) {
+    console.error("设备记录失败:", error);
     failure(res, error);
   }
 });
