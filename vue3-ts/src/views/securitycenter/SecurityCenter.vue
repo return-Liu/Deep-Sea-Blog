@@ -113,7 +113,9 @@ import { useUserStore } from "../../store/userStore";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 const router = useRouter();
+import Setting from "../../views/setting/Setting.vue";
 
+const settingRef = ref();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
 
@@ -167,7 +169,21 @@ const handleDeviceManagement = () => {
 };
 
 const handleAccountDeletion = () => {
-  ElMessage.info("目前此功能正在努力开发中，敬请期待！");
+  ElMessageBox.confirm(
+    "确定要注销账号吗？此操作将永久删除您的所有数据且无法恢复。",
+    "账号注销确认",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    }
+  )
+    .then(() => {
+      settingRef.value.deleteAccount();
+    })
+    .catch(() => {
+      ElMessage.info("已取消账号注销操作");
+    });
 };
 const securityFeatures = [
   {

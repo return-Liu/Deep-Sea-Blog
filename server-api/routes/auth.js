@@ -1,4 +1,3 @@
-// auth.js
 const express = require("express");
 const router = express.Router();
 const { User, Device } = require("../models");
@@ -18,11 +17,12 @@ const crypto = require("crypto");
 const { Op } = require("sequelize");
 
 // 生成设备唯一标识符
-function generateDeviceId(userId, userAgent, ip) {
+function generateDeviceId(userId, userAgent) {
   const hash = crypto.createHash("md5");
-  hash.update(`${userId}-${userAgent}-${ip}`);
+  hash.update(`${userId}-${userAgent}`);
   return hash.digest("hex");
-} // 生成一个随机的特征码
+}
+// 生成一个随机的特征码
 function generateFeatureCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
@@ -278,6 +278,7 @@ router.get("/accounts", async (req, res) => {
     failure(res, error);
   }
 });
+// 第一处修改：在 handlePostLogin 函数中
 async function handlePostLogin(user, req, res) {
   // 生成token
   const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
@@ -294,6 +295,19 @@ async function handlePostLogin(user, req, res) {
 
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
+
+  // 检查设备信任是否过期
+  if (device && device.isTrusted && device.trustExpire) {
+    const now = new Date();
+    if (now > device.trustExpire) {
+      // 信任已过期，取消信任状态
+      await device.update({
+        isTrusted: false,
+        trustExpire: null,
+      });
+      device.isTrusted = false;
+    }
+  }
 
   if (!device) {
     device = await Device.create({
@@ -331,21 +345,33 @@ async function handlePostLogin(user, req, res) {
     },
   });
 }
-// 处理登录失败尝试
-async function handleFailedLoginAttempt(user) {
-  const attempts = (user.loginAttempts || 0) + 1;
-  let updates = { loginAttempts: attempts };
+// 添加定时任务清理过期信任设备
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const expiredDevices = await Device.findAll({
+      where: {
+        isTrusted: true,
+        trustExpire: {
+          [Op.lt]: now,
+        },
+      },
+    });
 
-  if (attempts >= 5) {
-    updates = {
-      ...updates,
-      locked: true,
-      lockUntil: new Date(Date.now() + 30 * 60 * 1000), // 锁定30分钟
-    };
+    for (const device of expiredDevices) {
+      await device.update({
+        isTrusted: false,
+        trustExpire: null,
+      });
+    }
+
+    if (expiredDevices.length > 0) {
+      console.log(`清理了 ${expiredDevices.length} 个过期信任设备`);
+    }
+  } catch (error) {
+    console.error("清理过期信任设备失败:", error);
   }
-
-  await user.update(updates);
-}
+}, 24 * 60 * 60 * 1000); // 每24小时运行一次
 /**
  * 用户登录
  * POST auth/sign_in
@@ -353,26 +379,22 @@ async function handleFailedLoginAttempt(user) {
 router.post("/sign_in", async (req, res) => {
   try {
     const { login, password } = req.body;
+    if (!login) throw new BadRequestError("账号或手机号或邮箱必须填写!");
+    if (!password) throw new BadRequestError("密码必须填写!");
 
-    // 1. 参数验证
-    if (!login?.trim()) throw new BadRequestError("账号/手机号/邮箱不能为空");
-    if (!password?.trim()) throw new BadRequestError("密码不能为空");
-
-    // 2. 查找用户
-    const user = await User.findOne({
+    const condition = {
       where: {
-        [Op.or]: [
-          { email: login.trim() },
-          { username: login.trim() },
-          { phone: login.trim() },
-        ],
+        [Op.or]: [{ email: login }, { username: login }, { phone: login }],
       },
-    });
-    // 5. 登录成功处理
-    await handlePostLogin(user, req, res);
+    };
 
-    // 重置登录尝试次数
-    await user.update({ loginAttempts: 0 });
+    const user = await User.findOne(condition);
+    if (!user) throw new NotFoundError("用户不存在, 请先注册账号!");
+
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    if (!isPasswordValid)
+      throw new UnauthorizedError("密码错误,请输入正确的密码");
+    await handlePostLogin(user, req, res);
   } catch (error) {
     failure(res, error);
   }
@@ -392,7 +414,6 @@ router.post("/email", async (req, res) => {
     failure(res, error);
   }
 });
-
 // 邮箱验证码登录 - 发送验证码（带频率限制）
 router.post("/email/verify", async (req, res) => {
   try {
@@ -447,6 +468,7 @@ router.post("/email/verify", async (req, res) => {
 
 // 登录设备管理
 // 登录设备管理
+// 第二处修改：在 /login/device 路由中
 router.post("/login/device", async (req, res) => {
   try {
     // 获取当前用户
@@ -454,11 +476,7 @@ router.post("/login/device", async (req, res) => {
 
     // 提取设备信息
     const deviceInfo = await extractDeviceInfo(req);
-    const deviceId = generateDeviceId(
-      currentUser.id,
-      deviceInfo.userAgent,
-      deviceInfo.ip
-    );
+    const deviceId = generateDeviceId(currentUser.id, deviceInfo.userAgent);
 
     // 查找或创建设备记录
     let device = await Device.findOne({
@@ -467,22 +485,24 @@ router.post("/login/device", async (req, res) => {
       },
     });
 
+    // 确保所有必需字段都有默认值
+    const deviceData = {
+      userId: currentUser.id,
+      deviceId: deviceId,
+      deviceName: deviceInfo.deviceName || deviceInfo.deviceType || "未知设备",
+      deviceType: deviceInfo.deviceType || "unknown",
+      os: deviceInfo.os || "unknown",
+      browser: deviceInfo.browser || "unknown",
+      lastLoginTime: new Date(),
+      isTrusted: false,
+      userAgent: deviceInfo.userAgent,
+      location: deviceInfo.geoLocation || null,
+      // 删除了 geoInfo: deviceInfo.geoInfo || null,
+    };
+
     if (!device) {
-      device = await Device.create({
-        userId: currentUser.id,
-        deviceId: deviceId,
-        deviceName:
-          deviceInfo.deviceName || deviceInfo.deviceType || "未知设备",
-        deviceType: deviceInfo.deviceType || "unknown",
-        os: deviceInfo.os || "unknown",
-        browser: deviceInfo.browser || "unknown",
-        ip: deviceInfo.ip,
-        lastLoginTime: new Date(),
-        isTrusted: false,
-        userAgent: deviceInfo.userAgent,
-        location: deviceInfo.geoLocation || null,
-        geoInfo: deviceInfo.geoInfo || null,
-      });
+      // 创建设备记录前确保所有必需字段都已设置
+      device = await Device.create(deviceData);
     } else {
       // 更新最后登录时间
       await device.update({
@@ -501,15 +521,14 @@ router.post("/login/device", async (req, res) => {
 });
 
 // 获取用户所有登录设备
-// 更新设备列表路由
+// 第三处修改：在 /devices 路由中
 router.get("/devices", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     const currentDeviceInfo = await extractDeviceInfo(req);
     const currentDeviceId = generateDeviceId(
       currentUser.id,
-      currentDeviceInfo.userAgent,
-      currentDeviceInfo.ip
+      currentDeviceInfo.userAgent
     );
 
     const devices = await Device.findAll({
@@ -523,11 +542,12 @@ router.get("/devices", async (req, res) => {
       deviceType: device.deviceType,
       os: device.os,
       browser: device.browser,
-      ip: device.ip,
       location: device.location || "未知",
-      geoInfo: device.geoInfo,
+      // 删除了 geoInfo: device.geoInfo,
       lastLoginTime: device.lastLoginTime,
       isTrusted: device.isTrusted,
+      // 添加信任过期时间
+      trustExpire: device.trustExpire,
       isCurrentDevice: device.deviceId === currentDeviceId,
     }));
 
@@ -559,8 +579,7 @@ router.delete("/devices/:deviceId", async (req, res) => {
     const currentDeviceInfo = extractDeviceInfo(req);
     const currentDeviceId = generateDeviceId(
       currentUser.id,
-      currentDeviceInfo.userAgent,
-      currentDeviceInfo.ip
+      currentDeviceInfo.userAgent
     );
 
     if (device.deviceId === currentDeviceId) {
@@ -576,6 +595,7 @@ router.delete("/devices/:deviceId", async (req, res) => {
 });
 
 // 设置设备信任状态
+// 设置设备信任状态 - 修改 /devices/:deviceId/trust 路由
 router.put("/devices/:deviceId/trust", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -594,10 +614,22 @@ router.put("/devices/:deviceId/trust", async (req, res) => {
       throw new NotFoundError("设备不存在或不属于当前用户");
     }
 
-    // 更新信任状态
-    await device.update({
+    // 更新信任状态和过期时间
+    const updateData = {
       isTrusted: trusted,
-    });
+    };
+
+    // 如果设置为信任，设置30天后过期
+    if (trusted) {
+      const expireDate = new Date();
+      expireDate.setDate(expireDate.getDate() + 30);
+      updateData.trustExpire = expireDate;
+    } else {
+      // 如果取消信任，清除过期时间
+      updateData.trustExpire = null;
+    }
+
+    await device.update(updateData);
 
     success(res, `设备${trusted ? "已设为信任" : "已取消信任"}`);
   } catch (error) {
@@ -605,32 +637,4 @@ router.put("/devices/:deviceId/trust", async (req, res) => {
   }
 });
 
-// 登出所有设备（除了当前设备）
-router.post("/devices/logout-all", async (req, res) => {
-  try {
-    const currentUser = await getCurrentUser(req);
-
-    // 获取当前设备ID
-    const currentDeviceInfo = extractDeviceInfo(req);
-    const currentDeviceId = generateDeviceId(
-      currentUser.id,
-      currentDeviceInfo.userAgent,
-      currentDeviceInfo.ip
-    );
-
-    // 删除除当前设备外的所有设备
-    await Device.destroy({
-      where: {
-        userId: currentUser.id,
-        deviceId: {
-          [Op.ne]: currentDeviceId,
-        },
-      },
-    });
-
-    success(res, "已登出所有其他设备");
-  } catch (error) {
-    failure(res, error);
-  }
-});
 module.exports = router;

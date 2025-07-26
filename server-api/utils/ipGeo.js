@@ -1,75 +1,41 @@
 const axios = require("axios");
-const cache = require("memory-cache");
 
-const IP_API_SERVICES = {
-  IPAPI: (ip) => `https://ipapi.co/${ip}/json/`,
-  IPAPI_COM: (ip) =>
-    `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query`,
-  GEOLOCATION: (ip) => `https://geolocation-db.com/json/${ip}`,
-};
+// 高德地图逆地理编码 API
+const REGEOCODE_API_URL = "https://restapi.amap.com/v3/geocode/regeo";
 
-async function getIPGeoLocation(ip) {
-  if (
-    ip === "::1" ||
-    ip === "127.0.0.1" ||
-    ip.startsWith("192.168.") ||
-    ip.startsWith("10.")
-  ) {
-    return {
-      ip,
-      location: "本地网络",
-      isLocal: true,
-    };
-  }
-
-  const cached = cache.get(`ipgeo:${ip}`);
-  if (cached) return cached;
-
+// 获取逆地理编码信息
+async function getRegeoLocation(location) {
   try {
-    const response = await axios.get(IP_API_SERVICES.IPAPI_COM(ip), {
-      timeout: 3000,
+    const response = await axios.get(REGEOCODE_API_URL, {
+      params: {
+        key: "84c8fc9794d45e1bbb56bad2d8a7da05", // 替换为您的高德地图 API Key
+        location: location, // 经纬度坐标，格式为 "经度,纬度"
+        output: "JSON", // 返回数据格式，默认为 JSON
+      },
     });
-    const data = response.data;
 
-    if (data.status && data.status === "success") {
-      const result = {
-        ip,
-        continent: data.continent,
-        continentCode: data.continentCode,
-        country: data.country,
-        countryCode: data.countryCode,
-        region: data.regionName,
-        city: data.city,
-        district: data.district,
-        zip: data.zip,
-        lat: data.lat,
-        lon: data.lon,
-        timezone: data.timezone,
-        isp: data.isp,
-        org: data.org,
-        as: data.as,
-        proxy: data.proxy,
-        hosting: data.hosting,
-        location: `${data.country || ""}${
-          data.regionName ? `, ${data.regionName}` : ""
-        }${data.city ? `, ${data.city}` : ""}`,
-        raw: data,
-      };
-
-      cache.put(`ipgeo:${ip}`, result, 24 * 60 * 60 * 1000);
-      return result;
+    if (response.status === 200 && response.data.status === "1") {
+      // 解析返回结果
+      const regeocode = response.data.regeocode;
+      if (regeocode && regeocode.formatted_address) {
+        return regeocode.formatted_address; // 返回标准地址
+      } else {
+        console.warn("逆地理编码结果为空");
+        return null;
+      }
+    } else {
+      console.error("逆地理编码请求失败:", response.data.info);
+      return null;
     }
   } catch (error) {
-    console.error("IP地理位置查询失败:", error.message);
+    console.error("逆地理编码请求异常:", error.message);
+    return null;
   }
-
-  const defaultResult = {
-    ip,
-    location: "未知位置",
-    raw: null,
-  };
-  cache.put(`ipgeo:${ip}`, defaultResult, 60 * 60 * 1000);
-  return defaultResult;
 }
 
-module.exports = { getIPGeoLocation };
+// 示例调用
+(async () => {
+  const location = "360.0,360.0"; // 江西宜春
+  const address = await getRegeoLocation(location);
+  console.log("地址:", address);
+})();

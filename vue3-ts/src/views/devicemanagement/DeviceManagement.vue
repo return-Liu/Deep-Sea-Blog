@@ -1,9 +1,7 @@
 <template>
   <div class="device-management">
     <div class="header-section">
-      <h1 class="page-title">
-        登录设备管理 <el-tag type="warning">设备名称功能完善中</el-tag>
-      </h1>
+      <h1 class="page-title">登录设备管理</h1>
       <p class="page-description">
         管理和监控所有已登录您账户的设备，确保只有您信任的设备可以访问您的账户。
       </p>
@@ -29,7 +27,7 @@
             plain
           >
             <el-icon><SwitchButton /></el-icon>
-            登出所有设备
+            登出当前设备
           </el-button>
         </div>
       </template>
@@ -60,14 +58,16 @@
                   <component :is="getDeviceIcon(device.deviceType)" />
                 </el-icon>
                 <div class="device-name-section">
-                  <span class="device-name">{{ device.deviceName }}</span>
+                  <span class="device-name">{{
+                    device.deviceName || "未知设备名称/平台"
+                  }}</span>
                   <el-tag
                     v-if="device.isCurrentDevice"
                     type="success"
                     size="small"
                     effect="dark"
                   >
-                    当前设备
+                    当前设备/平台
                   </el-tag>
                 </div>
               </div>
@@ -83,16 +83,16 @@
 
             <div class="device-details" @click="handleClick(device)">
               <div class="detail-row">
-                <span class="detail-label">系统:</span>
-                <span>{{ device.os }}</span>
+                <span class="detail-label">登录系统:</span>
+                <span>{{ device.os || "未知登录系统" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">浏览器:</span>
-                <span>{{ device.browser }}</span>
+                <span class="detail-label">登录浏览器:</span>
+                <span>{{ device.browser || "未知登录浏览器" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">位置:</span>
-                <span>{{ device.location }}</span>
+                <span class="detail-label">登录参考地:</span>
+                <span>{{ device.location || "未知登录参考地" }}</span>
               </div>
               <div
                 class="detail-row"
@@ -102,8 +102,10 @@
                 <span>{{ formatDate(device.trustExpire) }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">最后登录:</span>
-                <span>{{ formatDate(device.lastLoginTime) }}</span>
+                <span class="detail-label">登录时间:</span>
+                <span>{{
+                  formatDate(device.lastLoginTime) || "未知登录时间"
+                }}</span>
               </div>
             </div>
 
@@ -204,7 +206,7 @@ const formatDate = (dateString: string | Date | undefined) => {
   if (!dateString) return "未知";
 
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return "未知";
+  if (isNaN(date.getTime())) return "未知"; // 检查日期是否有效
 
   return date.toLocaleString("zh-CN", {
     year: "numeric",
@@ -324,6 +326,7 @@ const logoutAllDevices = async () => {
     loading.value = false;
   }
 };
+// 获取ip位置
 </script>
 
 <style lang="less" scoped>
@@ -484,7 +487,7 @@ const logoutAllDevices = async () => {
 
               .detail-label {
                 color: var(--color-bg4);
-                width: 70px;
+                width: 90px;
                 flex-shrink: 0;
               }
             }
