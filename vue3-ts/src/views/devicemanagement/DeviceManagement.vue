@@ -246,6 +246,7 @@ const trustDevice = async (deviceId: string) => {
 
     device.isTrusted = !device.isTrusted;
     ElMessage.success(response.data.message ? "操作成功" : "操作失败");
+    fetchDevices(); // 刷新设备列表
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
@@ -278,6 +279,7 @@ const logoutDevice = async (deviceId: string) => {
     devices.value = devices.value.filter(
       (device: any) => device.id !== deviceId
     );
+    fetchDevices(); // 刷新设备列表
     ElMessage.success(response.data.message);
   } catch (error: any) {
     const errorMessage =
