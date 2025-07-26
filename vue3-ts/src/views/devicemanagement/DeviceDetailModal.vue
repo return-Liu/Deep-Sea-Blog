@@ -15,6 +15,10 @@
               <component :is="getDeviceIcon(device.deviceType)" />
             </el-icon>
             <div class="device-main-text">
+              <h5>
+                <span style="font-size: 20px"> {{ device.deviceType }} </span
+                >端的设备名称
+              </h5>
               <h4 class="device-name">{{ device.deviceName }}</h4>
               <el-tag
                 :type="device.isTrusted ? 'success' : 'info'"

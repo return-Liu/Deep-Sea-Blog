@@ -236,12 +236,6 @@ const fetchDevices = async () => {
 
 const trustDevice = async (deviceId: string) => {
   try {
-    // 设置权限 只有管理员可以设置
-    // 设置权限 只有管理员可以设置
-    if (user.value?.id !== 4) {
-      ElMessage.error("您没有权限进行此操作");
-      return;
-    }
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (!device) return;
 

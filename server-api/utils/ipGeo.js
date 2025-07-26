@@ -1,41 +1,48 @@
 const axios = require("axios");
 
-// 高德地图逆地理编码 API
-const REGEOCODE_API_URL = "https://restapi.amap.com/v3/geocode/regeo";
+// 高德地图地理编码 API
+const GEOCODE_API_URL = "https://restapi.amap.com/v3/geocode/geo";
 
-// 获取逆地理编码信息
-async function getRegeoLocation(location) {
+// 获取地理编码信息
+async function getGeocodeLocation(address, city) {
   try {
-    const response = await axios.get(REGEOCODE_API_URL, {
+    const response = await axios.get(GEOCODE_API_URL, {
       params: {
         key: "84c8fc9794d45e1bbb56bad2d8a7da05", // 替换为您的高德地图 API Key
-        location: location, // 经纬度坐标，格式为 "经度,纬度"
+        address: address, // 结构化地址信息
+        city: city, // 指定查询的城市
         output: "JSON", // 返回数据格式，默认为 JSON
       },
     });
 
     if (response.status === 200 && response.data.status === "1") {
       // 解析返回结果
-      const regeocode = response.data.regeocode;
-      if (regeocode && regeocode.formatted_address) {
-        return regeocode.formatted_address; // 返回标准地址
+      const geocodes = response.data.geocodes;
+      if (geocodes && geocodes.length > 0) {
+        return geocodes[0].location; // 返回经纬度坐标
       } else {
-        console.warn("逆地理编码结果为空");
+        console.warn("地理编码结果为空");
         return null;
       }
     } else {
-      console.error("逆地理编码请求失败:", response.data.info);
+      console.error("地理编码请求失败:", response.data.info);
       return null;
     }
   } catch (error) {
-    console.error("逆地理编码请求异常:", error.message);
+    console.error("地理编码请求异常:", error.message);
     return null;
   }
 }
 
 // 示例调用
 (async () => {
-  const location = "360.0,360.0"; // 江西宜春
-  const address = await getRegeoLocation(location);
-  console.log("地址:", address);
+  const address = "宜春市"; // 地址
+  const city = "奉新"; // 城市
+  const location = await getGeocodeLocation(address, city);
+  console.log("经纬度坐标:", location);
 })();
+
+// 导出函数
+module.exports = {
+  getGeocodeLocation,
+};

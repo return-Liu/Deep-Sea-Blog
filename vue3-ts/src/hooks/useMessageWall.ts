@@ -220,8 +220,9 @@ export default function useMessageWall() {
             isLiked: false,
             date: wall.createdAt,
             backgroundColor: wall.backgroundColor,
-            nicknameColor: userStore.user?.nicknameColor || "#000000", // 使用用户的昵称颜色
+            nicknameColor: wall.User.nicknameColor, // 使用用户的昵称颜色
           }));
+          console.log(wallResponse);
 
           // 获取每个留言的评论数据
           // 使用 Promise.all 并行获取所有评论数量

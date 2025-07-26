@@ -4,7 +4,8 @@ const { User, Device } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { createSixNum, verifyEmail } = require("../utils/email");
 const { canSendCode } = require("../utils/rateLimiter");
-const { extractDeviceInfo, getClientIP } = require("../utils/deviceInfo");
+const { extractDeviceInfo } = require("../utils/deviceInfo");
+const { getGeocodeLocation } = require("../utils/ipGeo");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -293,6 +294,26 @@ async function handlePostLogin(user, req, res) {
     deviceInfo.ip
   );
 
+  // 获取经纬度坐标（如果有地址信息）
+  let location = "未知位置";
+  // 检查 deviceInfo.geoInfo 是否存在且包含地址信息
+  if (deviceInfo.geoInfo && deviceInfo.geoInfo.raw) {
+    const address = deviceInfo.geoInfo.raw.address;
+    const city = deviceInfo.geoInfo.raw.city || "";
+
+    // 确保地址存在才调用 getGeocodeLocation
+    if (address) {
+      try {
+        const coordinates = await getGeocodeLocation(address, city);
+        if (coordinates) {
+          location = coordinates;
+        }
+      } catch (error) {
+        console.error("获取经纬度坐标失败:", error);
+      }
+    }
+  }
+
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
 
@@ -308,7 +329,6 @@ async function handlePostLogin(user, req, res) {
       device.isTrusted = false;
     }
   }
-
   if (!device) {
     device = await Device.create({
       userId: user.id,
@@ -317,9 +337,7 @@ async function handlePostLogin(user, req, res) {
       deviceType: deviceInfo.deviceType,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      ip: deviceInfo.ip,
-      location: deviceInfo.geoLocation,
-      geoInfo: deviceInfo.geoInfo,
+      location,
       lastLoginTime: new Date(),
       isTrusted: false,
       userAgent: deviceInfo.userAgent,
@@ -330,9 +348,7 @@ async function handlePostLogin(user, req, res) {
       deviceName: deviceInfo.deviceName,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      ip: deviceInfo.ip,
-      location: deviceInfo.geoLocation,
-      geoInfo: deviceInfo.geoInfo,
+      location,
     });
   }
 
@@ -467,8 +483,6 @@ router.post("/email/verify", async (req, res) => {
 });
 
 // 登录设备管理
-// 登录设备管理
-// 第二处修改：在 /login/device 路由中
 router.post("/login/device", async (req, res) => {
   try {
     // 获取当前用户
@@ -477,6 +491,26 @@ router.post("/login/device", async (req, res) => {
     // 提取设备信息
     const deviceInfo = await extractDeviceInfo(req);
     const deviceId = generateDeviceId(currentUser.id, deviceInfo.userAgent);
+
+    // 获取经纬度坐标（如果有地址信息）
+    let location = "未知位置";
+    // 检查 deviceInfo.geoInfo 是否存在且包含地址信息
+    if (deviceInfo.geoInfo && deviceInfo.geoInfo.raw) {
+      const address = deviceInfo.geoInfo.raw.address;
+      const city = deviceInfo.geoInfo.raw.city || "";
+
+      // 确保地址存在才调用 getGeocodeLocation
+      if (address) {
+        try {
+          const coordinates = await getGeocodeLocation(address, city);
+          if (coordinates) {
+            location = coordinates;
+          }
+        } catch (error) {
+          console.error("获取经纬度坐标失败:", error);
+        }
+      }
+    }
 
     // 查找或创建设备记录
     let device = await Device.findOne({
@@ -496,17 +530,17 @@ router.post("/login/device", async (req, res) => {
       lastLoginTime: new Date(),
       isTrusted: false,
       userAgent: deviceInfo.userAgent,
-      location: deviceInfo.geoLocation || null,
-      // 删除了 geoInfo: deviceInfo.geoInfo || null,
+      location: location, // 使用获取到的经纬度坐标
     };
 
     if (!device) {
       // 创建设备记录前确保所有必需字段都已设置
       device = await Device.create(deviceData);
     } else {
-      // 更新最后登录时间
+      // 更新最后登录时间和位置信息
       await device.update({
         lastLoginTime: new Date(),
+        location: location, // 更新位置信息
       });
     }
 
@@ -519,7 +553,6 @@ router.post("/login/device", async (req, res) => {
     failure(res, error);
   }
 });
-
 // 获取用户所有登录设备
 // 第三处修改：在 /devices 路由中
 router.get("/devices", async (req, res) => {
@@ -543,7 +576,6 @@ router.get("/devices", async (req, res) => {
       os: device.os,
       browser: device.browser,
       location: device.location || "未知",
-      // 删除了 geoInfo: device.geoInfo,
       lastLoginTime: device.lastLoginTime,
       isTrusted: device.isTrusted,
       // 添加信任过期时间
