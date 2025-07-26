@@ -1,4 +1,6 @@
+// utils/deviceInfo.js
 const { getIPGeoLocation } = require("./ipGeo");
+const UAParser = require("ua-parser-js");
 
 function getClientIP(req) {
   return (
@@ -17,7 +19,7 @@ async function extractDeviceInfo(req) {
   const ip = getClientIP(req);
 
   let geoInfo = {
-    location: "获取中...",
+    location: "未知位置",
     raw: null,
   };
 
@@ -25,94 +27,45 @@ async function extractDeviceInfo(req) {
     geoInfo = await getIPGeoLocation(ip);
   } catch (error) {
     console.error("获取地理位置失败:", error);
+    geoInfo.location = "未知位置";
   }
 
-  // 操作系统检测
-  const osPatterns = [
-    { pattern: /Windows NT 10.0/, name: "Windows 10/11" },
-    { pattern: /Windows NT 6.3/, name: "Windows 8.1" },
-    { pattern: /Windows NT 6.2/, name: "Windows 8" },
-    { pattern: /Windows NT 6.1/, name: "Windows 7" },
-    { pattern: /Windows NT 6.0/, name: "Windows Vista" },
-    { pattern: /Windows NT 5.1/, name: "Windows XP" },
-    { pattern: /Macintosh.*Mac OS X (\d+)_(\d+)_(\d+)/, name: "macOS" },
-    { pattern: /Linux/, name: "Linux" },
-    { pattern: /Android (\d+\.\d+)/, name: "Android" },
-    { pattern: /iPhone|iPad/, name: "iOS" },
-    { pattern: /CrOS/, name: "Chrome OS" },
-    { pattern: /Windows/, name: "Windows" },
-    { pattern: /Macintosh/, name: "macOS" },
-  ];
+  // 使用 ua-parser-js 解析 User-Agent
+  const parser = new UAParser(userAgent);
+  const result = parser.getResult();
 
-  // 浏览器检测
-  const browserPatterns = [
-    { pattern: /Edg\/([\d.]+)/, name: "Microsoft Edge" },
-    { pattern: /Chrome\/([\d.]+)/, name: "Google Chrome" },
-    { pattern: /Firefox\/([\d.]+)/, name: "Mozilla Firefox" },
-    { pattern: /Safari\/([\d.]+)/, name: "Safari" },
-    { pattern: /OPR\/([\d.]+)/, name: "Opera" },
-    { pattern: /Trident\/7.0/, name: "Internet Explorer 11" },
-    { pattern: /MSIE ([\d.]+)/, name: "Internet Explorer" },
-  ];
+  // 提取操作系统信息
+  const os = result.os.name
+    ? `${result.os.name}${result.os.version ? " " + result.os.version : ""}`
+    : "Unknown";
 
-  // 检测操作系统
-  let os = "Unknown";
-  for (const osPattern of osPatterns) {
-    if (osPattern.pattern.test(userAgent)) {
-      os = osPattern.name;
-      break;
-    }
-  }
+  // 提取浏览器信息
+  const browser = result.browser.name
+    ? `${result.browser.name}${
+        result.browser.version ? " " + result.browser.version : ""
+      }`
+    : "Unknown";
 
-  // 检测浏览器
-  let browser = "Unknown";
-  for (const browserPattern of browserPatterns) {
-    const match = userAgent.match(browserPattern.pattern);
-    if (match) {
-      browser = browserPattern.name;
-      if (match[1]) {
-        browser += ` ${match[1]}`;
-      }
-      break;
-    }
-  }
+  // 提取设备信息
+  const deviceName =
+    result.device.vendor && result.device.model
+      ? `${result.device.vendor} ${result.device.model}`
+      : result.device.type === "mobile"
+      ? "Mobile Device"
+      : "Unknown Device";
 
   // 设备类型检测
   let deviceType = "pc";
-  let deviceName = "Unknown Device";
-
-  if (/Mobile|Android|iPhone|iPad|iPod/i.test(userAgent)) {
+  if (result.device.type === "mobile") {
     deviceType = "mobile";
-    if (/iPad/i.test(userAgent)) {
-      deviceType = "tablet";
-      deviceName = "iPad";
-    } else if (/Tablet|Tab/i.test(userAgent)) {
-      deviceType = "tablet";
-      deviceName = "Android Tablet";
-    } else if (/iPhone|iPod/i.test(userAgent)) {
-      deviceName = "iPhone";
-    } else if (/Android/i.test(userAgent)) {
-      deviceName = "Android Phone";
-    } else {
-      deviceName = "Mobile Device";
-    }
-  } else if (/SmartTV|HbbTV|AppleTV|GoogleTV|Roku|PhilipsTV/i.test(userAgent)) {
+  } else if (result.device.type === "tablet") {
+    deviceType = "tablet";
+  } else if (result.device.type === "smarttv") {
     deviceType = "tv";
-    deviceName = "Smart TV";
-  } else if (/Xbox|PlayStation|Nintendo/i.test(userAgent)) {
-    deviceType = "game-console";
-    deviceName = "Game Console";
-  } else if (/Watch|Wear OS|Android Wear/i.test(userAgent)) {
+  } else if (result.device.type === "wearable") {
     deviceType = "wearable";
-    deviceName = "Smart Watch";
-  } else {
-    if (/Macintosh/i.test(userAgent)) {
-      deviceName = "Mac";
-    } else if (/Windows/i.test(userAgent)) {
-      deviceName = "Windows PC";
-    } else if (/Linux/i.test(userAgent)) {
-      deviceName = "Linux PC";
-    }
+  } else if (result.device.type === "console") {
+    deviceType = "game-console";
   }
 
   return {

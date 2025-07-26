@@ -419,7 +419,7 @@
   </div>
 </template>
 <script setup lang="ts" name="Setting">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, defineExpose } from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
@@ -836,7 +836,7 @@ const deleteAccount = async () => {
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
     // 删除账户
-    await axiosConfig.delete("/users/delete");
+    const response = await axiosConfig.delete("/users/delete");
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
 
@@ -855,11 +855,12 @@ const deleteAccount = async () => {
     themeStore.clearUserTheme();
     localStorage.removeItem("reportedMessages");
 
-    ElMessage.success("账号已注销");
+    ElMessage.success(response.data.message);
     router.push({ name: "login/index" });
-  } catch (error) {
-    ElMessage.error("注销失败，请稍后再试");
-    console.error("注销账号失败", error);
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 const fetchLikedArticles = async () => {
@@ -882,9 +883,10 @@ const fetchLikedArticles = async () => {
         likesCount: article.likesCount,
         label: article.label,
       }));
-  } catch (error) {
-    ElMessage.error("获取点赞文章数据失败，请稍后再试");
-    console.log("获取点赞文章数据失败", error);
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   }
 };
 const logout = () => {
@@ -897,6 +899,9 @@ onMounted(() => {
     getAllUsers();
     userStore.loadUser();
   });
+});
+defineExpose({
+  deleteAccount,
 });
 </script>
 <style lang="less" scoped>

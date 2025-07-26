@@ -1,17 +1,23 @@
 <template>
   <div class="device-management">
     <div class="header-section">
-      <h1 class="page-title">设备管理</h1>
-      <p class="page-description">管理您的登录设备，保障账户安全</p>
+      <h1 class="page-title">登录设备管理</h1>
+      <p class="page-description">
+        管理和监控所有已登录您账户的设备，确保只有您信任的设备可以访问您的账户。
+      </p>
     </div>
 
     <el-card class="device-card">
       <template #header>
         <div class="card-header">
-          <div>
+          <div class="card-header-left">
             <span class="card-title">已登录设备</span>
             <el-tag type="info" size="small" class="device-count">
-              共 {{ devices.length }} 台设备
+              共 {{ (devices || []).length }} 台设备
+            </el-tag>
+            <el-tag type="warning" size="small" effect="dark" class="beta-tag">
+              <el-icon><Warning /></el-icon>
+              内测中
             </el-tag>
           </div>
           <el-button
@@ -31,7 +37,7 @@
         element-loading-text="加载中..."
         class="devices-container"
       >
-        <div v-if="devices.length === 0" class="empty-state">
+        <div v-if="(devices || []).length === 0" class="empty-state">
           <el-icon size="48" color="#C0C4CC"><Monitor /></el-icon>
           <p>暂无设备信息</p>
         </div>
@@ -41,7 +47,10 @@
             v-for="device in devices"
             :key="device.id"
             class="device-item"
-            :class="{ 'current-device': device.isCurrentDevice }"
+            :class="{
+              'current-device': device.isCurrentDevice,
+              'trusted-device': device.isTrusted,
+            }"
           >
             <div class="device-header">
               <div class="device-basic-info">
@@ -70,7 +79,7 @@
               </el-tag>
             </div>
 
-            <div class="device-details">
+            <div class="device-details" @click="handleClick(device)">
               <div class="detail-row">
                 <span class="detail-label">系统:</span>
                 <span>{{ device.os }}</span>
@@ -81,7 +90,14 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">位置:</span>
-                <span>{{ user.area || "未知" }}</span>
+                <span>{{ device.location }}</span>
+              </div>
+              <div
+                class="detail-row"
+                v-if="device.isTrusted && device.trustExpire"
+              >
+                <span class="detail-label">信任到期:</span>
+                <span>{{ formatDate(device.trustExpire) }}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">最后登录:</span>
@@ -125,14 +141,26 @@
         <li>定期检查登录设备，及时移除不使用的设备有助于保护账号安全</li>
         <li>受信任的设备在下次登录时无需验证</li>
         <li>如果发现异常设备，请立即登出并修改密码</li>
+        <li>公共设备请勿设为信任，避免账号信息泄露</li>
+        <li>设备信任有效期为30天，过期后需重新验证</li>
+        <li>登出设备后，该设备的登录状态将立即失效</li>
       </ul>
     </el-card>
+    <DeviceDetailModal
+      v-model="modalVisible"
+      :device="selectedDevice"
+      @close="modalVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useUserStore } from "../../store/userStore";
+import DeviceDetailModal from "./DeviceDetailModal.vue";
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
 import {
   Monitor,
   Iphone,
@@ -141,14 +169,19 @@ import {
   Cellphone,
 } from "@element-plus/icons-vue";
 import axiosConfig from "../../utils/request";
-import { useUserStore } from "../../store/userStore";
 import type { Device } from "../../types/device";
 
-const userStore = useUserStore();
-const user = computed(() => userStore.user);
-const devices = ref<Device[]>([]); // 添加类型注解
+const devices = ref<Device[]>([]);
 const loading = ref(false);
+// 添加弹窗相关的状态
+const modalVisible = ref(false);
+const selectedDevice = ref<Device>({} as Device);
 
+// 修改 handleClick 方法
+const handleClick = (device: Device) => {
+  selectedDevice.value = device;
+  modalVisible.value = true;
+};
 onMounted(() => {
   fetchDevices();
 });
@@ -159,16 +192,18 @@ const getDeviceIcon = (deviceType: string) => {
     case "mobile":
       return Iphone;
     case "tablet":
-      return Cellphone; // 使用已导入的 Cellphone 替代未导入的 Tablet
+      return Cellphone;
     default:
       return Monitor;
   }
 };
 
-// 格式化日期
-const formatDate = (dateString: string | undefined) => {
+const formatDate = (dateString: string | Date | undefined) => {
   if (!dateString) return "未知";
+
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "未知";
+
   return date.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
@@ -183,10 +218,13 @@ const fetchDevices = async () => {
   try {
     loading.value = true;
     const response = await axiosConfig.get("/auth/devices");
-    devices.value = response.data.data;
-  } catch (error) {
-    console.error("Failed to fetch devices:", error);
-    ElMessage.error("获取设备列表失败");
+    console.log(response);
+
+    devices.value = Array.isArray(response.data.data) ? response.data.data : [];
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -194,19 +232,26 @@ const fetchDevices = async () => {
 
 const trustDevice = async (deviceId: string) => {
   try {
+    // 设置权限 只有管理员可以设置
+    // 设置权限 只有管理员可以设置
+    if (user.value?.id !== 4) {
+      ElMessage.error("您没有权限进行此操作");
+      return;
+    }
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (!device) return;
 
     device.actionLoading = true;
-    await axiosConfig.put(`/auth/devices/${deviceId}/trust`, {
+    const response = await axiosConfig.put(`/auth/devices/${deviceId}/trust`, {
       trusted: !device.isTrusted,
     });
 
     device.isTrusted = !device.isTrusted;
-    ElMessage.success(`设备已${device.isTrusted ? "设为信任" : "取消信任"}`);
-  } catch (error) {
-    console.error("Failed to trust device:", error);
-    ElMessage.error("操作失败");
+    ElMessage.success(response.data.message ? "操作成功" : "操作失败");
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   } finally {
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (device) {
@@ -231,16 +276,15 @@ const logoutDevice = async (deviceId: string) => {
     );
 
     device.actionLoading = true;
-    await axiosConfig.delete(`/auth/devices/${deviceId}`);
+    const response = await axiosConfig.delete(`/auth/devices/${deviceId}`);
     devices.value = devices.value.filter(
       (device: any) => device.id !== deviceId
     );
-    ElMessage.success("设备登出成功");
-  } catch (error) {
-    if (error !== "cancel") {
-      console.error("Failed to logout device:", error);
-      ElMessage.error("设备登出失败");
-    }
+    ElMessage.success(response.data.message);
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   } finally {
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (device) {
@@ -250,6 +294,10 @@ const logoutDevice = async (deviceId: string) => {
 };
 
 const logoutAllDevices = async () => {
+  if ((devices.value || []).length === 0) {
+    ElMessage.info("暂无设备信息");
+    return;
+  }
   try {
     await ElMessageBox.confirm(
       "确定要登出所有设备吗？您需要在所有设备上重新登录。",
@@ -262,247 +310,262 @@ const logoutAllDevices = async () => {
     );
 
     loading.value = true;
-    await axiosConfig.post("/auth/login/device");
-    ElMessage.success("已登出所有其他设备");
+
+    const response = await axiosConfig.post("/auth/login/device");
+    ElMessage.success(response.data.message);
     fetchDevices();
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
-
-    // 特定错误提示
-    if (errorMessage.includes("UUID 已存在")) {
-      ElMessage.warning("UUID 已存在，请稍后再试或清除缓存重试。");
-    }
   } finally {
     loading.value = false;
   }
 };
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .device-management {
   padding: 24px;
-  background: var(--bg1);
   min-height: 100vh;
   max-width: 1400px;
   margin: 0 auto;
-}
+  :deep(.el-card__body) {
+    background: var(--bg1);
+  }
+  .header-section {
+    margin-bottom: 24px;
 
-.header-section {
-  margin-bottom: 24px;
-}
+    .page-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--color-bg4);
+      margin: 0 0 8px 0;
+    }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--color-bg4);
-  margin: 0 0 8px 0;
-}
+    .page-description {
+      font-size: 14px;
+      color: var(--color-bg4);
+      margin: 0;
+    }
+  }
 
-.page-description {
-  font-size: 14px;
-  color: var(--color-bg4);
-  margin: 0;
-}
+  .device-card {
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    :deep(.el-card__header) {
+      padding: 20px 24px;
+      border-bottom: var(--border);
+      background: var(--bg1);
+    }
 
-.device-card {
-  margin-bottom: 24px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  border: none;
-}
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
 
-:deep(.el-card__header) {
-  padding: 20px 24px;
-  border-bottom: 1px solid #ebeef5;
-  background: var(--bg1);
-}
+      .card-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
+      .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-bg4);
+      }
 
-.card-header > div {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+      .device-count {
+        height: 20px;
+        line-height: 18px;
+      }
+    }
 
-.card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-bg4);
-}
+    .devices-container {
+      min-height: 300px;
 
-.device-count {
-  height: 20px;
-  line-height: 18px;
-}
+      .empty-state {
+        text-align: center;
+        padding: 60px 0;
+        color: var(--color-bg4);
 
-.devices-container {
-  min-height: 300px;
-}
+        p {
+          margin-top: 16px;
+          font-size: 14px;
+        }
+      }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-  color: var(--color-bg4);
-}
+      .devices-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        padding: 20px;
 
-.empty-state p {
-  margin-top: 16px;
-  font-size: 14px;
-}
+        .device-item {
+          border: 2px solid transparent; // 默认透明边框
+          border-radius: 8px;
+          transition: all 0.3s;
 
-.devices-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-  padding: 20px;
-}
+          &:hover {
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+          }
 
-.device-item {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
+          &.current-device {
+            background: var(--bg1);
+            border-color: #409eff; // 当前设备蓝色边框
+            box-shadow: 0 0 0 1px #409eff;
+          }
 
-.device-item:hover {
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
+          &.trusted-device {
+            border-color: #67c23a; // 受信任设备绿色边框
+          }
 
-.device-item.current-device {
-  background: var(--bg1);
-}
+          // 同时是当前设备和受信任设备时，优先显示当前设备边框
+          &.current-device.trusted-device {
+            border-color: #409eff;
+          }
 
-.device-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
+          .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
 
-.device-basic-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
+            .device-basic-info {
+              display: flex;
+              align-items: flex-start;
+              gap: 12px;
 
-.device-icon {
-  color: #409eff;
-  margin-top: 2px;
-}
+              .device-icon {
+                color: #409eff;
+                margin-top: 2px;
+              }
 
-.device-name-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+              .device-name-section {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
 
-.device-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-bg4);
-}
+                .device-name {
+                  font-size: 16px;
+                  font-weight: 500;
+                  color: var(--color-bg4);
+                }
+              }
+            }
 
-.trust-status {
-  height: 24px;
-  line-height: 22px;
-}
+            .trust-status {
+              height: 24px;
+              line-height: 22px;
+            }
+          }
 
-.device-details {
-  margin-bottom: 20px;
-  color: var(--color-bg4);
-}
+          .device-details {
+            margin-bottom: 20px;
+            color: var(--color-bg4);
 
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              font-size: 14px;
 
-.detail-row:last-child {
-  margin-bottom: 0;
-}
+              &:last-child {
+                margin-bottom: 0;
+              }
 
-.detail-label {
-  color: var(--color-bg4);
-  width: 70px;
-  flex-shrink: 0;
-}
+              .detail-label {
+                color: var(--color-bg4);
+                width: 70px;
+                flex-shrink: 0;
+              }
+            }
+          }
 
-.device-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+          .device-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+        }
+      }
+    }
+  }
 
-.security-card {
-  border: none;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  background: var(--bg1);
-}
+  .security-card {
+    border: none;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    background: var(--bg1);
 
-.security-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
+    .security-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
 
-.security-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: var(--color-bg4);
-}
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--color-bg4);
+      }
+    }
 
-.security-tips {
-  padding-left: 20px;
-  margin: 0;
-}
+    .security-tips {
+      padding-left: 20px;
+      margin: 0;
 
-.security-tips li {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: var(--color-bg4);
-  line-height: 1.5;
-}
+      li {
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--color-bg4);
+        line-height: 1.5;
 
-.security-tips li:last-child {
-  margin-bottom: 0;
-}
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
 
-@media (max-width: 768px) {
-  .device-management {
+  @media (max-width: 768px) {
     padding: 16px;
-  }
 
-  .page-title {
-    font-size: 24px;
-  }
+    .page-title {
+      font-size: 24px;
+    }
 
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
+    .card-header {
+      flex-direction: column;
+      align-items: stretch;
 
-  .card-header > div {
-    justify-content: space-between;
-  }
+      .card-header-left {
+        justify-content: space-between;
+      }
+    }
 
-  .devices-grid {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
+    .devices-grid {
+      grid-template-columns: 1fr;
+      padding: 16px;
 
-  .device-item {
-    width: 100%;
+      .device-item {
+        width: 100%;
+
+        .device-id {
+          flex-direction: column;
+          gap: 4px;
+
+          .device-id-value {
+            text-align: left;
+          }
+        }
+      }
+    }
   }
 }
 </style>
