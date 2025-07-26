@@ -83,7 +83,7 @@ export const ja = {
       suggestions: "提案",
       suggestionsList: "提案リスト",
 
-      supportwe: "私たちをサポート",
+      securitycenter: "サポート",
       expand: "展開",
       collapse: "折りたたみ",
     },

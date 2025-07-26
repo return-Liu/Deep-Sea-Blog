@@ -87,11 +87,14 @@
           </router-link>
         </el-menu-item>
       </el-tooltip>
-      <el-tooltip :content="$t('commonaside.home.supportwe')" placement="right">
-        <el-menu-item index="/supportwe">
-          <el-icon><ChatDotRound /></el-icon>
-          <router-link to="/supportwe">{{
-            $t("commonaside.home.supportwe")
+      <el-tooltip
+        :content="$t('commonaside.home.suggestionsList')"
+        placement="right"
+      >
+        <el-menu-item index="/securitycenter">
+          <el-icon><Tools /></el-icon>
+          <router-link to="/securitycenter">{{
+            $t("commonaside.home.securitycenter")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>

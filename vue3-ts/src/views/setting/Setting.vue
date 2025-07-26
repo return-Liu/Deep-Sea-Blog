@@ -571,26 +571,13 @@ const switchAccount = async (id: string) => {
       ElMessage.info("你已经在该账号下登录啦~");
       return;
     }
-
-    if (user && user.id) {
-      localStorage.removeItem(`theme-style-${user.id}`);
-    }
-
     const response = await axiosConfig.post("/auth/switch-account", {
       userId: id,
     });
-
-    // 更新 user.value
-    themeStore.setUser(Number(id));
-
     const userData = response.data.data;
-    // 刷新主题
-    await themeStore.loadTheme(); // 重新加载主题
-
     // 更新 token 和 uuid 到本地存储
     Cookies.set("ds-token", userData.token);
     ElMessage.success(response.data.message);
-
     // 刷新用户信息，确保 UI 数据同步
     fetchUserInfo();
     getAllUsers(); // 重新获取账号列表

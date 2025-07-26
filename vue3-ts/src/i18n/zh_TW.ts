@@ -75,7 +75,7 @@ export const zh_TW = {
       photo: "定格時光",
       suggestions: "建議與反饋",
       suggestionsList: "建議與反饋列表",
-      supportwe: "支持我們",
+      securitycenter: "帳號安全中心",
       expand: "展開",
       collapse: "收起",
     },

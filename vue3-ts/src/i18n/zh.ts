@@ -79,7 +79,7 @@ export const zh = {
       photo: "定格时光",
       suggestions: "建议与反馈",
       suggestionsList: "建议与反馈列表",
-      supportwe: "支持我们",
+      securitycenter: "账号安全中心",
       expand: "展开",
       collapse: "收起",
     },

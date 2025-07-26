@@ -31,10 +31,10 @@ export const useThemeStore = defineStore("theme", () => {
       setTheme(mode);
     }
 
-    // 确保 user 已被初始化
     if (user.value) {
       try {
         await updateThemeInDatabase(user.value, mode);
+        // 确保写入 localStorage 的值有效
         if (typeof mode === "string" && mode.trim() !== "") {
           localStorage.setItem(`theme-style-${user.value}`, mode);
         }

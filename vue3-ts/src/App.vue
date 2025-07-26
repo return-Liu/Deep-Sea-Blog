@@ -33,9 +33,13 @@ watch(
     if (newUser && oldUser && newUser.uuid !== oldUser.uuid) {
       getAllUsers();
       loadUserContents();
+      themeStore.loadTheme();
+      userStore.loadUser();
     }
     if (newUser) {
-      const savedLanguage = localStorage.getItem(`language-${newUser.uuid}`);
+      const savedLanguage = localStorage.getItem(
+        `language-style${newUser.uuid}`
+      );
       if (savedLanguage) {
         locale.value = savedLanguage;
       }

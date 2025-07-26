@@ -89,7 +89,7 @@ export const en = {
       photo: "Frozen Moments",
       suggestions: "Suggestions",
       suggestionsList: "SuggestionsList",
-      supportwe: "Support Us",
+      securitycenter: "Security Center",
       expand: "Expand",
       collapse: "Collapse",
     },

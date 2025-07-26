@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Note, { foreignKey: "userId" });
       User.hasMany(models.Update, { foreignKey: "userId" });
       User.hasMany(models.Wall, { foreignKey: "userId" });
+      User.hasMany(models.Device, { foreignKey: "userId" });
     }
   }
   User.init(

@@ -1,10 +1,11 @@
 // auth.js
 const express = require("express");
 const router = express.Router();
-const { User } = require("../models");
+const { User, Device } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { createSixNum, verifyEmail } = require("../utils/email");
 const { canSendCode } = require("../utils/rateLimiter");
+const { extractDeviceInfo, getClientIP } = require("../utils/deviceInfo");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -15,9 +16,13 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
-// 用于记录验证码发送记录，
-const verificationCodeRecords = {};
-// 生成一个随机的特征码
+
+// 生成设备唯一标识符
+function generateDeviceId(userId, userAgent, ip) {
+  const hash = crypto.createHash("md5");
+  hash.update(`${userId}-${userAgent}-${ip}`);
+  return hash.digest("hex");
+} // 生成一个随机的特征码
 function generateFeatureCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
@@ -273,6 +278,74 @@ router.get("/accounts", async (req, res) => {
     failure(res, error);
   }
 });
+async function handlePostLogin(user, req, res) {
+  // 生成token
+  const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
+    expiresIn: "1h",
+  });
+
+  // 记录设备信息
+  const deviceInfo = await extractDeviceInfo(req);
+  const deviceId = generateDeviceId(
+    user.id,
+    deviceInfo.userAgent,
+    deviceInfo.ip
+  );
+
+  // 查找或创建设备记录
+  let device = await Device.findOne({ where: { deviceId } });
+
+  if (!device) {
+    device = await Device.create({
+      userId: user.id,
+      deviceId,
+      deviceName: deviceInfo.deviceName,
+      deviceType: deviceInfo.deviceType,
+      os: deviceInfo.os,
+      browser: deviceInfo.browser,
+      ip: deviceInfo.ip,
+      location: deviceInfo.geoLocation,
+      geoInfo: deviceInfo.geoInfo,
+      lastLoginTime: new Date(),
+      isTrusted: false,
+      userAgent: deviceInfo.userAgent,
+    });
+  } else {
+    await device.update({
+      lastLoginTime: new Date(),
+      deviceName: deviceInfo.deviceName,
+      os: deviceInfo.os,
+      browser: deviceInfo.browser,
+      ip: deviceInfo.ip,
+      location: deviceInfo.geoLocation,
+      geoInfo: deviceInfo.geoInfo,
+    });
+  }
+
+  success(res, "登录成功", {
+    token,
+    deviceInfo: {
+      deviceName: deviceInfo.deviceName,
+      location: deviceInfo.geoLocation,
+      isTrusted: device.isTrusted,
+    },
+  });
+}
+// 处理登录失败尝试
+async function handleFailedLoginAttempt(user) {
+  const attempts = (user.loginAttempts || 0) + 1;
+  let updates = { loginAttempts: attempts };
+
+  if (attempts >= 5) {
+    updates = {
+      ...updates,
+      locked: true,
+      lockUntil: new Date(Date.now() + 30 * 60 * 1000), // 锁定30分钟
+    };
+  }
+
+  await user.update(updates);
+}
 /**
  * 用户登录
  * POST auth/sign_in
@@ -280,38 +353,71 @@ router.get("/accounts", async (req, res) => {
 router.post("/sign_in", async (req, res) => {
   try {
     const { login, password } = req.body;
-    if (!login) {
-      throw new BadRequestError("账号或手机号或邮箱必须填写!");
-    }
-    if (!password) {
-      throw new BadRequestError("密码必须填写!");
-    }
-    const condition = {
+
+    // 1. 参数验证
+    if (!login?.trim()) throw new BadRequestError("账号/手机号/邮箱不能为空");
+    if (!password?.trim()) throw new BadRequestError("密码不能为空");
+
+    // 2. 查找用户
+    const user = await User.findOne({
       where: {
-        [Op.or]: [{ email: login }, { username: login }, { phone: login }],
+        [Op.or]: [
+          { email: login.trim() },
+          { username: login.trim() },
+          { phone: login.trim() },
+        ],
+        status: "active", // 添加状态检查，确保是活跃用户
       },
-    };
-    const user = await User.findOne(condition);
-    if (!user) throw new NotFoundError("用户不存在, 请先注册账号!");
-    // 验证密码是否正确
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!login) {
-      throw new BadRequestError("请输入正确的账号或手机号或邮箱");
+      attributes: ["id", "password", "locked", "loginAttempts"], // 只查询必要字段
+    });
+
+    // 3. 用户验证
+    if (!user) throw new NotFoundError("用户不存在或账号未激活");
+
+    // 检查账号是否被锁定
+    if (user.locked) {
+      const lockTime = new Date(user.lockUntil);
+      throw new UnauthorizedError(
+        `账号已锁定，请 ${lockTime.toLocaleTimeString()} 后再试`
+      );
     }
-    if (!isPasswordValid)
-      throw new UnauthorizedError("密码错误,请输入正确的密码");
-    // 生成身份验证令牌
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      // 设置令牌过期时间 1小时
-      expiresIn: "1h",
-    });
-    success(res, "登录成功", {
-      token,
-    });
+
+    // 4. 密码验证
+    const isPasswordValid = await bcrypt.compare(
+      password.trim(),
+      user.password
+    );
+    if (!isPasswordValid) {
+      // 记录错误尝试
+      await handleFailedLoginAttempt(user);
+      throw new UnauthorizedError("账号或密码错误");
+    }
+
+    // 5. 登录成功处理
+    await handlePostLogin(user, req, res);
+
+    // 重置登录尝试次数
+    await user.update({ loginAttempts: 0 });
   } catch (error) {
     failure(res, error);
   }
 });
+
+// 邮箱验证码登录 - 验证验证码并登录
+router.post("/email", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const user = await User.findOne({ where: { email } });
+    if (!user) throw new NotFoundError("用户不存在");
+    if (user.code !== code) throw new BadRequestError("验证码错误");
+    if (new Date() > user.codeExpire) throw new BadRequestError("验证码已过期");
+
+    await handlePostLogin(user, req, res);
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
 // 邮箱验证码登录 - 发送验证码（带频率限制）
 router.post("/email/verify", async (req, res) => {
   try {
@@ -363,24 +469,186 @@ router.post("/email/verify", async (req, res) => {
     failure(res, error);
   }
 });
-// 邮箱验证码登录 - 验证验证码并登录
-router.post("/email", async (req, res) => {
+
+// 登录设备管理
+router.post("/login/device", async (req, res) => {
   try {
-    const { email, code } = req.body;
+    // 获取当前用户
+    const currentUser = await getCurrentUser(req);
 
-    const user = await User.findOne({ where: { email } });
-    if (!user) throw new NotFoundError("用户不存在");
+    // 提取设备信息
+    const deviceInfo = extractDeviceInfo(req);
+    const deviceId = generateDeviceId(
+      currentUser.id,
+      deviceInfo.userAgent,
+      deviceInfo.ip
+    );
 
-    if (user.code !== code) throw new Error("验证码错误");
-    if (new Date() > user.codeExpire) throw new Error("验证码已过期");
-
-    // 生成身份验证令牌
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      expiresIn: "1h",
+    // 查找或创建设备记录
+    let device = await Device.findOne({
+      where: {
+        deviceId: deviceId,
+      },
     });
-    success(res, "登录成功", {
-      token,
+
+    if (!device) {
+      device = await Device.create({
+        userId: currentUser.id,
+        deviceId: deviceId,
+        deviceName: deviceInfo.deviceName,
+        deviceType: deviceInfo.deviceType,
+        os: deviceInfo.os,
+        browser: deviceInfo.browser,
+        ip: deviceInfo.ip,
+        lastLoginTime: new Date(),
+        isTrusted: false,
+        userAgent: deviceInfo.userAgent,
+      });
+    } else {
+      // 更新最后登录时间
+      await device.update({
+        lastLoginTime: new Date(),
+      });
+    }
+
+    success(res, "设备信息记录成功", {
+      deviceId: device.deviceId,
+      isTrusted: device.isTrusted,
     });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 获取用户所有登录设备
+// 更新设备列表路由
+router.get("/devices", async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+    const currentDeviceInfo = await extractDeviceInfo(req);
+    const currentDeviceId = generateDeviceId(
+      currentUser.id,
+      currentDeviceInfo.userAgent,
+      currentDeviceInfo.ip
+    );
+
+    const devices = await Device.findAll({
+      where: { userId: currentUser.id },
+      order: [["lastLoginTime", "DESC"]],
+    });
+
+    const formattedDevices = devices.map((device) => ({
+      id: device.deviceId,
+      deviceName: device.deviceName,
+      deviceType: device.deviceType,
+      os: device.os,
+      browser: device.browser,
+      ip: device.ip,
+      location: device.location || "未知",
+      geoInfo: device.geoInfo,
+      lastLoginTime: device.lastLoginTime,
+      isTrusted: device.isTrusted,
+      isCurrentDevice: device.deviceId === currentDeviceId,
+    }));
+
+    success(res, "获取设备列表成功", formattedDevices);
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 删除设备（登出设备）
+router.delete("/devices/:deviceId", async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+    const { deviceId } = req.params;
+
+    // 检查设备是否属于当前用户
+    const device = await Device.findOne({
+      where: {
+        deviceId: deviceId,
+        userId: currentUser.id,
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundError("设备不存在或不属于当前用户");
+    }
+
+    // 不允许删除当前设备
+    const currentDeviceInfo = extractDeviceInfo(req);
+    const currentDeviceId = generateDeviceId(
+      currentUser.id,
+      currentDeviceInfo.userAgent,
+      currentDeviceInfo.ip
+    );
+
+    if (device.deviceId === currentDeviceId) {
+      throw new BadRequestError("不能删除当前设备");
+    }
+
+    await device.destroy();
+
+    success(res, "设备删除成功");
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 设置设备信任状态
+router.put("/devices/:deviceId/trust", async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+    const { deviceId } = req.params;
+    const { trusted } = req.body;
+
+    // 查找设备
+    const device = await Device.findOne({
+      where: {
+        deviceId: deviceId,
+        userId: currentUser.id,
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundError("设备不存在或不属于当前用户");
+    }
+
+    // 更新信任状态
+    await device.update({
+      isTrusted: trusted,
+    });
+
+    success(res, `设备${trusted ? "已设为信任" : "已取消信任"}`);
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 登出所有设备（除了当前设备）
+router.post("/devices/logout-all", async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+
+    // 获取当前设备ID
+    const currentDeviceInfo = extractDeviceInfo(req);
+    const currentDeviceId = generateDeviceId(
+      currentUser.id,
+      currentDeviceInfo.userAgent,
+      currentDeviceInfo.ip
+    );
+
+    // 删除除当前设备外的所有设备
+    await Device.destroy({
+      where: {
+        userId: currentUser.id,
+        deviceId: {
+          [Op.ne]: currentDeviceId,
+        },
+      },
+    });
+
+    success(res, "已登出所有其他设备");
   } catch (error) {
     failure(res, error);
   }

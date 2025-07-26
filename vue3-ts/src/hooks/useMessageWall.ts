@@ -409,7 +409,7 @@ export default function useMessageWall() {
       name: userStore.user?.nickname || "", // 使用当前用户的昵称
       content: "",
       userId: userId.value, // 设置当前用户 ID
-      category: null,
+      category: messageCategories[0].id, // 默认选择第一个分类
       likesCount: 0,
       date: "",
       backgroundColor: predefinedColors[0].color,
@@ -463,7 +463,7 @@ export default function useMessageWall() {
       name: "",
       content: "",
       userId: null,
-      category: null,
+      category: messageCategories[0].id,
       likesCount: 0,
       date: "",
       backgroundColor: predefinedColors[0].color,

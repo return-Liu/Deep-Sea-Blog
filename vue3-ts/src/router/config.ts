@@ -92,14 +92,19 @@ const routers = [
     component: () => import("../views/users/Users.vue"),
   },
   {
-    path: "/supportwe",
-    name: "supportwe",
-    component: () => import("../views/supportwe/SupportWe.vue"),
+    path: "/securitycenter",
+    name: "securitycenter",
+    component: () => import("../views/securitycenter/SecurityCenter.vue"),
   },
   {
     path: "/overview/:id?",
     name: "overview",
     component: () => import("../views/overview/OverView.vue"),
+  },
+  {
+    path: "/devicemanagement/:uuid",
+    name: "devicemanagement",
+    component: () => import("../views/devicemanagement/DeviceManagement.vue"),
   },
 ];
 export default routers;

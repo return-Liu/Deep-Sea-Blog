@@ -80,7 +80,7 @@ export const ko = {
       photo: "정성의 시간",
       suggestions: "건의사항",
       suggestionsList: "건의사항 목록",
-      supportwe: "우리를 지원하세요",
+      securitycenter: "계정 보안 센터",
       expand: "확장",
       collapse: "접기",
     },
