@@ -5,7 +5,6 @@ const { success, failure } = require("../utils/responses");
 const { createSixNum, verifyEmail } = require("../utils/email");
 const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
-const { getGeocodeLocation } = require("../utils/ipGeo");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -16,7 +15,32 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
-
+const axios = require("axios");
+// 获取地理编码信息
+async function getGeocodeLocation(address, city) {
+  try {
+    const response = await axios.get(
+      "https://restapi.amap.com/v3/geocode/geo",
+      {
+        params: {
+          key: "84c8fc9794d45e1bbb56bad2d8a7da05",
+          address: address,
+          city: city,
+        },
+      }
+    );
+    const formattedAddress = response.data.geocodes[0].formatted_address;
+    console.log("地理位置", formattedAddress);
+  } catch (error) {
+    console.error("地理编码请求异常:", error.message);
+    return null;
+  }
+}
+(async () => {
+  const address = "宜春市";
+  const city = "奉新";
+  await getGeocodeLocation(address, city);
+})();
 // 生成设备唯一标识符
 function generateDeviceId(userId, userAgent) {
   const hash = crypto.createHash("md5");
@@ -279,7 +303,6 @@ router.get("/accounts", async (req, res) => {
     failure(res, error);
   }
 });
-// 第一处修改：在 handlePostLogin 函数中
 async function handlePostLogin(user, req, res) {
   // 生成token
   const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
@@ -288,31 +311,8 @@ async function handlePostLogin(user, req, res) {
 
   // 记录设备信息
   const deviceInfo = await extractDeviceInfo(req);
-  const deviceId = generateDeviceId(
-    user.id,
-    deviceInfo.userAgent,
-    deviceInfo.ip
-  );
-
-  // 获取经纬度坐标（如果有地址信息）
-  let location = "未知位置";
-  // 检查 deviceInfo.geoInfo 是否存在且包含地址信息
-  if (deviceInfo.geoInfo && deviceInfo.geoInfo.raw) {
-    const address = deviceInfo.geoInfo.raw.address;
-    const city = deviceInfo.geoInfo.raw.city || "";
-
-    // 确保地址存在才调用 getGeocodeLocation
-    if (address) {
-      try {
-        const coordinates = await getGeocodeLocation(address, city);
-        if (coordinates) {
-          location = coordinates;
-        }
-      } catch (error) {
-        console.error("获取经纬度坐标失败:", error);
-      }
-    }
-  }
+  const deviceId = generateDeviceId(user.id, deviceInfo.userAgent);
+  // 获取地理位置
 
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
@@ -337,7 +337,6 @@ async function handlePostLogin(user, req, res) {
       deviceType: deviceInfo.deviceType,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      location,
       lastLoginTime: new Date(),
       isTrusted: false,
       userAgent: deviceInfo.userAgent,
@@ -348,7 +347,6 @@ async function handlePostLogin(user, req, res) {
       deviceName: deviceInfo.deviceName,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      location,
     });
   }
 
@@ -356,7 +354,6 @@ async function handlePostLogin(user, req, res) {
     token,
     deviceInfo: {
       deviceName: deviceInfo.deviceName,
-      location: deviceInfo.geoLocation,
       isTrusted: device.isTrusted,
     },
   });
@@ -492,26 +489,6 @@ router.post("/login/device", async (req, res) => {
     const deviceInfo = await extractDeviceInfo(req);
     const deviceId = generateDeviceId(currentUser.id, deviceInfo.userAgent);
 
-    // 获取经纬度坐标（如果有地址信息）
-    let location = "未知位置";
-    // 检查 deviceInfo.geoInfo 是否存在且包含地址信息
-    if (deviceInfo.geoInfo && deviceInfo.geoInfo.raw) {
-      const address = deviceInfo.geoInfo.raw.address;
-      const city = deviceInfo.geoInfo.raw.city || "";
-
-      // 确保地址存在才调用 getGeocodeLocation
-      if (address) {
-        try {
-          const coordinates = await getGeocodeLocation(address, city);
-          if (coordinates) {
-            location = coordinates;
-          }
-        } catch (error) {
-          console.error("获取经纬度坐标失败:", error);
-        }
-      }
-    }
-
     // 查找或创建设备记录
     let device = await Device.findOne({
       where: {
@@ -530,17 +507,15 @@ router.post("/login/device", async (req, res) => {
       lastLoginTime: new Date(),
       isTrusted: false,
       userAgent: deviceInfo.userAgent,
-      location: location, // 使用获取到的经纬度坐标
     };
 
     if (!device) {
       // 创建设备记录前确保所有必需字段都已设置
       device = await Device.create(deviceData);
     } else {
-      // 更新最后登录时间和位置信息
+      // 更新最后登录时间
       await device.update({
         lastLoginTime: new Date(),
-        location: location, // 更新位置信息
       });
     }
 
@@ -554,7 +529,6 @@ router.post("/login/device", async (req, res) => {
   }
 });
 // 获取用户所有登录设备
-// 第三处修改：在 /devices 路由中
 router.get("/devices", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -575,7 +549,6 @@ router.get("/devices", async (req, res) => {
       deviceType: device.deviceType,
       os: device.os,
       browser: device.browser,
-      location: device.location || "未知",
       lastLoginTime: device.lastLoginTime,
       isTrusted: device.isTrusted,
       // 添加信任过期时间
@@ -627,7 +600,6 @@ router.delete("/devices/:deviceId", async (req, res) => {
 });
 
 // 设置设备信任状态
-// 设置设备信任状态 - 修改 /devices/:deviceId/trust 路由
 router.put("/devices/:deviceId/trust", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);

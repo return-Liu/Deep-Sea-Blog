@@ -19,7 +19,9 @@
                 <span style="font-size: 20px"> {{ device.deviceType }} </span
                 >端的设备名称
               </h5>
-              <h4 class="device-name">{{ device.deviceName }}</h4>
+              <h4 class="device-name">
+                {{ device.deviceName || "未知登录设备名称/平台 " }}
+              </h4>
               <el-tag
                 :type="device.isTrusted ? 'success' : 'info'"
                 size="small"
@@ -36,7 +38,9 @@
               <el-icon class="detail-icon"><Monitor /></el-icon>
               <span>设备类型</span>
             </div>
-            <div class="detail-value">{{ device.deviceType }}</div>
+            <div class="detail-value">
+              {{ device.deviceType || "未知登录设备类型" }}
+            </div>
           </div>
 
           <div class="detail-item">
@@ -44,7 +48,7 @@
               <el-icon class="detail-icon"><Platform /></el-icon>
               <span>操作系统</span>
             </div>
-            <div class="detail-value">{{ device.os }}</div>
+            <div class="detail-value">{{ device.os || "未知登录系统" }}</div>
           </div>
 
           <div class="detail-item">
@@ -52,7 +56,9 @@
               <el-icon class="detail-icon"><ChromeFilled /></el-icon>
               <span>浏览器</span>
             </div>
-            <div class="detail-value">{{ device.browser }}</div>
+            <div class="detail-value">
+              {{ device.browser || "未知登录浏览器" }}
+            </div>
           </div>
 
           <div class="detail-item">
@@ -60,7 +66,9 @@
               <el-icon class="detail-icon"><Location /></el-icon>
               <span>位置</span>
             </div>
-            <div class="detail-value">{{ device.location || "未知位置" }}</div>
+            <div class="detail-value">
+              {{ device.location || "未知登录参考地" }}
+            </div>
           </div>
 
           <div class="detail-item">
@@ -69,7 +77,7 @@
               <span>最后登录</span>
             </div>
             <div class="detail-value">
-              {{ formatDate(device.lastLoginTime) }}
+              {{ formatDate(device.lastLoginTime) || "未知登录时间" }}
             </div>
           </div>
 
@@ -88,11 +96,8 @@
       <!-- 提示信息 -->
       <div class="modal-footer">
         <p class="notice-text">
-          注意：设备信息可能存在延迟，仅供参考，请以当前设备实际状态为准。
+          温馨提示：设备信息可能存在延迟，实际情况请以当前设备状态为准
         </p>
-      </div>
-      <div class="modal-footer">
-        <el-button @click="closeModal">关闭</el-button>
       </div>
     </div>
   </div>
@@ -290,10 +295,6 @@ const formatDate = (dateString: string | Date | undefined) => {
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
-
-  .el-button {
-    min-width: 80px;
-  }
 }
 
 .notice-text {

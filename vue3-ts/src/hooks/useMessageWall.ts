@@ -207,36 +207,28 @@ export default function useMessageWall() {
         params.category = category;
       }
       const wallResponse = await axiosConfig.get("/admin/wall", { params });
+      messages.value = wallResponse.data.data.walls.map((wall: any) => ({
+        id: wall.id.toString(),
+        content: wall.content,
+        name: wall.name,
+        userId: wall.userId,
+        category: wall.category,
+        likesCount: wall.likesCount || 0,
+        isLiked: false,
+        date: wall.createdAt,
+        backgroundColor: wall.backgroundColor,
+        nicknameColor: wall.User?.nicknameColor || "#000000", // 安全访问并提供默认值
+      }));
+      console.log(wallResponse);
 
-      if (wallResponse.data.status) {
-        if (currentPage === 1) {
-          messages.value = wallResponse.data.data.walls.map((wall: any) => ({
-            id: wall.id.toString(),
-            content: wall.content,
-            name: wall.name,
-            userId: wall.userId,
-            category: wall.category,
-            likesCount: wall.likesCount || 0,
-            isLiked: false,
-            date: wall.createdAt,
-            backgroundColor: wall.backgroundColor,
-            nicknameColor: wall.User.nicknameColor, // 使用用户的昵称颜色
-          }));
-          console.log(wallResponse);
-
-          // 获取每个留言的评论数据
-          // 使用 Promise.all 并行获取所有评论数量
-          const counts = await Promise.all(
-            messages.value.map((message) => getCommentCount(message.id))
-          );
-          // 将获取到的评论数量存储到 commentCounts 中
-          messages.value.forEach((message, index) => {
-            commentCounts.value[message.id] = counts[index];
-          });
-        }
-      }
+      // 获取每个留言的评论数据
+      const counts = await Promise.all(
+        messages.value.map((message) => getCommentCount(message.id))
+      );
+      messages.value.forEach((message, index) => {
+        commentCounts.value[message.id] = counts[index];
+      });
     } catch (error: any) {
-      // 兼容 message 字段
       const errorMessage =
         error?.response?.data?.message || error?.message || "未知错误";
       ElMessage.error(errorMessage);

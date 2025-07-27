@@ -59,7 +59,7 @@
                 </el-icon>
                 <div class="device-name-section">
                   <span class="device-name">{{
-                    device.deviceName || "未知设备名称/平台"
+                    device.deviceName || "未知登录设备名称/平台"
                   }}</span>
                   <el-tag
                     v-if="device.isCurrentDevice"

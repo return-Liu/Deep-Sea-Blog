@@ -1,34 +1,7 @@
-const { getIPGeoLocation } = require("./ipGeo");
 const UAParser = require("ua-parser-js");
 const os = require("os");
-
 async function extractDeviceInfo(req) {
   const userAgent = req.get("User-Agent") || "";
-  const ip =
-    req.ip ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    (req.headers["x-forwarded-for"] || "").split(",")[0];
-
-  // 初始化地理位置信息
-  let geoInfo = {
-    location: "未知位置",
-    raw: null,
-    coordinates: null,
-  };
-
-  // 获取IP地理位置信息
-  try {
-    geoInfo = await getIPGeoLocation(ip);
-
-    // 如果 geoInfo.raw 包含地址信息，可以进一步获取经纬度坐标
-    if (geoInfo.raw && geoInfo.raw.address) {
-      // 这里可以添加获取坐标逻辑，如果需要的话
-    }
-  } catch (error) {
-    console.error("获取地理位置失败:", error);
-    geoInfo.location = "未知位置";
-  }
 
   // 使用 ua-parser-js 解析 User-Agent
   const parser = new UAParser(userAgent);
@@ -82,10 +55,7 @@ async function extractDeviceInfo(req) {
     os: osInfo,
     browser,
     deviceName,
-    geoLocation: geoInfo.location,
-    geoInfo: geoInfo, // 返回完整地理信息，包括坐标
     userAgent,
-    ip, // 添加IP地址信息
   };
 }
 
