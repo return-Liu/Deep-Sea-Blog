@@ -4,7 +4,7 @@
       <div class="modal-header">
         <h3>
           <component :is="MoblieComputerIcon" class="title-icon" />
-          {{ device.deviceName || "未知设备" }}详情信息
+          {{ device.deviceName || "未知设备" }}的详情信息
         </h3>
         <button class="close-button" @click="closeModal">
           <el-icon><Close /></el-icon>
@@ -72,7 +72,7 @@
 
           <div class="detail-item">
             <div class="detail-label">
-              <el-icon class="detail-icon"><Location /></el-icon>
+              <component :is="LocationIcon" class="detail-icon" />
               <span>位置</span>
             </div>
             <div class="detail-value">
@@ -82,7 +82,7 @@
 
           <div class="detail-item">
             <div class="detail-label">
-              <el-icon class="detail-icon"><Clock /></el-icon>
+              <component :is="LastLoginIcon" class="detail-icon" />
               <span>最后登录</span>
             </div>
             <div class="detail-value">
@@ -95,7 +95,7 @@
             class="detail-item"
           >
             <div class="detail-label">
-              <el-icon class="detail-icon"><Timer /></el-icon>
+              <component :is="TrustExpiresIcon" class="detail-icon" />
               <span>信任到期</span>
             </div>
             <div class="detail-value">
@@ -123,6 +123,9 @@ import DeviceTypeIcon from "../../components/icon/DeviceType.vue";
 import PperatingSystemIcon from "../../components/icon/PperatingSystem.vue";
 import ComputerIcon from "../../components/icon/Computer.vue";
 import MoblieComputerIcon from "../../components/icon/MoblieComputer.vue";
+import TrustExpiresIcon from "../../components/icon/TrustExpires.vue";
+import LastLoginIcon from "../../components/icon/LastLogin.vue";
+import LocationIcon from "../../components/icon/Location.vue";
 import {
   Close,
   Location,
