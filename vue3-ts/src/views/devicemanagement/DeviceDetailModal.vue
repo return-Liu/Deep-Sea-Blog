@@ -2,7 +2,10 @@
   <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
-        <h3>设备详情</h3>
+        <h3>
+          <component :is="MoblieComputerIcon" class="title-icon" />
+          {{ device.deviceName || "未知设备" }}详情信息
+        </h3>
         <button class="close-button" @click="closeModal">
           <el-icon><Close /></el-icon>
         </button>
@@ -16,16 +19,20 @@
             </el-icon>
             <div class="device-main-text">
               <h5>
-                <span style="font-size: 20px"> {{ device.deviceType }} </span
+                <span style="font-size: 20px">{{ device.deviceType }}</span
                 >端的设备名称
               </h5>
               <h4 class="device-name">
-                {{ device.deviceName || "未知登录设备名称/平台 " }}
+                {{ device.deviceName || "未知登录设备名称/平台" }}
               </h4>
               <el-tag
                 :type="device.isTrusted ? 'success' : 'info'"
                 size="small"
               >
+                <el-icon>
+                  <Check v-if="device.isTrusted" />
+                  <CircleClose v-else />
+                </el-icon>
                 {{ device.isTrusted ? "受信任" : "未信任" }}
               </el-tag>
             </div>
@@ -35,7 +42,7 @@
         <div class="device-details-grid">
           <div class="detail-item">
             <div class="detail-label">
-              <el-icon class="detail-icon"><Monitor /></el-icon>
+              <component :is="DeviceTypeIcon" class="detail-icon" />
               <span>设备类型</span>
             </div>
             <div class="detail-value">
@@ -45,15 +52,17 @@
 
           <div class="detail-item">
             <div class="detail-label">
-              <el-icon class="detail-icon"><Platform /></el-icon>
+              <component :is="PperatingSystemIcon" class="detail-icon" />
               <span>操作系统</span>
             </div>
-            <div class="detail-value">{{ device.os || "未知登录系统" }}</div>
+            <div class="detail-value">
+              {{ device.os || "未知登录系统" }}
+            </div>
           </div>
 
           <div class="detail-item">
             <div class="detail-label">
-              <el-icon class="detail-icon"><ChromeFilled /></el-icon>
+              <component :is="BrowerIcon" class="detail-icon" />
               <span>浏览器</span>
             </div>
             <div class="detail-value">
@@ -89,33 +98,40 @@
               <el-icon class="detail-icon"><Timer /></el-icon>
               <span>信任到期</span>
             </div>
-            <div class="detail-value">{{ formatDate(device.trustExpire) }}</div>
+            <div class="detail-value">
+              {{ formatDate(device.trustExpire) }}
+            </div>
           </div>
         </div>
       </div>
+
       <!-- 提示信息 -->
-      <div class="modal-footer">
+      <div class="modal-footer notice-section">
         <p class="notice-text">
+          <el-icon class="warning-icon"><Warning /></el-icon>
           温馨提示：设备信息可能存在延迟，实际情况请以当前设备状态为准
         </p>
       </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Device } from "../../types/device";
+import BrowerIcon from "../../components/icon/Brower.vue";
+import DeviceTypeIcon from "../../components/icon/DeviceType.vue";
+import PperatingSystemIcon from "../../components/icon/PperatingSystem.vue";
+import ComputerIcon from "../../components/icon/Computer.vue";
+import MoblieComputerIcon from "../../components/icon/MoblieComputer.vue";
 import {
   Close,
-  Monitor,
-  Platform,
-  ChromeFilled,
   Location,
   Clock,
   Timer,
   Iphone,
   Cellphone,
+  Check,
+  CircleClose,
 } from "@element-plus/icons-vue";
 
 const props = defineProps<{
@@ -148,7 +164,7 @@ const getDeviceIcon = (deviceType: string) => {
     case "tablet":
       return Cellphone;
     default:
-      return Monitor;
+      return ComputerIcon;
   }
 };
 
@@ -207,6 +223,17 @@ const formatDate = (dateString: string | Date | undefined) => {
     font-size: 18px;
     font-weight: 600;
     color: var(--color-bg4);
+    display: flex;
+    align-items: center;
+
+    .title-icon {
+      margin-right: 8px;
+      font-size: 20px;
+      color: var(--color-primary);
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+    }
   }
 }
 
@@ -256,50 +283,60 @@ const formatDate = (dateString: string | Date | undefined) => {
 .device-details-grid {
   display: grid;
   gap: 16px;
-}
 
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 0; /* 增加顶部和底部的内边距 */
-  border-bottom: 1px solid var(--border);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .detail-label {
+  .detail-item {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    color: var(--color-bg4);
-    font-weight: 500;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
 
-    .detail-icon {
-      font-size: 16px; /* 统一图标大小 */
-      color: #409eff; /* 统一图标颜色 */
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+
+      .detail-icon {
+        font-size: 16px;
+        color: var(--color-primary);
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .detail-value {
+      text-align: right;
+      color: var(--color-text-primary);
+      max-width: 60%;
+      word-break: break-word;
     }
   }
-
-  .detail-value {
-    text-align: right;
-    color: var(--color-bg4);
-    max-width: 60%;
-    word-break: break-word;
-  }
 }
 
-.modal-footer {
+.notice-section {
   padding: 16px 24px;
   border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-}
+  text-align: center;
 
-.notice-text {
-  font-weight: bold; /* 加粗文本 */
-  color: #ff4d4f; /* 更显眼的颜色 */
+  .notice-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #ff4d4f;
+
+    .warning-icon {
+      margin-right: 8px;
+      font-size: 16px;
+      color: #ff4d4f;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -316,6 +353,14 @@ const formatDate = (dateString: string | Date | undefined) => {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    .detail-label {
+      margin-bottom: 8px;
+    }
   }
 }
 </style>

@@ -39,6 +39,7 @@
       <div class="container">
         <!-- 账号安全等级 -->
         <section class="security-level">
+          <component :is="AccountSecurityIcon" class="security-icons" />
           <h2 class="section-title">账号安全等级</h2>
           <div class="level-indicator">
             <div class="level-bar">
@@ -64,9 +65,10 @@
               :key="feature.id"
               class="feature-card"
               @click="feature.handler"
+              :title="`请根据指引进行${feature.title}前往`"
             >
               <div class="feature-icon">
-                <i :class="feature.icon"></i>
+                <component :is="feature.icon" />
               </div>
               <div class="feature-content">
                 <h3>{{ feature.title }}</h3>
@@ -79,14 +81,7 @@
                 </p>
               </div>
               <div class="feature-action">
-                <span
-                  v-if="feature.status"
-                  class="status-badge"
-                  :class="{ bound: feature.status.bound }"
-                >
-                  {{ feature.status.text }}
-                </span>
-                <i class="icon-arrow-right"></i>
+                <component :is="rightarrowIcon" class="icon-arrow-right" />
               </div>
             </div>
           </div>
@@ -94,7 +89,10 @@
 
         <!-- 安全提示 -->
         <section class="security-tips">
-          <h2 class="section-title">安全提示</h2>
+          <h2 class="section-title">
+            安全提示
+            <component :is="SecurityIcon" class="security-icon" />
+          </h2>
           <ul class="tips-list">
             <li>定期修改密码可以提高账号安全性</li>
             <li>不要将密码告诉他人或在公共场合输入密码</li>
@@ -111,9 +109,17 @@
 import { ref, computed } from "vue";
 import { useUserStore } from "../../store/userStore";
 import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
+import CancelAccountIcon from "../../components/icon/Cancel account.vue";
+import FoundpasswordIcon from "../../components/icon/Foundpassword.vue";
+import LogindevicemanageIcon from "../../components/icon/Logindevicemanage.vue";
+import phoneIcon from "../../components/icon/phone.vue";
+import rightarrowIcon from "../../components/icon/rightarrow.vue";
+import AccountIcon from "../../components/icon/Account.vue";
+import IndependencepasswordIcon from "../../components/icon/Independencepassword.vue";
+import SecurityIcon from "../../components/icon/Security.vue";
+import AccountSecurityIcon from "../../components/icon/AccountSecurity.vue";
 const router = useRouter();
-import Setting from "../../views/setting/Setting.vue";
 
 const settingRef = ref();
 const userStore = useUserStore();
@@ -188,21 +194,21 @@ const handleAccountDeletion = () => {
 const securityFeatures = [
   {
     id: "passwordRecovery",
-    icon: "icon-lock",
+    icon: FoundpasswordIcon, // 使用导入的组件而不是CSS类名
     title: "找回密码",
     description: "忘记Deep Sea账号密码? 从这里找回",
     handler: handlePasswordRecovery,
   },
   {
     id: "accountUnfreeze",
-    icon: "icon-unfreeze",
+    icon: AccountIcon, // 使用导入的组件
     title: "账号解冻",
     description: "解除被冻结的Deep Sea账号",
     handler: handleAccountUnfreeze,
   },
   {
     id: "phoneBinding",
-    icon: "icon-phone",
+    icon: phoneIcon, // 使用导入的组件
     title: "手机号绑定",
     description: computed(() =>
       user.value.phone ? `已绑定: ${maskedPhone.value}` : "未绑定手机号"
@@ -216,7 +222,7 @@ const securityFeatures = [
   },
   {
     id: "independentPassword",
-    icon: "icon-password",
+    icon: IndependencepasswordIcon, // 使用导入的组件
     title: "独立密码",
     description: "设置独立密码保护特定功能",
     status: computed(() =>
@@ -228,14 +234,14 @@ const securityFeatures = [
   },
   {
     id: "deviceManagement",
-    icon: "icon-device",
+    icon: LogindevicemanageIcon, // 使用导入的组件
     title: "登录设备管理",
     description: "查看和管理已登录的设备",
     handler: handleDeviceManagement,
   },
   {
     id: "accountDeletion",
-    icon: "icon-delete",
+    icon: CancelAccountIcon, // 使用导入的组件
     title: "账号注销",
     description: "永久删除Deep Sea账号",
     handler: handleAccountDeletion,
@@ -263,16 +269,16 @@ $transition: all 0.3s ease;
 .security-center {
   font-family: "Noto Sans SC", sans-serif;
   min-height: 100vh;
-  background-color: #f5f7fa;
   color: $dark-color;
 }
 
 .security-header {
-  background: linear-gradient(135deg, #4361ee, #7209b7);
+  background: rgb(35, 123, 118);
   color: white;
   padding: 30px 0;
   margin-bottom: 30px;
   box-shadow: $box-shadow;
+  border-radius: $border-radius;
 
   .header-content {
     max-width: 1200px;
@@ -284,7 +290,7 @@ $transition: all 0.3s ease;
 
   .header-icon {
     margin-right: 20px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bg3);
     width: 70px;
     height: 70px;
     border-radius: 50%;
@@ -292,7 +298,6 @@ $transition: all 0.3s ease;
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(5px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
 
     img {
       object-fit: contain;
@@ -310,6 +315,7 @@ $transition: all 0.3s ease;
     font-size: 16px;
     opacity: 0.9;
     margin: 0;
+    color: var(--color-bg6);
   }
 }
 
@@ -319,7 +325,7 @@ $transition: all 0.3s ease;
   padding: 0 20px;
 
   .container {
-    background-color: white;
+    background: var(--bg3);
     border-radius: $border-radius;
     padding: 30px;
     box-shadow: $box-shadow;
@@ -331,7 +337,7 @@ $transition: all 0.3s ease;
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 20px;
-  color: $dark-color;
+  color: var(--color-bg6);
   display: flex;
   align-items: center;
 
@@ -340,15 +346,38 @@ $transition: all 0.3s ease;
     display: inline-block;
     width: 4px;
     height: 16px;
-    background-color: $primary-color;
+    background: var(--bg3);
     margin-right: 10px;
     border-radius: 2px;
+  }
+  .security-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: var(--color-bg6);
+    font-size: 20px;
+    margin-left: 10px;
   }
 }
 
 .security-level {
   margin-bottom: 40px;
-
+  position: relative;
+  margin-left: 20px;
+  .security-icons {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-bg6);
+    font-size: 20px;
+    position: absolute;
+    left: -35px;
+  }
   .level-indicator {
     display: flex;
     align-items: center;
@@ -358,7 +387,7 @@ $transition: all 0.3s ease;
   .level-bar {
     flex: 1;
     height: 8px;
-    background-color: $gray-light;
+    background: var(--bg3);
     border-radius: 4px;
     overflow: hidden;
     margin-right: 15px;
@@ -373,12 +402,12 @@ $transition: all 0.3s ease;
 
   .level-text {
     font-weight: 500;
-    color: $primary-color;
+    color: var(--color-bg6);
   }
 
   .level-tips {
     font-size: 14px;
-    color: $gray-color;
+    color: var(--color-bg6);
   }
 }
 
@@ -394,7 +423,7 @@ $transition: all 0.3s ease;
   align-items: center;
   padding: 20px;
   border-radius: $border-radius;
-  background-color: $light-color;
+  background: var(--bg3);
   cursor: pointer;
   transition: $transition;
   border: 1px solid $gray-light;
@@ -409,13 +438,11 @@ $transition: all 0.3s ease;
   .feature-icon {
     width: 44px;
     height: 44px;
-    border-radius: 50%;
-    background-color: rgba($primary-color, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
-    color: $primary-color;
+    color: var(--color-bg6);
     font-size: 20px;
   }
 
@@ -426,36 +453,25 @@ $transition: all 0.3s ease;
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 5px;
-      color: $dark-color;
+      color: var(--color-bg6);
     }
 
     p {
       font-size: 14px;
-      color: $gray-color;
+      color: var(--color-bg6);
       margin: 0;
     }
   }
-
   .feature-action {
     display: flex;
     align-items: center;
 
-    .status-badge {
-      font-size: 12px;
-      padding: 3px 8px;
-      border-radius: 10px;
-      background-color: $gray-light;
-      color: $gray-color;
-      margin-right: 10px;
-
-      &.bound {
-        background-color: rgba($success-color, 0.1);
-        color: $success-color;
-      }
-    }
-
-    i {
-      color: $gray-color;
+    .icon-arrow-right {
+      margin-left: 10px;
+      color: var(--color-bg6);
+      transition: all 0.3s;
+      width: 12px;
+      height: 12px;
     }
   }
 }
@@ -471,39 +487,16 @@ $transition: all 0.3s ease;
       padding-left: 20px;
       margin-bottom: 10px;
       font-size: 14px;
-      color: $gray-color;
+      color: var(--color-bg6);
 
       &::before {
         content: "•";
         position: absolute;
         left: 0;
-        color: $primary-color;
+        color: var(--color-bg6);
         font-weight: bold;
       }
     }
   }
-}
-
-// 图标样式 (可以使用字体图标或SVG)
-.icon-lock::before {
-  content: "🔒";
-}
-.icon-unfreeze::before {
-  content: "❄️";
-}
-.icon-phone::before {
-  content: "📱";
-}
-.icon-password::before {
-  content: "🔑";
-}
-.icon-device::before {
-  content: "💻";
-}
-.icon-delete::before {
-  content: "🗑️";
-}
-.icon-arrow-right::before {
-  content: "→";
 }
 </style>
