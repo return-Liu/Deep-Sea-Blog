@@ -65,7 +65,7 @@
               :key="feature.id"
               class="feature-card"
               @click="feature.handler"
-              :title="`请根据指引进行${feature.title}前往`"
+              :title="`请根据指引${feature.title}进行操作`"
             >
               <div class="feature-icon">
                 <component :is="feature.icon" />
