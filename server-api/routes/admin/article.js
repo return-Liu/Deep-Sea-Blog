@@ -74,7 +74,7 @@ router.get("/", async (req, res) => {
   // 查询文章列表
   try {
     const { count, rows } = await Article.findAndCountAll(condition);
-    success(res, "查询文章列表成功", {
+    success(res, "查询博客文章列表成功", {
       articles: rows,
       pagination: {
         total: count,
@@ -100,9 +100,9 @@ router.get("/:id", async (req, res) => {
       ],
     });
     if (!article) {
-      return failure(res, 404, "文章不存在");
+      return failure(res, 404, "博客单个文章不存在");
     }
-    success(res, "查询文章详情成功", {
+    success(res, "查询单个博客文章成功", {
       article,
     });
   } catch (error) {
@@ -120,7 +120,7 @@ router.post("/", async (req, res) => {
     // 将当前登录用户的 ID 赋值给 userId
     body.userId = userId;
     await Article.create(body);
-    success(res, "创建文章成功", {
+    success(res, "创建博客文章成功", {
       image: body.image,
       userId: body.userId,
       title: body.title,
@@ -148,9 +148,9 @@ router.delete("/:id", async (req, res) => {
       where: { id: articleId },
     });
     if (!deleted) {
-      failure(res, 404, "文章不存在");
+      failure(res, 404, "博客文章不存在");
     }
-    success(res, "文章及关联点赞记录已删除");
+    success(res, "博客文章及关联点赞记录已删除");
   } catch (error) {
     console.error(error);
     failure(res, 500, "服务器错误");
@@ -167,12 +167,12 @@ router.put("/:id", async (req, res) => {
     const body = filterWhiteList(req);
 
     if (!article) {
-      return failure(res, 404, "文章不存在");
+      return failure(res, 404, "博客文章不存在");
     }
 
     // 提供 where 条件
     await Article.update(body, { where: { id } });
-    success(res, "更新文章成功", {
+    success(res, "更新博客文章成功", {
       image: body.image,
       title: body.title,
       userId: body.userId,

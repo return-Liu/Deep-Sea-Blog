@@ -402,6 +402,8 @@ async function handleLike(id: number, isLiked: boolean) {
       essay.value[index].isLiked = !isLiked;
       essay.value[index].likesCount = response.data.likeCount;
     }
+    // 刷新
+    fetchData();
     ElMessage.success(response.data.message);
   } catch (error: any) {
     // 兼容 message 字段

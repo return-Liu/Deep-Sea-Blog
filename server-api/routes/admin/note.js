@@ -49,7 +49,7 @@ router.get("/", async (req, res) => {
   }
   try {
     const { count, rows } = await Note.findAndCountAll(condition);
-    success(res, "查询所有笔记成功", {
+    success(res, "查询随笔随记成功", {
       notes: rows,
       pagination: {
         currentPage,
@@ -74,9 +74,9 @@ router.get("/:id", async (req, res) => {
       ],
     });
     if (!note) {
-      return failure(res, 404, "笔记不存在");
+      return failure(res, 404, "单个随记随记不存在");
     }
-    success(res, "查询单个笔记成功", {
+    success(res, "查询单个随笔随记成功", {
       note,
     });
   } catch (error) {
@@ -92,7 +92,7 @@ router.post("/", async (req, res) => {
     // 将当前登录用户的 ID 赋值给 userId
     body.userId = userId;
     await Note.create(body);
-    success(res, "创建笔记成功", {
+    success(res, "创建随笔随记成功", {
       title: body.title,
       content: body.content,
       userId: body.userId,
@@ -109,11 +109,11 @@ router.put("/:id", async (req, res) => {
     const { id } = req.params;
     const note = await Note.findByPk(id);
     if (!note) {
-      return failure(res, 404, "笔记不存在");
+      return failure(res, 404, "随笔随记不存在");
     }
     const body = filterWhiteList(req);
     await Note.update(body, { where: { id } });
-    success(res, "更新笔记成功", {
+    success(res, "更新随笔随记成功", {
       title: body.title,
       content: body.content,
       userId: body.userId,
@@ -129,7 +129,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Note.destroy({ where: { id } });
-    success(res, "删除笔记成功");
+    success(res, "删除随笔随记成功");
   } catch (error) {
     failure(res, error);
   }

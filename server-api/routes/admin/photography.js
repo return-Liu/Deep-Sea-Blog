@@ -69,7 +69,7 @@ router.get("/:id", async (req, res) => {
       ],
     });
     if (!photography) {
-      throw new Error("摄影作品不存在");
+      throw new Error("单个摄影作品不存在");
     }
     success(res, "查询单个摄影作品成功", {
       photography,
