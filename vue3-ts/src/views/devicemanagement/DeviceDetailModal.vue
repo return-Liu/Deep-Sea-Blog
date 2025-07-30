@@ -4,7 +4,7 @@
       <div class="modal-header">
         <h3>
           <component :is="MoblieComputerIcon" class="title-icon" />
-          {{ device.deviceName || "未知设备" }}的详情信息
+          登录操作通知
         </h3>
         <button class="close-button" @click="closeModal">
           <el-icon><Close /></el-icon>
@@ -25,16 +25,6 @@
               <h4 class="device-name">
                 {{ device.deviceName || "未知登录设备名称/平台" }}
               </h4>
-              <el-tag
-                :type="device.isTrusted ? 'success' : 'info'"
-                size="small"
-              >
-                <el-icon>
-                  <Check v-if="device.isTrusted" />
-                  <CircleClose v-else />
-                </el-icon>
-                {{ device.isTrusted ? "受信任" : "未信任" }}
-              </el-tag>
             </div>
           </div>
         </div>
@@ -49,7 +39,20 @@
               {{ device.deviceType || "未知登录设备类型" }}
             </div>
           </div>
-
+          <div class="detail-item">
+            <div class="detail-label">
+              <component :is="UUIDIcon" class="detail-icon" />
+              <span>UID</span>
+            </div>
+            <div class="detail-value">{{ user.uuid }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <component :is="LoginTypeIcon" class="detail-icon" />
+              <span>登录方式</span>
+            </div>
+            <div class="detail-value">{{ device.loginMethod }}</div>
+          </div>
           <div class="detail-item">
             <div class="detail-label">
               <component :is="PperatingSystemIcon" class="detail-icon" />
@@ -73,11 +76,11 @@
           <div class="detail-item">
             <div class="detail-label">
               <component :is="LocationIcon" class="detail-icon" />
-              <span>位置</span>
+              <span>参考登录地点</span>
             </div>
             <div class="detail-value">
               {{ device.province }}
-              {{ device.location || "未知登录参考地" }}
+              {{ device.location || "未知参考登录地点" }}
             </div>
           </div>
 
@@ -88,19 +91,6 @@
             </div>
             <div class="detail-value">
               {{ formatDate(device.lastLoginTime) || "未知登录时间" }}
-            </div>
-          </div>
-
-          <div
-            v-if="device.isTrusted && device.trustExpire"
-            class="detail-item"
-          >
-            <div class="detail-label">
-              <component :is="TrustExpiresIcon" class="detail-icon" />
-              <span>信任到期</span>
-            </div>
-            <div class="detail-value">
-              {{ formatDate(device.trustExpire) }}
             </div>
           </div>
         </div>
@@ -124,9 +114,13 @@ import DeviceTypeIcon from "../../components/icon/DeviceType.vue";
 import PperatingSystemIcon from "../../components/icon/PperatingSystem.vue";
 import ComputerIcon from "../../components/icon/Computer.vue";
 import MoblieComputerIcon from "../../components/icon/MoblieComputer.vue";
-import TrustExpiresIcon from "../../components/icon/TrustExpires.vue";
+import UUIDIcon from "../../components/icon/Uuid.vue";
 import LastLoginIcon from "../../components/icon/LastLogin.vue";
 import LocationIcon from "../../components/icon/Location.vue";
+import LoginTypeIcon from "../../components/icon/LoginType.vue";
+import { useUserStore } from "../../store/userStore";
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
 import {
   Close,
   Location,

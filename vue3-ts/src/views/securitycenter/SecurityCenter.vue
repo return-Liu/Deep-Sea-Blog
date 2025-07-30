@@ -31,6 +31,7 @@
           </h1>
           <p class="description">立即提升账号安全等级，快速掌握安全设置</p>
         </div>
+        <!-- 安全提示 -->
       </div>
     </header>
 
@@ -163,6 +164,7 @@ const handlePhoneBinding = () => {
     ElMessage.info("手机号已绑定,请勿重复操作");
   } else {
     ElMessage.info("手机号未绑定,请根据指引进行绑定");
+    router.push("/setting/personals");
   }
 };
 
@@ -273,7 +275,7 @@ $transition: all 0.3s ease;
 }
 
 .security-header {
-  background: rgb(35, 123, 118);
+  background: linear-gradient(135deg, #b39ddb, #8c9eff);
   color: white;
   padding: 30px 0;
   margin-bottom: 30px;
@@ -315,7 +317,7 @@ $transition: all 0.3s ease;
     font-size: 16px;
     opacity: 0.9;
     margin: 0;
-    color: var(--color-bg6);
+    color: var(--color-bg4);
   }
 }
 

@@ -3,26 +3,15 @@ const os = require("os");
 
 async function extractDeviceInfo(req) {
   const userAgent = req.get("User-Agent") || "";
-
   // 使用 ua-parser-js 解析 User-Agent
   const parser = new UAParser(userAgent);
   const result = parser.getResult();
 
   // 提取操作系统信息（优先使用 UA 解析结果，备选使用 os 模块）
-  const osInfo = result.os.name
-    ? `${result.os.name}${result.os.version ? " " + result.os.version : ""}`
-    : `${getOSNameFromPlatform()} ${os.release()}`;
-
-  // 提取浏览器信息（只能通过 UA 获取）
-  let browser = result.browser.name
-    ? `${result.browser.name}${
-        result.browser.version ? " " + result.browser.version : ""
-      }`
-    : "Unknown";
-
+  const osInfo = `Deep Sea ${result.os.name} 版`;
+  const browser = `${result.browser.name}浏览器`;
   // 获取设备名称（主机名）
   const deviceName = os.hostname();
-
   // 设备类型检测（优先使用 UA 解析结果，备选使用平台信息）
   let deviceType = "pc";
   if (result.device.type) {

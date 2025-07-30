@@ -27,19 +27,19 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "light", // 默认主题设置
       },
+
       phone: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         validate: {
           is: {
             args: [/^1[3-9]\d{9}$/], // 简单的中国大陆手机号格式校验
             msg: "手机号格式不正确",
           },
-          async isUnique(value) {
-            if (!value) return;
-            const user = await User.findOne({ where: { phone: value } });
-            if (user) {
-              throw new Error("该手机号已被注册,请使用其他手机号");
+          // 添加自定义验证，允许空值
+          isValidPhone(value) {
+            if (value && !/^1[3-9]\d{9}$/.test(value)) {
+              throw new Error("手机号格式不正确");
             }
           },
         },

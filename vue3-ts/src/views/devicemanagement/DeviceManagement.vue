@@ -1,12 +1,8 @@
 <template>
   <div class="device-management">
     <div class="header-section">
-      <h1 class="page-title">登录设备管理 目前仅支持1台设备使用</h1>
-      <p class="page-description">
-        管理和监控所有已登录您账户的设备，确保只有您信任的设备可以访问您的账户。
-      </p>
+      <h1 class="page-title">登录设备管理</h1>
     </div>
-
     <el-card class="device-card">
       <template #header>
         <div class="card-header">
@@ -43,117 +39,85 @@
         </div>
 
         <div v-else class="devices-grid">
-          <template v-for="device in devices">
-            <el-card
-              :key="device.id"
-              v-if="
-                device.isCurrentDevice ||
-                devices.findIndex((d) => d.id === device.id) === 0
-              "
-              class="device-item"
-              :class="{
-                'current-device': device.isCurrentDevice,
-                'trusted-device': device.isTrusted,
-              }"
-            >
-              <div class="device-header">
-                <div class="device-basic-info">
-                  <el-icon class="device-icon" :size="24">
-                    <component :is="getDeviceIcon(device.deviceType)" />
-                  </el-icon>
-                  <div class="device-name-section">
-                    <span class="device-name">{{
-                      device.deviceName || "未知登录设备名称/平台"
-                    }}</span>
-                    <el-tag
-                      v-if="device.isCurrentDevice"
-                      type="success"
-                      size="small"
-                      effect="dark"
-                    >
-                      当前设备/平台
-                    </el-tag>
-                  </div>
-                </div>
-
-                <el-tag
-                  :type="device.isTrusted ? 'success' : 'info'"
-                  size="small"
-                  class="trust-status"
-                >
-                  {{ device.isTrusted ? "受信任" : "未信任" }}
-                </el-tag>
-              </div>
-
-              <div class="device-details" @click="handleClick(device)">
-                <div class="detail-row">
-                  <span class="detail-label">登录系统:</span>
-                  <span>{{ device.os || "未知登录系统" }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">登录浏览器:</span>
-                  <span>{{ device.browser || "未知登录浏览器" }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">登录参考地:</span>
-                  <span
-                    >{{ device.province }}
-                    {{ device.location || "未知登录参考地" }}</span
-                  >
-                </div>
-                <div
-                  class="detail-row"
-                  v-if="device.isTrusted && device.trustExpire"
-                >
-                  <span class="detail-label">信任到期:</span>
-                  <span>{{ formatDate(device.trustExpire) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">登录时间:</span>
-                  <span>{{
-                    formatDate(device.lastLoginTime) || "未知登录时间"
+          <el-card
+            v-for="device in devices"
+            :key="device.id"
+            class="device-item"
+            :class="{
+              'current-device': device.isCurrentDevice,
+            }"
+          >
+            <div class="device-header">
+              <div class="device-basic-info">
+                <el-icon class="device-icon" :size="24">
+                  <component :is="getDeviceIcon(device.deviceType)" />
+                </el-icon>
+                <div class="device-name-section">
+                  <span class="device-name">{{
+                    device.deviceName || "未知登录设备名称/平台"
                   }}</span>
+                  <el-tag
+                    v-if="device.isCurrentDevice"
+                    type="success"
+                    size="small"
+                    effect="dark"
+                  >
+                    当前设备/平台
+                  </el-tag>
                 </div>
               </div>
+            </div>
 
-              <div class="device-actions">
-                <el-button
-                  size="small"
-                  @click="trustDevice(device.id)"
-                  :type="device.isTrusted ? 'info' : 'primary'"
-                  :loading="device.actionLoading"
-                  round
-                >
-                  {{ device.isTrusted ? "取消信任" : "设为信任" }}
-                </el-button>
-                <el-button
-                  size="small"
-                  type="danger"
-                  @click="logoutDevice(device.id)"
-                  :disabled="device.isCurrentDevice"
-                  :loading="device.actionLoading"
-                  v-if="!device.isCurrentDevice"
-                  round
-                >
-                  登出设备
-                </el-button>
+            <div class="device-details" @click="handleClick(device)">
+              <div class="detail-row">
+                <span class="detail-label">UID</span>
+                <span>{{ user.uuid }}</span>
               </div>
-            </el-card>
-          </template>
+              <div class="detail-row">
+                <span class="detail-label">登录方式</span>
+                <span>{{ device.loginMethod || "未知登录方式" }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">登录系统:</span>
+                <span>{{ device.os || "未知登录系统" }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">登录浏览器:</span>
+                <span>{{ device.browser || "未知登录浏览器" }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">参考登录地点:</span>
+                <span
+                  >{{ device.province }}
+                  {{ device.location || "未知参考登录地点" }}</span
+                >
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">登录时间:</span>
+                <span>{{
+                  formatDate(device.lastLoginTime) || "未知登录时间"
+                }}</span>
+              </div>
+            </div>
+            <div class="device-actions">
+              <el-button
+                size="small"
+                type="danger"
+                @click="logoutDevice(device.id)"
+                :disabled="device.isCurrentDevice"
+                :loading="device.actionLoading"
+                v-if="!device.isCurrentDevice"
+                round
+              >
+                登出设备
+              </el-button>
+            </div>
+          </el-card>
         </div>
       </div>
     </el-card>
 
-    <el-card class="security-card">
-      <div class="security-header">
-        <el-icon size="20" color="#409EFF"><Warning /></el-icon>
-        <h3>安全提示</h3>
-      </div>
-      <ul class="security-tips">
-        <li>定期检查登录设备，及时移除不使用的设备有助于保护账号安全</li>
-        <li>受信任的设备在下次登录时无需验证</li>
-      </ul>
-    </el-card>
     <DeviceDetailModal
       v-model="modalVisible"
       :device="selectedDevice"
@@ -225,59 +189,13 @@ const fetchDevices = async () => {
     loading.value = true;
     const response = await axiosConfig.get("/auth/devices");
     console.log(response);
-
-    if (Array.isArray(response.data.data)) {
-      const currentDevice = response.data.data.find(
-        (device: Device) => device.isCurrentDevice
-      );
-
-      // 只取当前设备 不会增加设备数量,只会改变设备信息
-      devices.value = currentDevice
-        ? [currentDevice]
-        : response.data.data.slice(0, 1);
-    } else {
-      devices.value = [];
-    }
+    devices.value = response.data.data;
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
   } finally {
     loading.value = false;
-  }
-};
-
-const trustDevice = async (deviceId: string) => {
-  try {
-    const device = devices.value.find((device: any) => device.id === deviceId);
-    if (!device) return;
-
-    // 检查是否已经有受信任的设备
-    const trustedDevice = devices.value.find(
-      (d: Device) => d.isTrusted && d.id !== deviceId
-    );
-    if (!device.isTrusted && trustedDevice) {
-      ElMessage.warning("最多只能有一台受信任设备");
-      return;
-    }
-
-    device.actionLoading = true;
-    const response = await axiosConfig.put(`/auth/devices/${deviceId}/trust`, {
-      trusted: !device.isTrusted,
-    });
-
-    device.isTrusted = !device.isTrusted;
-    ElMessage.success(response.data.message ? "操作成功" : "操作失败");
-    fetchDevices(); // 刷新设备列表
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  } finally {
-    const device = devices.value.find((device: any) => device.id === deviceId);
-    if (device) {
-      device.actionLoading = false;
-    }
   }
 };
 
@@ -344,7 +262,6 @@ const logoutAllDevices = async () => {
     loading.value = false;
   }
 };
-// 获取ip位置
 </script>
 
 <style lang="less" scoped>
@@ -364,11 +281,6 @@ const logoutAllDevices = async () => {
       font-weight: 600;
       color: var(--color-bg4);
       margin: 0 0 8px 0;
-    }
-    .page-description {
-      font-size: 14px;
-      color: var(--color-bg4);
-      margin: 0;
     }
   }
 
@@ -444,10 +356,6 @@ const logoutAllDevices = async () => {
             box-shadow: 0 0 0 1px #409eff;
           }
 
-          &.trusted-device {
-            border-color: #67c23a; // 受信任设备绿色边框
-          }
-
           // 同时是当前设备和受信任设备时，优先显示当前设备边框
           &.current-device.trusted-device {
             border-color: #409eff;
@@ -515,41 +423,6 @@ const logoutAllDevices = async () => {
             gap: 12px;
             flex-wrap: wrap;
           }
-        }
-      }
-    }
-  }
-
-  .security-card {
-    border: none;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-    background: var(--bg1);
-
-    .security-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        color: var(--color-bg4);
-      }
-    }
-
-    .security-tips {
-      padding-left: 20px;
-      margin: 0;
-
-      li {
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: var(--color-bg4);
-        line-height: 1.5;
-
-        &:last-child {
-          margin-bottom: 0;
         }
       }
     }

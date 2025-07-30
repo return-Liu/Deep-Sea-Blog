@@ -26,9 +26,9 @@ module.exports = (sequelize, DataTypes) => {
       browser: DataTypes.STRING,
       location: DataTypes.STRING,
       lastLoginTime: DataTypes.DATE,
-      isTrusted: DataTypes.BOOLEAN,
+      loginMethod: DataTypes.STRING,
       userAgent: DataTypes.TEXT,
-      trustExpire: DataTypes.DATE,
+
       province: DataTypes.STRING,
       city: DataTypes.STRING,
     },
