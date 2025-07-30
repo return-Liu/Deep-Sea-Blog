@@ -29,6 +29,8 @@ module.exports = (sequelize, DataTypes) => {
       isTrusted: DataTypes.BOOLEAN,
       userAgent: DataTypes.TEXT,
       trustExpire: DataTypes.DATE,
+      province: DataTypes.STRING,
+      city: DataTypes.STRING,
     },
     {
       sequelize,

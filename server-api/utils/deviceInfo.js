@@ -1,5 +1,6 @@
 const UAParser = require("ua-parser-js");
 const os = require("os");
+
 async function extractDeviceInfo(req) {
   const userAgent = req.get("User-Agent") || "";
 
@@ -13,7 +14,7 @@ async function extractDeviceInfo(req) {
     : `${getOSNameFromPlatform()} ${os.release()}`;
 
   // 提取浏览器信息（只能通过 UA 获取）
-  const browser = result.browser.name
+  let browser = result.browser.name
     ? `${result.browser.name}${
         result.browser.version ? " " + result.browser.version : ""
       }`

@@ -16,31 +16,6 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
 const axios = require("axios");
-// 获取地理编码信息
-async function getGeocodeLocation(address, city) {
-  try {
-    const response = await axios.get(
-      "https://restapi.amap.com/v3/geocode/geo",
-      {
-        params: {
-          key: "84c8fc9794d45e1bbb56bad2d8a7da05",
-          address: address,
-          city: city,
-        },
-      }
-    );
-    const formattedAddress = response.data.geocodes[0].formatted_address;
-    console.log("地理位置", formattedAddress);
-  } catch (error) {
-    console.error("地理编码请求异常:", error.message);
-    return null;
-  }
-}
-(async () => {
-  const address = "宜春市";
-  const city = "奉新";
-  await getGeocodeLocation(address, city);
-})();
 // 生成设备唯一标识符
 function generateDeviceId(userId, userAgent) {
   const hash = crypto.createHash("md5");
@@ -171,7 +146,48 @@ function generateUUID() {
   }
   return result;
 }
+// 获取ip地址
+async function getIpAddress(ip) {
+  try {
+    const response = await axios.get(
+      "https://apis.map.qq.com/ws/location/v1/ip",
+      {
+        params: {
+          key: "B3QBZ-57BWV-3MIPO-5QBY6-ZPUCS-F7BUJ",
+          ip: ip, // 使用传入的IP地址
+        },
+      }
+    );
 
+    // 检查 response.data 是否存在
+    if (!response.data) {
+      console.error("API 响应数据为空");
+      return { city: "未知位置", province: "未知位置" };
+    }
+
+    // 检查 response.data.result 是否存在
+    if (!response.data.result) {
+      console.error("API 响应中没有 result 字段");
+      return { city: "未知位置", province: "未知位置" };
+    }
+
+    // 检查 response.data.result.ad_info 是否存在
+    if (!response.data.result.ad_info) {
+      console.error("API 响应中没有 ad_info 字段");
+      return { city: "未知位置", province: "未知位置" };
+    }
+
+    // 获取城市和省份信息
+    const city = response.data.result.ad_info.city || "未知位置";
+    const province = response.data.result.ad_info.province || "未知位置";
+
+    console.log(`City: ${city}, Province: ${province}`);
+    return { city, province };
+  } catch (error) {
+    console.error("获取位置信息失败:", error);
+    return { city: "未知位置", province: "未知位置" };
+  }
+}
 // 用于存储二维码状态，生产建议用 Redis
 const qrcodeStore = {};
 
@@ -312,7 +328,25 @@ async function handlePostLogin(user, req, res) {
   // 记录设备信息
   const deviceInfo = await extractDeviceInfo(req);
   const deviceId = generateDeviceId(user.id, deviceInfo.userAgent);
-  // 获取地理位置
+  // 获取客户端真实IP地址
+  const clientIp =
+    req.headers["x-forwarded-for"] || // 代理服务器传递的真实客户端IP
+    req.headers["x-real-ip"] || // 另一种代理服务器头部
+    req.connection.remoteAddress || // 直接连接的IP地址
+    req.socket.remoteAddress || // Socket连接的IP地址
+    (req.connection.socket ? req.connection.socket.remoteAddress : null) || // 嵌套Socket的IP地址
+    "127.0.0.1"; // 默认本地IP
+
+  // 如果是本地IP，使用默认测试IP为北京市 111.206.145.41
+  const ipToUse =
+    clientIp === "127.0.0.1" || // IPv4本地回环地址
+    clientIp === "::1" || // IPv6本地回环地址
+    clientIp.startsWith("::ffff:") // IPv4映射的IPv6地址
+      ? "111.206.145.41" // 使用北京市的IP地址作为默认值
+      : clientIp.split(",")[0].trim(); // 否则使用真实的客户端IP（取第一个）
+
+  // 获取位置信息
+  const locationInfo = await getIpAddress(ipToUse);
 
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
@@ -329,24 +363,33 @@ async function handlePostLogin(user, req, res) {
       device.isTrusted = false;
     }
   }
+
+  const deviceData = {
+    userId: user.id,
+    deviceId,
+    deviceName: deviceInfo.deviceName,
+    deviceType: deviceInfo.deviceType,
+    os: deviceInfo.os,
+    browser: deviceInfo.browser,
+    lastLoginTime: new Date(),
+    isTrusted: false,
+    userAgent: deviceInfo.userAgent,
+    location: locationInfo.city, // 使用获取到的位置信息
+    province: locationInfo.province,
+    city: locationInfo.city,
+  };
+
   if (!device) {
-    device = await Device.create({
-      userId: user.id,
-      deviceId,
-      deviceName: deviceInfo.deviceName,
-      deviceType: deviceInfo.deviceType,
-      os: deviceInfo.os,
-      browser: deviceInfo.browser,
-      lastLoginTime: new Date(),
-      isTrusted: false,
-      userAgent: deviceInfo.userAgent,
-    });
+    device = await Device.create(deviceData);
   } else {
     await device.update({
       lastLoginTime: new Date(),
       deviceName: deviceInfo.deviceName,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
+      location: deviceData.location,
+      province: deviceData.province,
+      city: deviceData.city,
     });
   }
 
@@ -355,9 +398,15 @@ async function handlePostLogin(user, req, res) {
     deviceInfo: {
       deviceName: deviceInfo.deviceName,
       isTrusted: device.isTrusted,
+      os: deviceInfo.os,
+      browser: deviceInfo.browser,
+      location: deviceData.location,
+      province: deviceData.province,
+      city: deviceData.city,
     },
   });
 }
+
 // 添加定时任务清理过期信任设备
 setInterval(async () => {
   try {
@@ -480,6 +529,7 @@ router.post("/email/verify", async (req, res) => {
 });
 
 // 登录设备管理
+// 登录设备管理
 router.post("/login/device", async (req, res) => {
   try {
     // 获取当前用户
@@ -507,6 +557,8 @@ router.post("/login/device", async (req, res) => {
       lastLoginTime: new Date(),
       isTrusted: false,
       userAgent: deviceInfo.userAgent,
+      location: deviceInfo.location || "未知位置",
+      province: deviceInfo.province || "未知省",
     };
 
     if (!device) {
@@ -551,7 +603,9 @@ router.get("/devices", async (req, res) => {
       browser: device.browser,
       lastLoginTime: device.lastLoginTime,
       isTrusted: device.isTrusted,
-      // 添加信任过期时间
+      location: device.location,
+      city: device.city,
+      province: device.province,
       trustExpire: device.trustExpire,
       isCurrentDevice: device.deviceId === currentDeviceId,
     }));
@@ -640,5 +694,4 @@ router.put("/devices/:deviceId/trust", async (req, res) => {
     failure(res, error);
   }
 });
-
 module.exports = router;

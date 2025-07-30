@@ -76,6 +76,7 @@
               <span>位置</span>
             </div>
             <div class="detail-value">
+              {{ device.province }}
               {{ device.location || "未知登录参考地" }}
             </div>
           </div>

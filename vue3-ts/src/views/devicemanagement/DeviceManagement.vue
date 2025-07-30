@@ -1,7 +1,7 @@
 <template>
   <div class="device-management">
     <div class="header-section">
-      <h1 class="page-title">登录设备管理</h1>
+      <h1 class="page-title">登录设备管理 目前仅支持1台设备使用</h1>
       <p class="page-description">
         管理和监控所有已登录您账户的设备，确保只有您信任的设备可以访问您的账户。
       </p>
@@ -43,95 +43,103 @@
         </div>
 
         <div v-else class="devices-grid">
-          <el-card
-            v-for="device in devices"
-            :key="device.id"
-            class="device-item"
-            :class="{
-              'current-device': device.isCurrentDevice,
-              'trusted-device': device.isTrusted,
-            }"
-          >
-            <div class="device-header">
-              <div class="device-basic-info">
-                <el-icon class="device-icon" :size="24">
-                  <component :is="getDeviceIcon(device.deviceType)" />
-                </el-icon>
-                <div class="device-name-section">
-                  <span class="device-name">{{
-                    device.deviceName || "未知登录设备名称/平台"
-                  }}</span>
-                  <el-tag
-                    v-if="device.isCurrentDevice"
-                    type="success"
-                    size="small"
-                    effect="dark"
+          <template v-for="device in devices">
+            <el-card
+              :key="device.id"
+              v-if="
+                device.isCurrentDevice ||
+                devices.findIndex((d) => d.id === device.id) === 0
+              "
+              class="device-item"
+              :class="{
+                'current-device': device.isCurrentDevice,
+                'trusted-device': device.isTrusted,
+              }"
+            >
+              <div class="device-header">
+                <div class="device-basic-info">
+                  <el-icon class="device-icon" :size="24">
+                    <component :is="getDeviceIcon(device.deviceType)" />
+                  </el-icon>
+                  <div class="device-name-section">
+                    <span class="device-name">{{
+                      device.deviceName || "未知登录设备名称/平台"
+                    }}</span>
+                    <el-tag
+                      v-if="device.isCurrentDevice"
+                      type="success"
+                      size="small"
+                      effect="dark"
+                    >
+                      当前设备/平台
+                    </el-tag>
+                  </div>
+                </div>
+
+                <el-tag
+                  :type="device.isTrusted ? 'success' : 'info'"
+                  size="small"
+                  class="trust-status"
+                >
+                  {{ device.isTrusted ? "受信任" : "未信任" }}
+                </el-tag>
+              </div>
+
+              <div class="device-details" @click="handleClick(device)">
+                <div class="detail-row">
+                  <span class="detail-label">登录系统:</span>
+                  <span>{{ device.os || "未知登录系统" }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">登录浏览器:</span>
+                  <span>{{ device.browser || "未知登录浏览器" }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">登录参考地:</span>
+                  <span
+                    >{{ device.province }}
+                    {{ device.location || "未知登录参考地" }}</span
                   >
-                    当前设备/平台
-                  </el-tag>
+                </div>
+                <div
+                  class="detail-row"
+                  v-if="device.isTrusted && device.trustExpire"
+                >
+                  <span class="detail-label">信任到期:</span>
+                  <span>{{ formatDate(device.trustExpire) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">登录时间:</span>
+                  <span>{{
+                    formatDate(device.lastLoginTime) || "未知登录时间"
+                  }}</span>
                 </div>
               </div>
 
-              <el-tag
-                :type="device.isTrusted ? 'success' : 'info'"
-                size="small"
-                class="trust-status"
-              >
-                {{ device.isTrusted ? "受信任" : "未信任" }}
-              </el-tag>
-            </div>
-
-            <div class="device-details" @click="handleClick(device)">
-              <div class="detail-row">
-                <span class="detail-label">登录系统:</span>
-                <span>{{ device.os || "未知登录系统" }}</span>
+              <div class="device-actions">
+                <el-button
+                  size="small"
+                  @click="trustDevice(device.id)"
+                  :type="device.isTrusted ? 'info' : 'primary'"
+                  :loading="device.actionLoading"
+                  round
+                >
+                  {{ device.isTrusted ? "取消信任" : "设为信任" }}
+                </el-button>
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="logoutDevice(device.id)"
+                  :disabled="device.isCurrentDevice"
+                  :loading="device.actionLoading"
+                  v-if="!device.isCurrentDevice"
+                  round
+                >
+                  登出设备
+                </el-button>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">登录浏览器:</span>
-                <span>{{ device.browser || "未知登录浏览器" }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">登录参考地:</span>
-                <span>{{ device.location || "未知登录参考地" }}</span>
-              </div>
-              <div
-                class="detail-row"
-                v-if="device.isTrusted && device.trustExpire"
-              >
-                <span class="detail-label">信任到期:</span>
-                <span>{{ formatDate(device.trustExpire) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">登录时间:</span>
-                <span>{{
-                  formatDate(device.lastLoginTime) || "未知登录时间"
-                }}</span>
-              </div>
-            </div>
-
-            <div class="device-actions">
-              <el-button
-                size="small"
-                @click="trustDevice(device.id)"
-                :type="device.isTrusted ? 'info' : 'primary'"
-                :loading="device.actionLoading"
-                round
-              >
-                {{ device.isTrusted ? "取消信任" : "设为信任" }}
-              </el-button>
-              <el-button
-                size="small"
-                type="danger"
-                @click="logoutDevice(device.id)"
-                :disabled="device.isCurrentDevice"
-                :loading="device.actionLoading"
-                v-if="!device.isCurrentDevice"
-                round
-              >
-                登出设备
-              </el-button>
-            </div>
-          </el-card>
+            </el-card>
+          </template>
         </div>
       </div>
     </el-card>
@@ -144,10 +152,6 @@
       <ul class="security-tips">
         <li>定期检查登录设备，及时移除不使用的设备有助于保护账号安全</li>
         <li>受信任的设备在下次登录时无需验证</li>
-        <li>如果发现异常设备，请立即登出并修改密码</li>
-        <li>公共设备请勿设为信任，避免账号信息泄露</li>
-        <li>设备信任有效期为30天，过期后需重新验证</li>
-        <li>登出设备后，该设备的登录状态将立即失效</li>
       </ul>
     </el-card>
     <DeviceDetailModal
@@ -177,11 +181,9 @@ import type { Device } from "../../types/device";
 
 const devices = ref<Device[]>([]);
 const loading = ref(false);
-// 添加弹窗相关的状态
 const modalVisible = ref(false);
 const selectedDevice = ref<Device>({} as Device);
 
-// 修改 handleClick 方法
 const handleClick = (device: Device) => {
   selectedDevice.value = device;
   modalVisible.value = true;
@@ -189,6 +191,7 @@ const handleClick = (device: Device) => {
 onMounted(() => {
   fetchDevices();
 });
+// 获取地理位置
 
 // 获取设备图标
 const getDeviceIcon = (deviceType: string) => {
@@ -217,14 +220,24 @@ const formatDate = (dateString: string | Date | undefined) => {
     second: "2-digit",
   });
 };
-
 const fetchDevices = async () => {
   try {
     loading.value = true;
     const response = await axiosConfig.get("/auth/devices");
     console.log(response);
 
-    devices.value = Array.isArray(response.data.data) ? response.data.data : [];
+    if (Array.isArray(response.data.data)) {
+      const currentDevice = response.data.data.find(
+        (device: Device) => device.isCurrentDevice
+      );
+
+      // 只取当前设备 不会增加设备数量,只会改变设备信息
+      devices.value = currentDevice
+        ? [currentDevice]
+        : response.data.data.slice(0, 1);
+    } else {
+      devices.value = [];
+    }
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
@@ -238,6 +251,15 @@ const trustDevice = async (deviceId: string) => {
   try {
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (!device) return;
+
+    // 检查是否已经有受信任的设备
+    const trustedDevice = devices.value.find(
+      (d: Device) => d.isTrusted && d.id !== deviceId
+    );
+    if (!device.isTrusted && trustedDevice) {
+      ElMessage.warning("最多只能有一台受信任设备");
+      return;
+    }
 
     device.actionLoading = true;
     const response = await axiosConfig.put(`/auth/devices/${deviceId}/trust`, {
@@ -343,7 +365,6 @@ const logoutAllDevices = async () => {
       color: var(--color-bg4);
       margin: 0 0 8px 0;
     }
-
     .page-description {
       font-size: 14px;
       color: var(--color-bg4);
