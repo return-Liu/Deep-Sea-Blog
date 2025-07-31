@@ -146,48 +146,36 @@ function generateUUID() {
   }
   return result;
 }
+
 // 获取ip地址
-async function getIpAddress(ip) {
+async function getIpAddress() {
   try {
     const response = await axios.get(
       "https://apis.map.qq.com/ws/location/v1/ip",
       {
         params: {
           key: "B3QBZ-57BWV-3MIPO-5QBY6-ZPUCS-F7BUJ",
-          ip: ip, // 使用传入的IP地址
+          ip: "223.104.174.0",
         },
+        timeout: 3000, // 3秒超时
       }
     );
 
-    // 检查 response.data 是否存在
-    if (!response.data) {
-      console.error("API 响应数据为空");
-      return { city: "未知位置", province: "未知位置" };
+    const result = response.data?.result;
+    if (!result) {
+      console.error("Invalid API response:", response.data);
+      return { city: "未知", province: "未知" };
     }
 
-    // 检查 response.data.result 是否存在
-    if (!response.data.result) {
-      console.error("API 响应中没有 result 字段");
-      return { city: "未知位置", province: "未知位置" };
-    }
-
-    // 检查 response.data.result.ad_info 是否存在
-    if (!response.data.result.ad_info) {
-      console.error("API 响应中没有 ad_info 字段");
-      return { city: "未知位置", province: "未知位置" };
-    }
-
-    // 获取城市和省份信息
-    const city = response.data.result.ad_info.city || "未知位置";
-    const province = response.data.result.ad_info.province || "未知位置";
-
-    console.log(`City: ${city}, Province: ${province}`);
+    const { city = "未知", province = "未知" } = result.ad_info || {};
     return { city, province };
   } catch (error) {
-    console.error("获取位置信息失败:", error);
-    return { city: "未知位置", province: "未知位置" };
+    console.error("获取位置信息失败:", error.message);
+    return { city: "未知", province: "未知" };
   }
 }
+// 获取ip经纬度
+async function getIPLocation(ip) {}
 // 用于存储二维码状态，生产建议用 Redis
 const qrcodeStore = {};
 
@@ -319,7 +307,7 @@ router.get("/accounts", async (req, res) => {
     failure(res, error);
   }
 });
-async function handlePostLogin(user, req, res) {
+async function handlePostLogin(user, req, res, loginMethod) {
   // 生成token
   const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
     expiresIn: "1h",
@@ -328,41 +316,12 @@ async function handlePostLogin(user, req, res) {
   // 记录设备信息
   const deviceInfo = await extractDeviceInfo(req);
   const deviceId = generateDeviceId(user.id, deviceInfo.userAgent);
-  // 获取客户端真实IP地址
-  const clientIp =
-    req.headers["x-forwarded-for"] || // 代理服务器传递的真实客户端IP
-    req.headers["x-real-ip"] || // 另一种代理服务器头部
-    req.connection.remoteAddress || // 直接连接的IP地址
-    req.socket.remoteAddress || // Socket连接的IP地址
-    (req.connection.socket ? req.connection.socket.remoteAddress : null) || // 嵌套Socket的IP地址
-    "127.0.0.1"; // 默认本地IP
-
-  // 如果是本地IP，使用默认测试IP为北京市 111.206.145.41
-  const ipToUse =
-    clientIp === "127.0.0.1" || // IPv4本地回环地址
-    clientIp === "::1" || // IPv6本地回环地址
-    clientIp.startsWith("::ffff:") // IPv4映射的IPv6地址
-      ? "111.206.145.41" // 使用北京市的IP地址作为默认值
-      : clientIp.split(",")[0].trim(); // 否则使用真实的客户端IP（取第一个）
 
   // 获取位置信息
-  const locationInfo = await getIpAddress(ipToUse);
+  const locationInfo = await getIpAddress();
 
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
-
-  // 检查设备信任是否过期
-  if (device && device.isTrusted && device.trustExpire) {
-    const now = new Date();
-    if (now > device.trustExpire) {
-      // 信任已过期，取消信任状态
-      await device.update({
-        isTrusted: false,
-        trustExpire: null,
-      });
-      device.isTrusted = false;
-    }
-  }
 
   const deviceData = {
     userId: user.id,
@@ -374,9 +333,11 @@ async function handlePostLogin(user, req, res) {
     lastLoginTime: new Date(),
     isTrusted: false,
     userAgent: deviceInfo.userAgent,
-    location: locationInfo.city, // 使用获取到的位置信息
+    location: locationInfo.city,
     province: locationInfo.province,
     city: locationInfo.city,
+    loginMethod: loginMethod,
+    status: "已登录", // 添加状态字段
   };
 
   if (!device) {
@@ -390,6 +351,9 @@ async function handlePostLogin(user, req, res) {
       location: deviceData.location,
       province: deviceData.province,
       city: deviceData.city,
+      // 更新登录方式
+      loginMethod: loginMethod || device.loginMethod,
+      status: "已登录", // 更新状态为已登录
     });
   }
 
@@ -407,33 +371,6 @@ async function handlePostLogin(user, req, res) {
   });
 }
 
-// 添加定时任务清理过期信任设备
-setInterval(async () => {
-  try {
-    const now = new Date();
-    const expiredDevices = await Device.findAll({
-      where: {
-        isTrusted: true,
-        trustExpire: {
-          [Op.lt]: now,
-        },
-      },
-    });
-
-    for (const device of expiredDevices) {
-      await device.update({
-        isTrusted: false,
-        trustExpire: null,
-      });
-    }
-
-    if (expiredDevices.length > 0) {
-      console.log(`清理了 ${expiredDevices.length} 个过期信任设备`);
-    }
-  } catch (error) {
-    console.error("清理过期信任设备失败:", error);
-  }
-}, 24 * 60 * 60 * 1000); // 每24小时运行一次
 /**
  * 用户登录
  * POST auth/sign_in
@@ -444,11 +381,23 @@ router.post("/sign_in", async (req, res) => {
     if (!login) throw new BadRequestError("账号或手机号或邮箱必须填写!");
     if (!password) throw new BadRequestError("密码必须填写!");
 
-    const condition = {
-      where: {
-        [Op.or]: [{ email: login }, { username: login }, { phone: login }],
-      },
-    };
+    let condition = { where: {} };
+    let loginMethod = "未知登录方式";
+
+    // 根据输入类型构建查询条件并确定登录方式
+    if (/^1[3-9]\d{9}$/.test(login)) {
+      // 手机号登录
+      condition.where.phone = login;
+      loginMethod = "手机号登录";
+    } else if (login.includes("@")) {
+      // 邮箱登录
+      condition.where.email = login;
+      loginMethod = "邮箱登录";
+    } else {
+      // 用户名登录
+      condition.where.username = login;
+      loginMethod = "账号登录";
+    }
 
     const user = await User.findOne(condition);
     if (!user) throw new NotFoundError("用户不存在, 请先注册账号!");
@@ -456,13 +405,12 @@ router.post("/sign_in", async (req, res) => {
     const isPasswordValid = bcrypt.compareSync(password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedError("密码错误,请输入正确的密码");
-    await handlePostLogin(user, req, res);
+    await handlePostLogin(user, req, res, loginMethod);
   } catch (error) {
     failure(res, error);
   }
 });
 
-// 邮箱验证码登录 - 验证验证码并登录
 router.post("/email", async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -471,7 +419,7 @@ router.post("/email", async (req, res) => {
     if (user.code !== code) throw new BadRequestError("验证码错误");
     if (new Date() > user.codeExpire) throw new BadRequestError("验证码已过期");
 
-    await handlePostLogin(user, req, res);
+    await handlePostLogin(user, req, res, "邮箱登录");
   } catch (error) {
     failure(res, error);
   }
@@ -510,7 +458,7 @@ router.post("/email/verify", async (req, res) => {
         constellation: null,
         area: null,
         nicknameColor: "#000000",
-        phone: null,
+        phone: "",
       });
     }
 
@@ -528,7 +476,6 @@ router.post("/email/verify", async (req, res) => {
   }
 });
 
-// 登录设备管理
 // 登录设备管理
 router.post("/login/device", async (req, res) => {
   try {
@@ -608,6 +555,8 @@ router.get("/devices", async (req, res) => {
       province: device.province,
       trustExpire: device.trustExpire,
       isCurrentDevice: device.deviceId === currentDeviceId,
+      loginMethod: device.loginMethod || "未知登录方式",
+      status: device.status, // 添加状态字段
     }));
 
     success(res, "获取设备列表成功", formattedDevices);
@@ -642,54 +591,14 @@ router.delete("/devices/:deviceId", async (req, res) => {
     );
 
     if (device.deviceId === currentDeviceId) {
-      throw new BadRequestError("不能删除当前设备");
+      // 将当前设备状态设为未登录而不是删除
+      await device.update({ status: "未登录" });
+      return success(res, "设备已登出");
     }
 
     await device.destroy();
 
     success(res, "设备删除成功");
-  } catch (error) {
-    failure(res, error);
-  }
-});
-
-// 设置设备信任状态
-router.put("/devices/:deviceId/trust", async (req, res) => {
-  try {
-    const currentUser = await getCurrentUser(req);
-    const { deviceId } = req.params;
-    const { trusted } = req.body;
-
-    // 查找设备
-    const device = await Device.findOne({
-      where: {
-        deviceId: deviceId,
-        userId: currentUser.id,
-      },
-    });
-
-    if (!device) {
-      throw new NotFoundError("设备不存在或不属于当前用户");
-    }
-
-    // 更新信任状态和过期时间
-    const updateData = {
-      isTrusted: trusted,
-    };
-
-    // 如果设置为信任，设置30天后过期
-    if (trusted) {
-      const expireDate = new Date();
-      expireDate.setDate(expireDate.getDate() + 30);
-      updateData.trustExpire = expireDate;
-    } else {
-      // 如果取消信任，清除过期时间
-      updateData.trustExpire = null;
-    }
-
-    await device.update(updateData);
-
-    success(res, `设备${trusted ? "已设为信任" : "已取消信任"}`);
   } catch (error) {
     failure(res, error);
   }

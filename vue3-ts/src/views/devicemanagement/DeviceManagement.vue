@@ -2,12 +2,30 @@
   <div class="device-management">
     <div class="header-section">
       <h1 class="page-title">登录设备管理</h1>
+      <el-tag>账号情况</el-tag>
+      <p class="page-status">
+        <component :is="LoginStautsIcon" class="detail-icon" />
+        <span
+          v-for="device in devices.filter((d) => d.isCurrentDevice)"
+          :key="device.id"
+        >
+          {{ device.status ? "正常" : "异常" }}
+        </span>
+      </p>
+      <p class="page-description">
+        尊贵的用户，您的账号目前{{
+          currentDeviceStatus
+        }}，请继续保持。请妥善保管账号，建议移除不常用，非自用设备。
+      </p>
     </div>
     <el-card class="device-card">
       <template #header>
         <div class="card-header">
           <div class="card-header-left">
-            <span class="card-title">已登录设备</span>
+            <span class="card-title"
+              >登录设备情况
+              <span class="card-title-tip">状态存在一定延时</span>
+            </span>
             <el-tag type="info" size="small" class="device-count">
               共 {{ (devices || []).length }} 台设备
             </el-tag>
@@ -15,15 +33,16 @@
               <el-icon><Warning /></el-icon>
               内测中
             </el-tag>
+            <!-- 主设备 -->
           </div>
           <el-button
-            type="danger"
+            type="primary"
             @click="logoutAllDevices"
             :loading="loading"
             plain
           >
-            <el-icon><SwitchButton /></el-icon>
-            登出当前设备
+            <el-icon><Refresh /></el-icon>
+            刷新当前设备
           </el-button>
         </div>
       </template>
@@ -92,7 +111,10 @@
                   {{ device.location || "未知参考登录地点" }}</span
                 >
               </div>
-
+              <div class="detail-row">
+                <span class="detail-label">登录状态:</span>
+                <span>{{ device.status || "未知设备状态" }}</span>
+              </div>
               <div class="detail-row">
                 <span class="detail-label">登录时间:</span>
                 <span>{{
@@ -131,6 +153,7 @@ import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "../../store/userStore";
 import DeviceDetailModal from "./DeviceDetailModal.vue";
+import LoginStautsIcon from "../../components/icon/LoginStauts.vue";
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
 import {
@@ -232,25 +255,18 @@ const logoutDevice = async (deviceId: string) => {
     }
   }
 };
-
 const logoutAllDevices = async () => {
   if ((devices.value || []).length === 0) {
     ElMessage.info("暂无设备信息");
     return;
   }
   try {
-    await ElMessageBox.confirm(
-      "确定要登出所有设备吗？您需要在所有设备上重新登录。",
-      "确认登出",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      }
-    );
-
+    await ElMessageBox.confirm("确定要刷新当前设备列表吗？", "确认刷新", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
     loading.value = true;
-
     const response = await axiosConfig.post("/auth/login/device");
     ElMessage.success(response.data.message);
     fetchDevices();
@@ -262,6 +278,10 @@ const logoutAllDevices = async () => {
     loading.value = false;
   }
 };
+const currentDeviceStatus = computed(() => {
+  const currentDevice = devices.value.find((d) => d.isCurrentDevice);
+  return currentDevice ? (currentDevice.status ? "正常" : "异常") : "未知";
+});
 </script>
 
 <style lang="less" scoped>
@@ -281,6 +301,12 @@ const logoutAllDevices = async () => {
       font-weight: 600;
       color: var(--color-bg4);
       margin: 0 0 8px 0;
+    }
+    .detail-icon {
+      font-size: 20px;
+      color: var(--color-primary);
+      width: 20px;
+      height: 20px;
     }
   }
 
@@ -310,6 +336,11 @@ const logoutAllDevices = async () => {
 
       .card-title {
         font-size: 18px;
+        font-weight: 600;
+        color: var(--color-bg4);
+      }
+      .card-title-tip {
+        font-size: 12px;
         font-weight: 600;
         color: var(--color-bg4);
       }

@@ -28,7 +28,11 @@ module.exports = (sequelize, DataTypes) => {
       lastLoginTime: DataTypes.DATE,
       loginMethod: DataTypes.STRING,
       userAgent: DataTypes.TEXT,
-
+      status: {
+        type: DataTypes.ENUM("已登录", "未登录"),
+        defaultValue: "未登录",
+        allowNull: false,
+      },
       province: DataTypes.STRING,
       city: DataTypes.STRING,
     },

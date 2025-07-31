@@ -55,6 +55,13 @@
           </div>
           <div class="detail-item">
             <div class="detail-label">
+              <component :is="LoginStautsIcon" class="detail-icon" />
+              <span>登录状态</span>
+            </div>
+            <div class="detail-value">{{ device.status }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
               <component :is="PperatingSystemIcon" class="detail-icon" />
               <span>操作系统</span>
             </div>
@@ -118,6 +125,7 @@ import UUIDIcon from "../../components/icon/Uuid.vue";
 import LastLoginIcon from "../../components/icon/LastLogin.vue";
 import LocationIcon from "../../components/icon/Location.vue";
 import LoginTypeIcon from "../../components/icon/LoginType.vue";
+import LoginStautsIcon from "../../components/icon/LoginStauts.vue";
 import { useUserStore } from "../../store/userStore";
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
