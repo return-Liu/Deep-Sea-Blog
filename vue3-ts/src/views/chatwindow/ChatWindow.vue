@@ -59,8 +59,9 @@
             :disabled="!inputText.trim()"
             @click="sendMessage"
             class="custom-button"
+            :title="loading ? '消息发送中...' : '发送消息'"
           >
-            发送
+            {{ loading ? "发送中..." : "发送" }}
           </el-button>
         </div>
       </div>
@@ -331,6 +332,8 @@ const sendMessage = async () => {
         sendMessage(); // 重试发送
       } else {
         ElMessage.error("连接失败,请稍后重试");
+        // 消息不发送
+        socket.close();
         loading.value = false;
       }
     });
@@ -379,13 +382,16 @@ const handleAvatar = (isUser: boolean) => {
   .deep-container,
   .selected {
     background-color: #2196f3; /* 选中时的背景颜色 */
-    color: white; /* 选中时的文字颜色 */
+    color: var(--color-bg8);
     border-radius: 5px;
   }
   .deep-img {
     width: 16px;
+
     img {
       width: 16px;
+      background: #ffff;
+      border-radius: 10px;
     }
   }
 
@@ -394,7 +400,7 @@ const handleAvatar = (isUser: boolean) => {
     align-items: center;
     font-size: 10px;
     margin-left: 2px;
-    color: #000;
+    color: var(--color-bg8);
 
     label {
       margin-right: 10px;
@@ -406,7 +412,7 @@ const handleAvatar = (isUser: boolean) => {
       display: inline-block;
       width: 60px;
       height: 34px;
-      background-color: #ccc;
+      background: var(--bg3);
       border-radius: 34px;
 
       &:before {
@@ -416,7 +422,7 @@ const handleAvatar = (isUser: boolean) => {
         width: 26px;
         left: 4px;
         bottom: 4px;
-        background-color: white;
+        background: var(--bg3);
         border-radius: 50%;
         transition: 0.4s;
       }
@@ -440,12 +446,12 @@ const handleAvatar = (isUser: boolean) => {
   p {
     margin-top: 10px;
     font-size: 14px;
-    color: #666;
+    color: var(--color-bg8);
   }
 }
 .thinking-indicator {
   font-size: 14px;
-  color: #666;
+  color: var(--color-bg8);
   margin: 10px 0;
   text-align: center;
   animation: blink 1s infinite;

@@ -32,6 +32,15 @@
         <div class="device-details-grid">
           <div class="detail-item">
             <div class="detail-label">
+              <component :is="DeviceIdIcon" class="detail-icon" />
+              <span>设备ID</span>
+            </div>
+            <div class="detail-value">
+              {{ device.id || "未知登录设备id" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
               <component :is="DeviceTypeIcon" class="detail-icon" />
               <span>设备类型</span>
             </div>
@@ -126,6 +135,7 @@ import LastLoginIcon from "../../components/icon/LastLogin.vue";
 import LocationIcon from "../../components/icon/Location.vue";
 import LoginTypeIcon from "../../components/icon/LoginType.vue";
 import LoginStautsIcon from "../../components/icon/LoginStauts.vue";
+import DeviceIdIcon from "../../components/icon/DeviceId.vue";
 import { useUserStore } from "../../store/userStore";
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
@@ -259,8 +269,8 @@ const formatDate = (dateString: string | Date | undefined) => {
 
 .modal-body {
   padding: 24px;
-  overflow-y: auto;
   flex: 1;
+  overflow-y: auto;
 }
 
 .device-info-section {

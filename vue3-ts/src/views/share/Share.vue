@@ -160,7 +160,7 @@
 </template>
 
 <script setup lang="ts" name="Share">
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed, defineExpose } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axiosConfig from "../../utils/request";
 import { formatDistanceToNow } from "date-fns";
@@ -172,6 +172,9 @@ import BlogIcon from "../../components/icon/Blog.vue";
 import PhotographyIcon from "../../components/icon/Photography.vue";
 import NoteIcon from "../../components/icon/Note.vue";
 import { ElMessage } from "element-plus";
+defineExpose({
+  fetchData,
+});
 const tabs = [
   { id: "essays", text: "博客文章", icon: BlogIcon },
   { id: "photographys", text: "摄影图库", icon: PhotographyIcon },
@@ -256,8 +259,11 @@ async function fetchData(currentPage: number = 1) {
           type: "essay",
           views: item.views || 0,
           isViewed: false,
+          isLiked: item.isLiked ?? false, // 初始化点赞状态
+          likesCount: item.likesCount ?? 0, // 初始化点赞数
         })
       );
+
       photography.value = responsePhotography.data.data.photography.map(
         (item: Photography) => ({
           ...item,

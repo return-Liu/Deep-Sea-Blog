@@ -87,7 +87,7 @@ export const useUserStore = defineStore("user", () => {
       for (const { endpoint, key } of endpoints) {
         try {
           const response = await axiosConfig.get(endpoint, {
-            params: { userId: user.value.uuid },
+            params: { userId: user.value.id },
           });
 
           response.data.data[key].forEach((item: { image: string }) => {

@@ -403,9 +403,9 @@ const submitUpload = (type: string) => {
   showUploadButton.value = false;
 };
 const typeNameMap = {
-  essay: "文章",
+  essay: "博客文章",
   photography: "摄影作品",
-  notes: "随笔",
+  notes: "随笔随记",
 };
 
 const currentTypeText = computed(() => {

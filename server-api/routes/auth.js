@@ -5,6 +5,7 @@ const { success, failure } = require("../utils/responses");
 const { createSixNum, verifyEmail } = require("../utils/email");
 const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
+const cron = require("node-cron");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -323,6 +324,9 @@ async function handlePostLogin(user, req, res, loginMethod) {
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
 
+  // 计算登录过期时间（1小时后）
+  const loginExpire = new Date(Date.now() + 60 * 60 * 1000);
+
   const deviceData = {
     userId: user.id,
     deviceId,
@@ -337,7 +341,8 @@ async function handlePostLogin(user, req, res, loginMethod) {
     province: locationInfo.province,
     city: locationInfo.city,
     loginMethod: loginMethod,
-    status: "已登录", // 添加状态字段
+    status: "已登录",
+    loginExpire: loginExpire, // 添加过期时间
   };
 
   if (!device) {
@@ -351,9 +356,9 @@ async function handlePostLogin(user, req, res, loginMethod) {
       location: deviceData.location,
       province: deviceData.province,
       city: deviceData.city,
-      // 更新登录方式
       loginMethod: loginMethod || device.loginMethod,
-      status: "已登录", // 更新状态为已登录
+      status: "已登录",
+      loginExpire: loginExpire, // 更新过期时间
     });
   }
 
@@ -502,7 +507,6 @@ router.post("/login/device", async (req, res) => {
       os: deviceInfo.os || "unknown",
       browser: deviceInfo.browser || "unknown",
       lastLoginTime: new Date(),
-      isTrusted: false,
       userAgent: deviceInfo.userAgent,
       location: deviceInfo.location || "未知位置",
       province: deviceInfo.province || "未知省",
@@ -528,6 +532,7 @@ router.post("/login/device", async (req, res) => {
   }
 });
 // 获取用户所有登录设备
+// 修改 /devices 路由
 router.get("/devices", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -542,21 +547,36 @@ router.get("/devices", async (req, res) => {
       order: [["lastLoginTime", "DESC"]],
     });
 
-    const formattedDevices = devices.map((device) => ({
+    // 检查设备是否过期并更新状态
+    const now = new Date();
+    const updatedDevices = await Promise.all(
+      devices.map(async (device) => {
+        // 如果设备状态为已登录但已过期，则更新为未登录
+        if (
+          device.status === "已登录" &&
+          device.loginExpire &&
+          device.loginExpire < now
+        ) {
+          await device.update({ status: "未登录" });
+          device.status = "未登录"; // 更新内存中的状态
+        }
+        return device;
+      })
+    );
+
+    const formattedDevices = updatedDevices.map((device) => ({
       id: device.deviceId,
       deviceName: device.deviceName,
       deviceType: device.deviceType,
       os: device.os,
       browser: device.browser,
       lastLoginTime: device.lastLoginTime,
-      isTrusted: device.isTrusted,
       location: device.location,
       city: device.city,
       province: device.province,
-      trustExpire: device.trustExpire,
       isCurrentDevice: device.deviceId === currentDeviceId,
       loginMethod: device.loginMethod || "未知登录方式",
-      status: device.status, // 添加状态字段
+      status: device.status,
     }));
 
     success(res, "获取设备列表成功", formattedDevices);
@@ -601,6 +621,35 @@ router.delete("/devices/:deviceId", async (req, res) => {
     success(res, "设备删除成功");
   } catch (error) {
     failure(res, error);
+  }
+});
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+    // 查找所有已登录但过期的设备
+    const expiredDevices = await Device.findAll({
+      where: {
+        status: "已登录",
+        loginExpire: {
+          [Op.lt]: now, // 小于当前时间
+        },
+      },
+    });
+
+    // 更新这些设备的状态为"未登录"
+    for (const device of expiredDevices) {
+      await device.update({ status: "未登录" });
+    }
+
+    if (expiredDevices.length > 0) {
+      console.log(
+        `[${new Date().toISOString()}] 已将 ${
+          expiredDevices.length
+        } 个设备状态更新为未登录`
+      );
+    }
+  } catch (error) {
+    console.error("定时任务更新设备状态失败:", error);
   }
 });
 module.exports = router;

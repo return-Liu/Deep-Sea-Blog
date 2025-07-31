@@ -440,6 +440,7 @@ import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import languagesIcon from "../../components/icon/Languages.vue";
+import { fetchDevices } from "../../utils/publicuser";
 // 省略其他导入
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
@@ -794,18 +795,7 @@ const updateUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
-const hasUserResources = async (userId: number): Promise<boolean> => {
-  const response = await axiosConfig.get("/users/resources/exist", {
-    params: { userId },
-  });
-  return response.data.data.exist;
-};
-const hasUserComments = async (userId: number): Promise<boolean> => {
-  const response = await axiosConfig.get(`/admin/comment/${userId}/exist`, {
-    params: { userId },
-  });
-  return response.data.data.exist;
-};
+// 注销账号
 // 注销账号
 const deleteAccount = async () => {
   try {
@@ -820,23 +810,20 @@ const deleteAccount = async () => {
     );
 
     const userId = userStore.user.id;
-
-    // 删除用户资源（先检查是否存在）
-    if (await hasUserResources(userId)) {
-      await axiosConfig.delete("/users/resources", {
-        data: { userId },
-      });
-    }
-
-    // 删除用户评论（先检查是否存在）
-    if (await hasUserComments(userId)) {
-      await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
-    }
-
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
+
+    // 直接删除用户资源，
+    await axiosConfig.delete("/users/resources", {
+      data: { userId },
+    });
+
+    // 直接删除用户评论，
+    await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
+    await axiosConfig.delete(`/auth/devices/${userStore.user.id}`);
     // 删除账户
     const response = await axiosConfig.delete("/users/delete");
+
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
 

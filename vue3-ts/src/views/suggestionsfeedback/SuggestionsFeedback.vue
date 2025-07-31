@@ -1,85 +1,94 @@
 <template>
-  <div class="suggestions-feedback">
-    <div class="feedback-container">
-      <h1 class="title">建议与反馈</h1>
-      <p class="subtitle">你的反馈对我们很重要</p>
+  <div class="feedback-container">
+    <div class="feedback-card">
+      <!-- 简洁标题 -->
+      <h2 class="feedback-title">意见反馈</h2>
+      <p class="feedback-subtitle">您的建议将帮助我们改进</p>
 
+      <!-- 反馈表单 -->
       <form @submit.prevent="submitFeedback" class="feedback-form">
+        <!-- 姓名输入 -->
         <div class="form-group">
           <label for="name">姓名</label>
           <input
             type="text"
             id="name"
             v-model="formData.name"
-            :class="{ 'input-filled': formData.name }"
-            placeholder="请输入你的姓名"
+            @blur="validateName"
+            :class="{ 'has-error': nameError }"
+            placeholder="请输入您的姓名"
           />
-          <p v-if="nameError" class="error-text">{{ nameError }}</p>
+          <p v-if="nameError" class="error-message">{{ nameError }}</p>
         </div>
 
+        <!-- 邮箱输入 -->
         <div class="form-group">
-          <label for="email">电子邮件</label>
+          <label for="email">邮箱</label>
           <input
             type="email"
             id="email"
             v-model="formData.email"
-            :class="{ 'input-filled': formData.email }"
-            placeholder="请输入你的邮箱"
+            @blur="validateEmail"
+            :class="{ 'has-error': emailError }"
+            placeholder="请输入您的邮箱"
           />
-          <p v-if="emailError" class="error-text">{{ emailError }}</p>
+          <p v-if="emailError" class="error-message">{{ emailError }}</p>
         </div>
 
+        <!-- 反馈内容 -->
         <div class="form-group">
-          <label for="feedback">建议与反馈</label>
+          <label for="feedback">反馈内容</label>
           <textarea
             id="feedback"
             v-model="formData.feedback"
-            :class="{ 'input-filled': formData.feedback }"
-            placeholder="请详细描述你的建议或反馈..."
+            @blur="validateFeedback"
+            :class="{ 'has-error': feedbackError }"
+            placeholder="请输入您的反馈意见"
             rows="5"
           ></textarea>
-          <p v-if="feedbackError" class="error-text">{{ feedbackError }}</p>
+          <p v-if="feedbackError" class="error-message">{{ feedbackError }}</p>
         </div>
 
-        <button type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? "提交中..." : "提交反馈" }}
+        <!-- 提交按钮 -->
+        <button type="submit" class="submit-button" :disabled="isSubmitting">
+          <span v-if="!isSubmitting">提交反馈</span>
+          <span v-else>提交中...</span>
         </button>
       </form>
 
-      <transition name="fade">
-        <div v-if="successMessage" class="success-message">
-          <i class="success-icon">✓</i>
-          {{ successMessage }}
-        </div>
-      </transition>
+      <!-- 状态提示 -->
+      <div v-if="successMessage" class="status-message success">
+        <p>{{ successMessage }}</p>
+      </div>
 
-      <transition name="fade">
-        <div v-if="errorMessage" class="error-message">
-          <i class="error-icon">✕</i>
-          {{ errorMessage }}
-        </div>
-      </transition>
+      <div v-if="errorMessage" class="status-message error">
+        <p>{{ errorMessage }}</p>
+      </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import axiosConfig from "../../utils/request";
 import { ElMessage } from "element-plus";
+
 const successMessage = ref("");
 const errorMessage = ref("");
 const isSubmitting = ref(false);
 const nameError = ref("");
 const emailError = ref("");
 const feedbackError = ref("");
+
 const formData = reactive({
   name: "",
   email: "",
   feedback: "",
 });
+
 const validateName = () => {
-  if (!formData.name) {
-    nameError.value = "姓名不能为空";
+  if (!formData.name.trim()) {
+    nameError.value = "请输入您的姓名";
     return false;
   }
   nameError.value = "";
@@ -88,12 +97,12 @@ const validateName = () => {
 
 const validateEmail = () => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!formData.email) {
-    emailError.value = "电子邮件不能为空";
+  if (!formData.email.trim()) {
+    emailError.value = "请输入电子邮箱";
     return false;
   }
   if (!emailPattern.test(formData.email)) {
-    emailError.value = "电子邮件格式不正确";
+    emailError.value = "请输入有效的电子邮箱";
     return false;
   }
   emailError.value = "";
@@ -101,8 +110,12 @@ const validateEmail = () => {
 };
 
 const validateFeedback = () => {
-  if (!formData.feedback) {
-    feedbackError.value = "反馈内容不能为空";
+  if (!formData.feedback.trim()) {
+    feedbackError.value = "请填写您的反馈内容";
+    return false;
+  }
+  if (formData.feedback.length < 10) {
+    feedbackError.value = "反馈内容至少需要10个字符";
     return false;
   }
   feedbackError.value = "";
@@ -110,7 +123,10 @@ const validateFeedback = () => {
 };
 
 const validateForm = () => {
-  return validateName() && validateEmail() && validateFeedback();
+  const isNameValid = validateName();
+  const isEmailValid = validateEmail();
+  const isFeedbackValid = validateFeedback();
+  return isNameValid && isEmailValid && isFeedbackValid;
 };
 
 const submitFeedback = async () => {
@@ -121,22 +137,28 @@ const submitFeedback = async () => {
   }
 
   isSubmitting.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
+
   try {
     await axiosConfig.post("/admin/feedback", formData);
     ElMessage.success("反馈提交成功！");
-    successMessage.value = "感谢你的反馈，我们会尽快处理！";
-    // 清空表单数据
+    successMessage.value = "感谢您的宝贵意见！";
+
+    // 清空表单
     formData.name = "";
     formData.email = "";
     formData.feedback = "";
   } catch (error) {
-    ElMessage.error("提交反馈失败，请稍后再试。");
+    ElMessage.error("提交反馈失败，请稍后再试");
+    errorMessage.value = "提交过程中出现错误，请稍后再试。";
     console.error("Error submitting feedback:", error);
   } finally {
     isSubmitting.value = false;
   }
 };
 </script>
-<style scoped>
+
+<style lang="less" scoped>
 @import "../../base-ui/suggestionsfeedback.less";
 </style>

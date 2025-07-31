@@ -39,22 +39,4 @@ router.put("/:uuid/style", async (req, res) => {
     failure(res, error);
   }
 });
-// 删除主题
-router.delete("/:uuid/style", async (req, res) => {
-  try {
-    const { uuid } = req.params;
-    const user = await User.findOne({
-      where: { uuid },
-    });
-    if (!user) {
-      throw new NotFoundError("用户不存在");
-    }
-
-    await user.update({ theme: null });
-    success(res, { theme: null });
-  } catch (error) {
-    failure(res, error);
-    console.log(error);
-  }
-});
 module.exports = router;

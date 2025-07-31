@@ -9,7 +9,7 @@
           v-for="device in devices.filter((d) => d.isCurrentDevice)"
           :key="device.id"
         >
-          {{ device.status ? "正常" : "异常" }}
+          {{ currentDeviceStatus }}
         </span>
       </p>
       <p class="page-description">
@@ -22,9 +22,11 @@
       <template #header>
         <div class="card-header">
           <div class="card-header-left">
-            <span class="card-title"
-              >登录设备情况
-              <span class="card-title-tip">状态存在一定延时</span>
+            <span class="card-title">
+              登录设备情况
+              <span class="card-title-tip">
+                <strong>状态存在一定延时</strong>
+              </span>
             </span>
             <el-tag type="info" size="small" class="device-count">
               共 {{ (devices || []).length }} 台设备
@@ -156,13 +158,7 @@ import DeviceDetailModal from "./DeviceDetailModal.vue";
 import LoginStautsIcon from "../../components/icon/LoginStauts.vue";
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
-import {
-  Monitor,
-  Iphone,
-  SwitchButton,
-  Warning,
-  Cellphone,
-} from "@element-plus/icons-vue";
+import { Monitor, Iphone, Warning, Cellphone } from "@element-plus/icons-vue";
 import axiosConfig from "../../utils/request";
 import type { Device } from "../../types/device";
 
@@ -178,7 +174,6 @@ const handleClick = (device: Device) => {
 onMounted(() => {
   fetchDevices();
 });
-// 获取地理位置
 
 // 获取设备图标
 const getDeviceIcon = (deviceType: string) => {
@@ -301,6 +296,10 @@ const currentDeviceStatus = computed(() => {
       font-weight: 600;
       color: var(--color-bg4);
       margin: 0 0 8px 0;
+    }
+    .page-status {
+      display: flex;
+      margin: 10px;
     }
     .detail-icon {
       font-size: 20px;

@@ -111,13 +111,10 @@ import { ref, computed } from "vue";
 import { useUserStore } from "../../store/userStore";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import CancelAccountIcon from "../../components/icon/Cancel account.vue";
 import FoundpasswordIcon from "../../components/icon/Foundpassword.vue";
 import LogindevicemanageIcon from "../../components/icon/Logindevicemanage.vue";
 import phoneIcon from "../../components/icon/phone.vue";
 import rightarrowIcon from "../../components/icon/rightarrow.vue";
-import AccountIcon from "../../components/icon/Account.vue";
-import IndependencepasswordIcon from "../../components/icon/Independencepassword.vue";
 import SecurityIcon from "../../components/icon/Security.vue";
 import AccountSecurityIcon from "../../components/icon/AccountSecurity.vue";
 const router = useRouter();
@@ -201,13 +198,7 @@ const securityFeatures = [
     description: "忘记Deep Sea账号密码? 从这里找回",
     handler: handlePasswordRecovery,
   },
-  {
-    id: "accountUnfreeze",
-    icon: AccountIcon, // 使用导入的组件
-    title: "账号解冻",
-    description: "解除被冻结的Deep Sea账号",
-    handler: handleAccountUnfreeze,
-  },
+
   {
     id: "phoneBinding",
     icon: phoneIcon, // 使用导入的组件
@@ -222,31 +213,13 @@ const securityFeatures = [
     ),
     handler: handlePhoneBinding,
   },
-  {
-    id: "independentPassword",
-    icon: IndependencepasswordIcon, // 使用导入的组件
-    title: "独立密码",
-    description: "设置独立密码保护特定功能",
-    status: computed(() =>
-      hasIndependentPassword.value
-        ? { text: "已设置", bound: true }
-        : { text: "未设置", bound: false }
-    ),
-    handler: handleIndependentPassword,
-  },
+
   {
     id: "deviceManagement",
     icon: LogindevicemanageIcon, // 使用导入的组件
     title: "登录设备管理",
     description: "查看和管理已登录的设备",
     handler: handleDeviceManagement,
-  },
-  {
-    id: "accountDeletion",
-    icon: CancelAccountIcon, // 使用导入的组件
-    title: "账号注销",
-    description: "永久删除Deep Sea账号",
-    handler: handleAccountDeletion,
   },
 ];
 </script>

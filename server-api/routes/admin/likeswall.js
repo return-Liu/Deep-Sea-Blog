@@ -38,7 +38,7 @@ router.post("/like", async (req, res) => {
     });
 
     // 成功点赞时返回新的点赞状态和点赞数
-    return success(res, "点赞成功", {
+    return success(res, "点赞留言墙成功", {
       isLiked: true,
       likeCount: wall.likesCount,
       status: true,

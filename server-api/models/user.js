@@ -32,10 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-          is: {
-            args: [/^1[3-9]\d{9}$/], // 简单的中国大陆手机号格式校验
-            msg: "手机号格式不正确",
-          },
+          // is: {
+          //   args: [/^1[3-9]\d{9}$/], // 简单的中国大陆手机号格式校验
+          //   msg: "手机号格式不正确",
+          // },
           // 添加自定义验证，允许空值
           isValidPhone(value) {
             if (value && !/^1[3-9]\d{9}$/.test(value)) {
@@ -149,6 +149,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
+   
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

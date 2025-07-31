@@ -11,4 +11,5 @@ export interface Device {
   province: string;
   loginMethod: string;
   status: string;
+  userAgent: string;
 }

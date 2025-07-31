@@ -33,6 +33,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "未登录",
         allowNull: false,
       },
+      loginExpire: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       province: DataTypes.STRING,
       city: DataTypes.STRING,
     },

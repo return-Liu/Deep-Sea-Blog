@@ -335,6 +335,12 @@ const {
 </script>
 <style lang="less" scoped>
 @import "../../base-ui/home.less";
+:deep(.el-dialog__title) {
+  color: var(--color-bg8);
+}
+:deep(.el-dialog) {
+  background: var(--bg3);
+}
 .dialog-content {
   display: flex;
   flex-direction: column;
@@ -345,7 +351,6 @@ const {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .chat-container {
