@@ -1,0 +1,213 @@
+.device-management {
+  padding: 24px;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  :deep(.el-card__body) {
+    background: var(--bg1);
+  }
+  .header-section {
+    margin-bottom: 24px;
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--color-bg4);
+      margin: 0 0 8px 0;
+    }
+    .page-status {
+      display: flex;
+      margin: 10px;
+    }
+    .detail-icon {
+      font-size: 20px;
+      color: var(--color-primary);
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .device-card {
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+    :deep(.el-card__header) {
+      padding: 20px 24px;
+      border-bottom: var(--border);
+      background: var(--bg1);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+
+      .card-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-bg4);
+      }
+      .card-title-tip {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-bg4);
+      }
+
+      .device-count {
+        height: 20px;
+        line-height: 18px;
+      }
+    }
+
+    .devices-container {
+      min-height: 300px;
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 0;
+        color: var(--color-bg4);
+
+        p {
+          margin-top: 16px;
+          font-size: 14px;
+        }
+      }
+
+      .devices-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        padding: 20px;
+
+        .device-item {
+          border: 2px solid transparent; // 默认透明边框
+          border-radius: 8px;
+          transition: all 0.3s;
+
+          &:hover {
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+          }
+
+          &.current-device {
+            background: var(--bg1);
+            border-color: #409eff; // 当前设备蓝色边框
+            box-shadow: 0 0 0 1px #409eff;
+          }
+
+          // 同时是当前设备和受信任设备时，优先显示当前设备边框
+          &.current-device.trusted-device {
+            border-color: #409eff;
+          }
+
+          .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+
+            .device-basic-info {
+              display: flex;
+              align-items: flex-start;
+              gap: 12px;
+
+              .device-icon {
+                color: #409eff;
+                margin-top: 2px;
+              }
+
+              .device-name-section {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+
+                .device-name {
+                  font-size: 16px;
+                  font-weight: 500;
+                  color: var(--color-bg4);
+                }
+              }
+            }
+
+            .trust-status {
+              height: 24px;
+              line-height: 22px;
+            }
+          }
+
+          .device-details {
+            margin-bottom: 20px;
+            color: var(--color-bg4);
+
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              font-size: 14px;
+
+              &:last-child {
+                margin-bottom: 0;
+              }
+
+              .detail-label {
+                color: var(--color-bg4);
+                width: 90px;
+                flex-shrink: 0;
+              }
+            }
+          }
+
+          .device-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-title {
+      font-size: 24px;
+    }
+
+    .card-header {
+      flex-direction: column;
+      align-items: stretch;
+
+      .card-header-left {
+        justify-content: space-between;
+      }
+    }
+
+    .devices-grid {
+      grid-template-columns: 1fr;
+      padding: 16px;
+
+      .device-item {
+        width: 100%;
+
+        .device-id {
+          flex-direction: column;
+          gap: 4px;
+
+          .device-id-value {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+}
