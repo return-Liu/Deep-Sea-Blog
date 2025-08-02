@@ -3,7 +3,7 @@
     <el-header>
       <slot name="search-box" v-if="showSearchBox"></slot>
       <div class="avatar-box">
-        <div class="email-box" title="系统邮箱" @click="viewMessage">
+        <div class="email-box" title="系统通知" @click="viewMessage">
           <el-icon :size="30" :color="'#0078d4'">
             <message />
           </el-icon>
@@ -50,10 +50,6 @@
               >
                 {{ user?.nickname }}
               </div>
-              <!-- 进入博客 -->
-              <div class="info-card-enter" @click="goToBlog">
-                <span>进入博客</span>
-              </div>
             </div>
             <div class="info-card-content">
               <div class="info-card-item">
@@ -73,7 +69,7 @@
       </div>
     </el-header>
     <el-drawer
-      title="系统邮箱"
+      title="系统通知"
       v-model="drawerVisible"
       :direction="direction"
       :close-on-click-modal="false"
@@ -95,6 +91,12 @@
                 <clock />
               </el-icon>
               更新时间: {{ update.formattedCreatedAt }}
+            </p>
+            <!-- 查看详情 -->
+            <p class="view-details-container">
+              <span class="view-details" @click="() => viewsystem(update.id)"
+                >查看详情</span
+              >
             </p>
           </div>
         </div>
@@ -151,8 +153,9 @@ let {
   user,
   drawerVisible,
   updates,
+  viewsystem,
   superColorPalette,
-  goToBlog,
+
   viewAvatar,
 } = useHeader();
 </script>

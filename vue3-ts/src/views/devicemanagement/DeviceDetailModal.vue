@@ -202,5 +202,5 @@ const formatDate = (dateString: string | Date | undefined) => {
 </script>
 
 <style lang="less" scoped>
-@import "../../base-ui/devicedetailmodal.less"
+@import "../../base-ui/devicedetailmodal.less";
 </style>

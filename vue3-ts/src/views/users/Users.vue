@@ -82,6 +82,7 @@
       </div>
     </div>
     <!-- 底部内容区域 -->
+    <!-- 底部内容区域 -->
     <div class="bottom-section">
       <div class="tabs-header">
         <div
@@ -95,38 +96,47 @@
       </div>
 
       <div class="content-area">
-        <div v-if="getContent(currentTab).length === 0" class="empty-state">
-          <yk-empty
-            :description="`暂无${
-              currentTab === 'articles'
-                ? '文章'
-                : currentTab === 'photography'
-                ? '摄影'
-                : '随记'
-            }内容`"
-            type="secondary"
-          />
-        </div>
-        <div v-else class="content-grid">
-          <div
-            v-for="item in getContent(currentTab)"
-            :key="item.id"
-            class="content-card"
-          >
-            <div class="content-image">
-              <img :src="item.image" :alt="item.title" />
-            </div>
-            <div class="content-info">
-              <h3>{{ item.title }}</h3>
-              <div class="content-meta">
-                <span class="date">{{ formatDate(item.createdAt) }}</span>
-                <span v-if="item.label" class="label-tag">{{
-                  item.label
-                }}</span>
+        <template v-if="contentLoading">
+          <div class="loading-state">
+            <yk-empty description="加载中..." type="secondary" />
+          </div>
+        </template>
+
+        <template v-else>
+          <div v-if="getCurrentTabContent().length === 0" class="empty-state">
+            <yk-empty
+              :description="`暂无${
+                currentTab === 'articles'
+                  ? '文章'
+                  : currentTab === 'photography'
+                  ? '摄影'
+                  : '随记'
+              }内容`"
+              type="secondary"
+            />
+          </div>
+
+          <div v-else class="content-grid">
+            <div
+              v-for="item in getCurrentTabContent()"
+              :key="item.id"
+              class="content-card"
+            >
+              <div class="content-image">
+                <img :src="item.image" :alt="item.title" />
+              </div>
+              <div class="content-info">
+                <h3>{{ item.title }}</h3>
+                <div class="content-meta">
+                  <span class="date">{{ formatDate(item.createdAt) }}</span>
+                  <span v-if="item.label" class="label-tag">{{
+                    item.label
+                  }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
     <transition name="avatar-modal">
@@ -156,16 +166,12 @@ import BirthdayIcon from "../../components/icon/Birthday.vue";
 import AreaIcon from "../../components/icon/Area.vue";
 import IntroduceIcon from "../../components/icon/Introduce.vue";
 import UuidIcon from "../../components/icon/Uuid.vue";
-import {
-  articles,
-  photos,
-  notes,
-  type ContentItem,
-} from "../../utils/publicuser";
 import Constellation from "../../components/icon/Constellation.vue";
 import Uuid from "../../components/icon/Uuid.vue";
-import { loadUserContents } from "../../utils/publicuser";
+import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
+import { el } from "date-fns/locale";
+
 interface User {
   id: number;
   avatar: string;
@@ -177,6 +183,20 @@ interface User {
   uuid: string;
   nicknameColor: string;
 }
+export interface ContentItem {
+  id: number;
+  title: string;
+  image: string;
+  createdAt: string;
+  views: number;
+  content?: string;
+  userId: number;
+  label?: string;
+}
+const articles = ref<ContentItem[]>([]);
+
+const photos = ref<ContentItem[]>([]);
+const notes = ref<ContentItem[]>([]);
 const showAvatarModal = ref(false); // 控制弹窗显示
 const route = useRoute();
 const user = ref<User | null>(null);
@@ -187,6 +207,40 @@ const tabs = [
   { key: "photography", label: "摄影" },
   { key: "notes", label: "随记" },
 ];
+const contentLoading = ref(false);
+
+const loadUserContents = async () => {
+  contentLoading.value = true; // 开始加载
+  const uuidValue = Array.isArray(route.params.uuid)
+    ? route.params.uuid[0]
+    : route.params.uuid;
+
+  // 确保 uuid 存在再请求数据
+  if (!uuidValue) {
+    console.error("用户UUID不存在");
+    contentLoading.value = false;
+    return;
+  }
+  try {
+    const fetchData = (type: string) =>
+      axiosConfig.get(`/admin/${type}/user/${uuidValue}`);
+    const [articleRes, photoRes, noteRes] = await Promise.all([
+      fetchData("article"),
+      fetchData("photography"),
+      fetchData("note"),
+    ]);
+
+    articles.value = articleRes.data.data.articles || [];
+    photos.value = photoRes.data.data.photos || [];
+    notes.value = noteRes.data.data.notes || [];
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    console.error("加载用户内容失败:", errorMessage);
+  } finally {
+    contentLoading.value = false; // 加载完成
+  }
+};
 
 const fetchUser = async () => {
   uuid.value = route.params.uuid;
@@ -203,8 +257,8 @@ const fetchUser = async () => {
   }
 };
 
-const getContent = (type: string): ContentItem[] => {
-  switch (type) {
+const getCurrentTabContent = (): ContentItem[] => {
+  switch (currentTab.value) {
     case "articles":
       return articles.value;
     case "photography":

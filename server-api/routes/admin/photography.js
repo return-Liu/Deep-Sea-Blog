@@ -137,7 +137,39 @@ router.delete("/:id", async (req, res) => {
     failure(res, error);
   }
 });
-
+// 获取指定用户的摄影作品
+// 获取指定用户的摄影作品
+router.get("/user/:uuid", async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const user = await User.findOne({ where: { uuid } });
+    if (!user) {
+      throw new Error("用户不存在");
+    }
+    const userId = user.id;
+    const photos = await Photography.findAll({
+      where: { userId },
+      attributes: [
+        "id",
+        "image",
+        "userId",
+        "size",
+        "content",
+        "createdAt",
+        "updatedAt",
+      ],
+    });
+    // 优化：检查数组长度而不是是否存在
+    if (photos.length === 0) {
+      return failure(res, 404, "用户摄影作品不存在");
+    }
+    success(res, "获取指定用户的摄影作品成功", {
+      photos,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 公共方法 过滤白名单
 function filterWhiteList(req) {
   return {

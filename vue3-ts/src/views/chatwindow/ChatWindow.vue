@@ -17,6 +17,15 @@
           {{ msg.text }}
         </div>
       </div>
+      <!-- 添加当前正在打印的回复显示 -->
+      <div v-if="currentReply" class="message">
+        <div class="avatar" style="margin-right: 5px">
+          <img :src="botAvatar" alt="Avatar" />
+        </div>
+        <div class="bubble bot">
+          {{ currentReply }}
+        </div>
+      </div>
     </div>
     <div v-if="isThinking" class="thinking-indicator">
       <p>正在思考中... 深度推理模型X1正在努力为您提供最优解答，请耐心等待。</p>
@@ -118,6 +127,8 @@ const version = "v1/x1";
 const replyContent = ref("");
 const historyList = ref<{ role: string; content: string }[]>([]);
 const deepThinkEnabled = ref(false); // 默认关闭深度思考模式
+const currentReply = ref(""); // 存储当前显示的回复（用于打字机效果）
+let typeWriterTimer: number | null = null;
 onMounted(() => {
   userAvatar.value =
     userStore.user?.avatar ||
@@ -125,9 +136,17 @@ onMounted(() => {
   // 初始化 WebSocket 连接
   connectWebSocket();
 });
+// 清除打字机定时器的函数
+const clearTypeWriter = () => {
+  if (typeWriterTimer !== null) {
+    clearInterval(typeWriterTimer);
+    typeWriterTimer = null;
+  }
+};
 const toggleDeepThink = () => {
   ElMessage.info("深度思考模式正在开发中，敬请期待！");
 };
+
 // 获取鉴权URL地址
 const getWebsocketUrl = () => {
   return new Promise((resolve) => {
@@ -294,17 +313,28 @@ const sendMessage = async () => {
               replyContent.value += content;
             }
             if (data.header.status === 2) {
-              addMessage(replyContent.value, false);
-              historyList.value.push({
-                role: "assistant",
-                content: replyContent.value,
-              });
-              // console.log("对话完成:", replyContent.value);
-              replyContent.value = "";
-              socket.close();
+              // 启动打字机效果
+              clearTypeWriter();
+              let i = 0;
+              const fullText = replyContent.value;
 
-              // 隐藏"正在思考中"提示
-              isThinking.value = false;
+              typeWriterTimer = window.setInterval(() => {
+                if (i < fullText.length) {
+                  currentReply.value += fullText.charAt(i);
+                  i++;
+                } else {
+                  clearTypeWriter();
+                  addMessage(currentReply.value, false);
+                  historyList.value.push({
+                    role: "assistant",
+                    content: currentReply.value,
+                  });
+                  currentReply.value = "";
+                  replyContent.value = "";
+                  socket.close();
+                  isThinking.value = false;
+                }
+              }, 70); // 每20毫秒显示一个字符，可根据需要调整速度
             }
           }
         } else {
@@ -313,8 +343,7 @@ const sendMessage = async () => {
       } catch (error) {
         console.error("消息解析错误:", error);
         ElMessage.error("消息处理失败");
-
-        // 即使出错也隐藏提示
+        clearTypeWriter();
         isThinking.value = false;
         socket.close();
       }
@@ -361,10 +390,10 @@ const handleAvatar = (isUser: boolean) => {
       type: "success",
     });
   } else {
-    router.push({
-      name: "users",
-      params: { uuid: userStore.user?.uuid },
-    });
+    window.open(
+      router.resolve({ name: "users", params: { uuid: userStore.user?.uuid } })
+        .href
+    );
   }
 };
 </script>

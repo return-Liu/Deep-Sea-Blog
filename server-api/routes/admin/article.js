@@ -198,6 +198,42 @@ router.post("/views/:id", async (req, res) => {
     failure(res, error);
   }
 });
+// 查询指定用户的文章列表
+router.get("/user/:uuid", async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const user = await User.findOne({ where: { uuid } });
+    if (!user) {
+      throw new Error("用户不存在");
+    }
+    const userId = user.id;
+    const articles = await Article.findAll({
+      where: { userId: userId },
+      attributes: [
+        "id",
+        "image",
+        "title",
+        "userId",
+        "label",
+        "content",
+        "likesCount",
+        "size",
+        "views",
+        "createdAt",
+        "updatedAt",
+      ],
+    });
+    // 优化：检查数组长度而不是是否存在
+    if (articles.length === 0) {
+      return failure(res, 404, "用户博客文章不存在");
+    }
+    success(res, "查询指定用户博客文章列表成功", {
+      articles,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 公共方法 白名单过滤
 function filterWhiteList(req) {
   return {

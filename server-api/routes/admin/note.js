@@ -134,6 +134,39 @@ router.delete("/:id", async (req, res) => {
     failure(res, error);
   }
 });
+// 获取指定用户的笔记
+// 获取指定用户的笔记
+router.get("/user/:uuid", async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const user = await User.findOne({ where: { uuid } });
+    if (!user) {
+      throw new Error("用户不存在");
+    }
+    const userId = user.id;
+    const notes = await Note.findAll({
+      where: { userId: userId },
+      attributes: [
+        "id",
+        "image",
+        "title",
+        "userId",
+        "content",
+        "createdAt",
+        "updatedAt",
+      ],
+    });
+    // 修复：检查 notes 而不是 articles
+    if (notes.length === 0) {
+      return failure(res, 404, "用户随笔随记不存在");
+    }
+    success(res, "查询指定用户随笔随记列表成功", {
+      notes,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 白名单过滤
 function filterWhiteList(req) {
   return {

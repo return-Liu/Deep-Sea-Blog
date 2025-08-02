@@ -189,7 +189,7 @@
                     v-if="comment.useravatar"
                     v-lazy="comment.useravatar"
                     :title="`用户${comment.username}的头像`"
-                    @click="getUser(comment.userId)"
+                    @click="getUser(comment.uuid)"
                     style="
                       width: 40px;
                       height: 40px;
@@ -266,10 +266,9 @@ import {
   CloseOutlined,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
-import { log } from "console";
+
 const router = useRouter();
 const userStore = useUserStore();
-console.log(userStore);
 
 interface Comment {
   id: number;
@@ -283,6 +282,9 @@ interface Comment {
   commentbackground: string;
   nicknameColor: string;
   uuid: string;
+  articleId: string;
+  noteId: string;
+  photographyId: string;
 }
 const showBg = ref(false);
 const route = useRoute();
@@ -354,9 +356,11 @@ const deleteComment = async (commentId: number) => {
   }
 };
 const getUser = (uuid: string) => {
-  checkMaintenanceMode();
-};
-// 检查是否处于维护模式，如果是则提示并阻止后续操作
+  router.push({
+    path: `/users/${uuid}`,
+  });
+  console.log(uuid);
+}; // 检查是否处于维护模式，如果是则提示并阻止后续操作
 const checkMaintenanceMode = () => {
   if (modelURL === "true") {
     loadmore.value = true;
@@ -371,10 +375,6 @@ const submitComment = async () => {
     ElMessage.warning("请输入评论内容");
     return;
   }
-  if (checkMaintenanceMode()) {
-    return;
-  }
-  submitting.value = true;
 
   try {
     const { id } = userStore.user;

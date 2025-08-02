@@ -13,7 +13,7 @@ router.get("/:wallId", async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["nickname", "avatar", "area", "nicknameColor"],
+          attributes: ["nickname", "avatar", "area", "nicknameColor", "uuid"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -32,6 +32,7 @@ router.get("/:wallId", async (req, res) => {
       area: comment.User.area,
       commentbackground: comment.commentbackground,
       nicknameColor: comment.User.nicknameColor,
+      uuid: comment.User.uuid,
     }));
 
     success(res, "获取评论列表成功", {

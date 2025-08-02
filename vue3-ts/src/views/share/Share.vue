@@ -314,13 +314,18 @@ const editContent = (content: Article | Photography | Note) => {
     return;
   }
 
-  router.push({
+  // 使用 router.resolve 获取完整 URL
+  const routeData = router.resolve({
     name: "overview",
     query: {
       id: String(content.id),
       type: content.type,
     },
   });
+
+  // 在新窗口中打开 URL，使用 content.id 作为窗口名称
+  // 如果窗口已存在，则重用；否则创建新窗口
+  window.open(routeData.href, `content_${content.type}`);
 };
 onMounted(async () => {
   await fetchData();

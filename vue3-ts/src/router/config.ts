@@ -106,5 +106,10 @@ const routers = [
     name: "devicemanagement",
     component: () => import("../views/devicemanagement/DeviceManagement.vue"),
   },
+  {
+    path: "viewsystememail/:id",
+    name: "viewsystememail",
+    component: () => import("../views/viewsystememail/Viewsystememail.vue"),
+  },
 ];
 export default routers;

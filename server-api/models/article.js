@@ -10,8 +10,10 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       // 关联用户
+      // 关联用户
       Article.belongsTo(models.User, { foreignKey: "userId" });
-      Article.belongsTo(models.Like, { foreignKey: "userId" });
+      // 关联点赞
+      Article.hasMany(models.Like, { foreignKey: "articleId", as: "Likes" });
     }
   }
   Article.init(

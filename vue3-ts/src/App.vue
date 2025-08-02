@@ -7,7 +7,7 @@ import { onMounted, watch, onUnmounted } from "vue";
 import { useUserStore } from "./store/userStore";
 import { useThemeStore } from "./store/themeStore";
 import { useI18n } from "vue-i18n";
-import { getAllUsers, loadUserContents } from "./utils/publicuser";
+import { getAllUsers } from "./utils/publicuser";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -15,7 +15,6 @@ const { locale } = useI18n();
 onMounted(async () => {
   await userStore.loadUser();
   await getAllUsers();
-  await loadUserContents();
   await themeStore.loadTheme();
   if (userStore.user?.uuid) {
     const savedLanguage = localStorage.getItem(
@@ -32,7 +31,7 @@ watch(
   (newUser, oldUser) => {
     if (newUser && oldUser && newUser.uuid !== oldUser.uuid) {
       getAllUsers();
-      loadUserContents();
+
       themeStore.loadTheme();
       userStore.loadUser();
     }

@@ -27,6 +27,7 @@ export default function useHeader() {
 
   // 接口定义
   interface Update {
+    id: number;
     title: string;
     content: string;
     createdAt: string;
@@ -61,6 +62,7 @@ export default function useHeader() {
   const addUpdate = async () => {
     try {
       await axiosConfig.post("/admin/update", newUpdate.value);
+
       await handleUpdates();
       resetNewUpdate();
       ElMessage.success("新增更新信息成功");
@@ -70,6 +72,19 @@ export default function useHeader() {
     }
   };
 
+  const viewsystem = async (id: number) => {
+    try {
+      const routerData = router.resolve({
+        name: "viewsystememail",
+        params: { id: id },
+      });
+      window.open(routerData.href, `updata_${id}`);
+      // 关闭抽屉
+      drawerVisible.value = false;
+    } catch (error) {
+      handleError("获取系统信息失败", error);
+    }
+  };
   // 搜索处理
   const handleSearch = async () => {
     try {
@@ -123,9 +138,6 @@ export default function useHeader() {
   };
   const superColorPalette = () => {
     router.push({ path: "/setting/languages" });
-  };
-  const goToBlog = () => {
-    window.open("http://localhost:5174/home", "_blank");
   };
 
   // 辅助函数
@@ -203,7 +215,7 @@ export default function useHeader() {
     drawerVisible,
     updates,
     superColorPalette,
-    goToBlog,
+    viewsystem,
     viewAvatar,
   };
 }

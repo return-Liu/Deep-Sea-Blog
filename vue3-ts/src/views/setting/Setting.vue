@@ -440,7 +440,6 @@ import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import languagesIcon from "../../components/icon/Languages.vue";
-import { fetchDevices } from "../../utils/publicuser";
 // 省略其他导入
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {

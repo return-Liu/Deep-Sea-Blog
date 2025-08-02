@@ -77,6 +77,18 @@ router.post("/", async (req, res) => {
     failure(res, error);
   }
 });
+// 单个查询
+router.get("/:id", async (req, res) => {
+  try {
+    const update = await Update.findByPk(req.params.id);
+    if (!update) {
+      return failure(res, "更新信息不存在");
+    }
+    success(res, "单个更新信息查询成功", update);
+  } catch (error) {
+    failure(res, error);
+  }
+});
 function filterWhiteList(req) {
   return {
     userId: req.body.userId,
