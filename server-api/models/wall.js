@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Wall.belongsTo(models.User, { foreignKey: "userId" });
       Wall.hasMany(models.LikesWall, { foreignKey: "wallsId" });
+      Wall.hasMany(models.Report, { foreignKey: "wallId" });
     }
   }
   Wall.init(

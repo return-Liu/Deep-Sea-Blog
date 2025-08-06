@@ -81,7 +81,7 @@ export const ja = {
       momentInTime: "瞬間時刻",
       photo: "定格時刻",
       suggestions: "提案",
-      suggestionsList: "提案リスト",
+      reportresultscenter: "報告結果センター",
 
       securitycenter: "サポート",
       expand: "展開",

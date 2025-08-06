@@ -17,6 +17,24 @@ module.exports = (sequelize, DataTypes) => {
     {
       userId: DataTypes.INTEGER,
       wallId: DataTypes.INTEGER,
+      status: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+
+      resultType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      processTime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      resultDetail: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       sequelize,

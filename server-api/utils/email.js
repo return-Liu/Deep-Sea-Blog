@@ -14,7 +14,7 @@ let transporter = nodemailer.createTransport({
   secure: true, // true for 465, false for other ports
   auth: {
     user: "3829626016@qq.com", // 发送方邮箱地址
-    pass: "ibcyzpkxqkaxcgdg", // mtp 验证码 这个有了才可以发送邮件，可以qq邮箱去查看自己的码
+    pass: "vwwszxptjazpceha", // mtp 验证码 这个有了才可以发送邮件，可以qq邮箱去查看自己的码
   },
 });
 //发送邮件

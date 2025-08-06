@@ -213,6 +213,7 @@ import { useUserStore } from "../../store/userStore";
 const router = useRouter();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
+const { openAuthorProfile } = useUserStore();
 const route = useRoute();
 
 // 定义上传组件的引用
@@ -241,14 +242,6 @@ const uploadTip = computed(() => {
   const currentType = currentTypeText.value;
   return `${baseTip} - 当前为${currentType}封面`;
 });
-const openAuthorProfile = () => {
-  if (userStore.user?.uuid) {
-    router.push({
-      name: "users",
-      params: { uuid: userStore.user.uuid },
-    });
-  }
-};
 
 const formatContent = (text: string) => {
   return text || "";

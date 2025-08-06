@@ -78,17 +78,16 @@
       <el-tooltip
         :content="$t('commonaside.home.suggestionsList')"
         placement="right"
-        v-if="user?.id === 4"
       >
-        <el-menu-item index="/suggestionsfeedbacklist">
+        <el-menu-item index="/reportresultscenter">
           <el-icon><Calendar /></el-icon>
-          <router-link to="/suggestionsfeedbacklist">
-            {{ $t("commonaside.home.suggestionsList") }}
+          <router-link to="/reportresultscenter">
+            {{ $t("commonaside.home.reportresultscenter") }}
           </router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.suggestionsList')"
+        :content="$t('commonaside.home.reportresultscenter')"
         placement="right"
       >
         <el-menu-item index="/securitycenter">

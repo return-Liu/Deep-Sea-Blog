@@ -18,6 +18,7 @@
       <div class="card-header">
         <div class="sender-avatar">
           <img
+            @click="openAuthorProfile"
             class="system-avatar"
             v-if="
               user?.avatar ||
@@ -94,8 +95,8 @@ import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
 
 const userStore = useUserStore();
+const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
-const updates = ref<SystemUpdate[]>([]);
 const route = useRoute();
 const router = useRouter();
 const currentUpdate = ref<SystemUpdate | null>(null);
@@ -111,6 +112,7 @@ interface SystemUpdate {
   content: string;
   formattedCreatedAt: string;
 }
+
 const changeAccount = () => {
   router.push({
     path: "/setting/toggleaccount",

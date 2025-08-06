@@ -3,14 +3,18 @@ const router = express.Router();
 const { Feedback } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 // 提交反馈
-router.post("/", async (req, res) => {
+router.post("/:id", async (req, res) => {
+  const userId = req.params.id; // 从URL参数获取userId
   try {
     const body = filterWhiteList(req);
+    body.userId = userId; // 将userId添加到要保存的数据中
+
     await Feedback.create(body);
     success(res, "反馈提交成功", {
       name: body.name,
       feedback: body.feedback,
       email: body.email,
+      userId: body.userId,
     });
   } catch (error) {
     failure(res, error);
@@ -77,12 +81,35 @@ router.delete("/:id", async (req, res) => {
     failure(res, error);
   }
 });
+// 示例：在 report 路由文件中添加类似的处理逻辑
+router.put("/:id/process", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const report = await Report.findByPk(id);
+    if (!report) {
+      return failure(res, "举报不存在");
+    }
+
+    // 更新处理信息
+    await report.update({
+      status: true,
+      resultType: req.body.resultType,
+      resultDetail: req.body.resultDetail,
+      processTime: req.body.processTime,
+    });
+
+    success(res, "处理举报成功");
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 公共方法 白名单过滤
 function filterWhiteList(req) {
   return {
     name: req.body.name,
     email: req.body.email,
     feedback: req.body.feedback,
+    userId: req.params.id, // 从URL参数获取userId
   };
 }
 module.exports = router;

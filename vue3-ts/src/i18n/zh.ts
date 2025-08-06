@@ -78,7 +78,7 @@ export const zh = {
       momentInTime: "一刻时光",
       photo: "定格时光",
       suggestions: "建议与反馈",
-      suggestionsList: "建议与反馈列表",
+      reportresultscenter: "举报结果中心",
       securitycenter: "账号安全中心",
       expand: "展开",
       collapse: "收起",

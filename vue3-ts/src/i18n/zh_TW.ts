@@ -74,7 +74,7 @@ export const zh_TW = {
       momentInTime: "一刻時光",
       photo: "定格時光",
       suggestions: "建議與反饋",
-      suggestionsList: "建議與反饋列表",
+      reportresultscenter: "舉報結果中心",
       securitycenter: "帳號安全中心",
       expand: "展開",
       collapse: "收起",

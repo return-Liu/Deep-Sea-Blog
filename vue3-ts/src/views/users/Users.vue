@@ -27,7 +27,14 @@
                   :style="{ color: user?.nicknameColor || '#000' }"
                 >
                   {{ user.nickname }}
+                  <span
+                    v-if="user.uuid !== String(userStore.user.uuid)"
+                    @click="reportComment()"
+                    style="margin-left: 10px; font-size: 20px; color: #ff4d4f"
+                    >举报</span
+                  >
                 </h2>
+
                 <p class="uuid">
                   <component class="user-icon-left" :is="UuidIcon" />
                   <span class="uuid-text">{{ user.uuid }}</span>
@@ -81,7 +88,7 @@
         </div>
       </div>
     </div>
-    <!-- 底部内容区域 -->
+
     <!-- 底部内容区域 -->
     <div class="bottom-section">
       <div class="tabs-header">
@@ -139,14 +146,75 @@
         </template>
       </div>
     </div>
-    <transition name="avatar-modal">
-      <div
-        v-if="showAvatarModal"
-        class="modal-overlay"
-        @click.self="showAvatarModal = false"
-      >
-        <div class="modal-content">
-          <img :src="user?.avatar" alt="放大头像" class="modal-avatar" />
+    <!-- 举报弹窗 -->
+    <transition name="modal-fade">
+      <div v-if="showReportModal" class="report-modal-overlay">
+        <div class="report-modal-container">
+          <div class="report-modal-header">
+            <h3>举报用户 {{ user?.nickname }}</h3>
+            <button class="close-btn" @click="cancelReport">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path
+                  fill="currentColor"
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="report-modal-body">
+            <div class="report-reason-section">
+              <h4>请选择举报原因 <span class="required">*</span></h4>
+              <div class="reason-grid">
+                <div
+                  v-for="reason in reportReasons"
+                  :key="reason.value"
+                  class="reason-card"
+                  :class="{ selected: reportReason === reason.value }"
+                  @click="reportReason = reason.value"
+                >
+                  <span class="reason-text">{{ reason.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-description-section">
+              <h4>详细描述 <span class="required">*</span></h4>
+              <div class="description-counter">
+                <span>{{ reportDescription.length }}/100</span>
+              </div>
+              <textarea
+                v-model="reportDescription"
+                placeholder="请尽可能详细描述举报内容，这将帮助我们更快处理您的举报（100字以内）"
+                maxlength="100"
+                @input="handleDescriptionInput"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="report-modal-footer">
+            <button class="cancel-btn" @click="cancelReport">取消</button>
+            <button
+              class="submit-btn"
+              :class="{ disabled: !canSubmit }"
+              :disabled="!canSubmit"
+              @click="submitReport"
+            >
+              <span v-if="!submitting">提交</span>
+              <span v-else class="loading">
+                <svg class="spinner" viewBox="0 0 50 50">
+                  <circle
+                    class="path"
+                    cx="25"
+                    cy="25"
+                    r="20"
+                    fill="none"
+                    stroke-width="5"
+                  ></circle>
+                </svg>
+                处理中...
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -154,7 +222,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import axiosConfig from "../../utils/request";
 import { YkEmpty } from "@yike-design/ui";
@@ -171,7 +239,9 @@ import Uuid from "../../components/icon/Uuid.vue";
 import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
 import { el } from "date-fns/locale";
-
+const userStore = useUserStore();
+const loadmore = ref(false);
+import { modelURL } from "../../config";
 interface User {
   id: number;
   avatar: string;
@@ -193,13 +263,25 @@ export interface ContentItem {
   userId: number;
   label?: string;
 }
+import { useReportUser } from "../../hooks/useReportUser";
+const {
+  showReportModal,
+  reportReasons,
+  reportReason,
+  reportDescription,
+  canSubmit,
+  submitting,
+  submitReport,
+  cancelReport,
+  handleDescriptionInput,
+} = useReportUser();
 const articles = ref<ContentItem[]>([]);
-
 const photos = ref<ContentItem[]>([]);
 const notes = ref<ContentItem[]>([]);
 const showAvatarModal = ref(false); // 控制弹窗显示
 const route = useRoute();
 const user = ref<User | null>(null);
+
 const currentTab = ref("articles");
 const uuid = ref<string | string[]>();
 const tabs = [
@@ -208,6 +290,18 @@ const tabs = [
   { key: "notes", label: "随记" },
 ];
 const contentLoading = ref(false);
+const checkMaintenanceMode = () => {
+  if (modelURL === "true") {
+    loadmore.value = true;
+    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
+    return true; // 表示处于维护模式
+  }
+  return false; // 不在维护模式中
+};
+
+const reportComment = () => {
+  showReportModal.value = true;
+};
 
 const loadUserContents = async () => {
   contentLoading.value = true; // 开始加载
@@ -244,11 +338,10 @@ const loadUserContents = async () => {
 
 const fetchUser = async () => {
   uuid.value = route.params.uuid;
+
   try {
     const response = await axiosConfig.get(`/admin/comment/user/${uuid.value}`);
-    if (response.data && response.data.data) {
-      user.value = response.data.data;
-    }
+    user.value = response.data.data;
   } catch (error: any) {
     // 兼容 message 字段
     const errorMessage =
@@ -286,6 +379,8 @@ onMounted(() => {
   loadUserContents();
 });
 </script>
+
 <style scoped lang="less">
 @import "../../base-ui/userdetails.less";
+@import "../../base-ui/reportuser.less";
 </style>

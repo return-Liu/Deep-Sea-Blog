@@ -69,10 +69,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, computed } from "vue";
 import axiosConfig from "../../utils/request";
 import { ElMessage } from "element-plus";
-
+import { useUserStore } from "../../store/userStore";
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
 const successMessage = ref("");
 const errorMessage = ref("");
 const isSubmitting = ref(false);
@@ -129,10 +131,17 @@ const validateForm = () => {
   return isNameValid && isEmailValid && isFeedbackValid;
 };
 
-const submitFeedback = async () => {
+const submitFeedback = async (event: Event) => {
+  event.preventDefault(); // 可选，因为模板中已有 .prevent
   if (isSubmitting.value) return;
 
   if (!validateForm()) {
+    return;
+  }
+
+  const userId = user.value?.id; // 确保 user 存在
+  if (!userId) {
+    ElMessage.error("用户未登录，无法提交反馈");
     return;
   }
 
@@ -141,7 +150,7 @@ const submitFeedback = async () => {
   successMessage.value = "";
 
   try {
-    await axiosConfig.post("/admin/feedback", formData);
+    await axiosConfig.post(`/admin/feedback/${userId}`, formData);
     ElMessage.success("反馈提交成功！");
     successMessage.value = "感谢您的宝贵意见！";
 

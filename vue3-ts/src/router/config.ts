@@ -47,10 +47,10 @@ const routers = [
       import("../views/suggestionsfeedback/SuggestionsFeedback.vue"),
   },
   {
-    path: "/suggestionsfeedbacklist",
-    name: "suggestionsfeedbacklist",
+    path: "/reportresultscenter",
+    name: "reportresultscenter",
     component: () =>
-      import("../views/suggestionsfeedbacklist/SuggestionsFeedbackList.vue"),
+      import("../views/reportresultscenter/ReportResultsCenter.vue"),
   },
   {
     path: "/localresources",

@@ -88,7 +88,7 @@ export const en = {
       momentInTime: "Moment in Time",
       photo: "Frozen Moments",
       suggestions: "Suggestions",
-      suggestionsList: "SuggestionsList",
+      reportresultscenter: "report results center",
       securitycenter: "Security Center",
       expand: "Expand",
       collapse: "Collapse",

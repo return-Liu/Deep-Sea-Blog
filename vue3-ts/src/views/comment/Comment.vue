@@ -214,6 +214,12 @@
                       style="margin-left: 10px; font-size: 12px; color: #ff4d4f"
                       >删除</span
                     >
+                    <span
+                      v-if="userStore.user.id !== Number(comment.userId)"
+                      @click="reportComment(comment.id, comment.username)"
+                      style="margin-left: 10px; font-size: 12px; color: #ff4d4f"
+                      >举报</span
+                    >
                   </div>
                 </div>
                 <div class="comment-content">{{ comment.content }}</div>
@@ -245,6 +251,80 @@
         </div>
       </template>
     </el-skeleton>
+    <!-- 举报弹窗 -->
+    <transition name="modal-fade">
+      <div v-if="showReportModal" class="report-modal-overlay">
+        <div class="report-modal-container">
+          <div class="report-modal-header">
+            <h3 v-if="currentReportedUsername">
+              举报用户 {{ currentReportedUsername }}
+            </h3>
+            <button class="close-btn" @click="cancelReport">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path
+                  fill="currentColor"
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="report-modal-body">
+            <div class="report-reason-section">
+              <h4>请选择举报原因 <span class="required">*</span></h4>
+              <div class="reason-grid">
+                <div
+                  v-for="reason in reportReasons"
+                  :key="reason.value"
+                  class="reason-card"
+                  :class="{ selected: reportReason === reason.value }"
+                  @click="reportReason = reason.value"
+                >
+                  <span class="reason-text">{{ reason.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-description-section">
+              <h4>详细描述 <span class="required">*</span></h4>
+              <div class="description-counter">
+                <span>{{ reportDescription.length }}/100</span>
+              </div>
+              <textarea
+                v-model="reportDescription"
+                placeholder="请尽可能详细描述举报内容，这将帮助我们更快处理您的举报（100字以内）"
+                maxlength="100"
+                @input="handleDescriptionInput"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="report-modal-footer">
+            <button class="cancel-btn" @click="cancelReport">取消</button>
+            <button
+              class="submit-btn"
+              :class="{ disabled: !canSubmit }"
+              :disabled="!canSubmit"
+              @click="submitReport"
+            >
+              <span v-if="!submitting">提交</span>
+              <span v-else class="loading">
+                <svg class="spinner" viewBox="0 0 50 50">
+                  <circle
+                    class="path"
+                    cx="25"
+                    cy="25"
+                    r="20"
+                    fill="none"
+                    stroke-width="5"
+                  ></circle>
+                </svg>
+                处理中...
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 <script setup lang="ts">
@@ -266,10 +346,6 @@ import {
   CloseOutlined,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
-
-const router = useRouter();
-const userStore = useUserStore();
-
 interface Comment {
   id: number;
   username: string;
@@ -286,13 +362,26 @@ interface Comment {
   noteId: string;
   photographyId: string;
 }
+import { useReportUser } from "../../hooks/useReportUser";
+const {
+  showReportModal,
+  reportReasons,
+  reportReason,
+  reportDescription,
+  canSubmit,
+  submitting,
+  submitReport,
+  cancelReport,
+  handleDescriptionInput,
+} = useReportUser();
+const router = useRouter();
+const userStore = useUserStore();
 const showBg = ref(false);
 const route = useRoute();
 const messageId = route.params.messageId as string;
 const commentList = ref<Comment[]>([]);
 const loadmore = ref(false);
 const commentContent = ref("");
-const submitting = ref(false);
 const showEmoji = ref(false);
 const selectedBgId = ref<number | null>(null);
 const selectedBackground = ref<string | null>(null);
@@ -305,7 +394,8 @@ const skeletonCount = computed(() => {
   // 如果还没有获取到评论列表,默认空
   return commentList.value.length || "";
 });
-
+const currentReportedCommentId = ref<number | null>(null);
+const currentReportedUsername = ref<string | null>(null);
 // 插入表情
 const insertEmoji = (emoji: string) => {
   commentContent.value += emoji;
@@ -355,11 +445,15 @@ const deleteComment = async (commentId: number) => {
     ElMessage.error(errorMessage);
   }
 };
+const reportComment = async (commentId: number, username: string) => {
+  currentReportedCommentId.value = commentId;
+  currentReportedUsername.value = username;
+  showReportModal.value = true;
+};
 const getUser = (uuid: string) => {
   router.push({
     path: `/users/${uuid}`,
   });
-  console.log(uuid);
 }; // 检查是否处于维护模式，如果是则提示并阻止后续操作
 const checkMaintenanceMode = () => {
   if (modelURL === "true") {
@@ -475,4 +569,5 @@ onMounted(async () => {
 </script>
 <style scoped lang="less">
 @import "../../base-ui/comments.less";
+@import "../../base-ui/reportuser.less";
 </style>

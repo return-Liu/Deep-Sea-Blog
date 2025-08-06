@@ -79,7 +79,7 @@ export const ko = {
       momentInTime: "순간의 시간",
       photo: "정성의 시간",
       suggestions: "건의사항",
-      suggestionsList: "건의사항 목록",
+      reportresultscenter: "건의사항 목록",
       securitycenter: "계정 보안 센터",
       expand: "확장",
       collapse: "접기",

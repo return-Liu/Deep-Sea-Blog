@@ -121,91 +121,8 @@
       <!-- 其他登录方式 -->
       <div class="other-login-options">
         <h2 class="login-methods-title">其他登录方式</h2>
-        <div class="login-methods">
-          <!-- 新增扫码登录 -->
-          <span class="login-item" @click="showQrcode = true">
-            <svg
-              t="1751952716862"
-              class="login-icon"
-              viewBox="0 0 1024 1024"
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg"
-              p-id="5293"
-              width="200"
-              height="200"
-            >
-              <path
-                d="M149.897707 387.566843l154.232099 0c49.484303 0 89.577425-40.093122 89.577425-89.577425L393.707231 143.757319C393.707231 94.273016 353.614109 54.179894 304.491005 54.179894L149.897707 54.179894c-49.484303 0-89.577425 40.093122-89.577425 89.577425l0 154.232099C60.320282 347.473721 100.774603 387.566843 149.897707 387.566843zM136.533333 143.757319c0-7.223986 6.140388-13.364374 13.364374-13.364374l154.232099 0c7.223986 0 13.364374 6.140388 13.364374 13.364374l0 154.232099c0 7.223986-6.140388 13.364374-13.364374 13.364374L149.897707 311.353792c-7.223986 0-13.364374-6.140388-13.364374-13.364374L136.533333 143.757319z"
-                fill="#575B66"
-                p-id="5294"
-              ></path>
-              <path
-                d="M304.491005 628.486772 149.897707 628.486772c-49.484303 0-89.577425 40.093122-89.577425 89.577425l0 154.232099c0 49.484303 40.093122 89.577425 89.577425 89.577425l154.232099 0c49.484303 0 89.577425-40.093122 89.577425-89.577425l0-154.232099C393.707231 668.579894 353.614109 628.486772 304.491005 628.486772zM317.49418 872.296296c0 7.223986-6.140388 13.364374-13.364374 13.364374L149.897707 885.66067c-7.223986 0-13.364374-6.140388-13.364374-13.364374l0-154.232099c0-7.223986 6.140388-13.364374 13.364374-13.364374l154.232099 0c7.223986 0 13.364374 6.140388 13.364374 13.364374L317.49418 872.296296z"
-                fill="#575B66"
-                p-id="5295"
-              ></path>
-              <path
-                d="M878.797884 54.179894l-154.232099 0c-49.484303 0-89.577425 40.093122-89.577425 89.577425l0 154.232099c0 49.484303 40.093122 89.577425 89.577425 89.577425l154.232099 0c49.484303 0 89.577425-40.093122 89.577425-89.577425L968.375309 143.757319C968.014109 94.273016 927.920988 54.179894 878.797884 54.179894zM891.801058 297.989418c0 7.223986-6.140388 13.364374-13.364374 13.364374l-154.232099 0c-7.223986 0-13.364374-6.140388-13.364374-13.364374L710.840212 143.757319c0-7.223986 6.140388-13.364374 13.364374-13.364374l154.232099 0c7.223986 0 13.364374 6.140388 13.364374 13.364374L891.801058 297.989418z"
-                fill="#575B66"
-                p-id="5296"
-              ></path>
-              <path
-                d="M673.997884 552.273721c19.865961 0 36.119929-15.892769 35.75873-36.119929 0-19.865961-15.892769-36.119929-36.119929-36.119929l-126.058554 0L547.578131 338.443739c0-19.865961-15.892769-36.119929-36.119929-35.75873-19.865961 0-36.119929 15.892769-36.119929 36.119929L475.338272 480.395062 96.440212 480.395062c-19.865961 0-36.119929 15.892769-36.119929 36.119929 0 19.865961 15.892769 36.119929 36.119929 36.119929l379.620459 0 0 169.04127c0 19.865961 15.892769 36.119929 36.119929 36.119929s36.119929-15.892769 36.119929-36.119929l0-169.04127L673.997884 552.634921z"
-                fill="#575B66"
-                p-id="5297"
-              ></path>
-              <path
-                d="M932.255379 552.273721c19.865961 0 36.119929-15.892769 35.75873-36.119929 0-19.865961-15.892769-36.119929-36.119929-36.119929l-79.825044 0c-19.865961 0-36.119929 15.892769-36.119929 36.119929 0 19.865961 15.892769 36.119929 36.119929 36.119929L932.255379 552.273721z"
-                fill="#575B66"
-                p-id="5298"
-              ></path>
-              <path
-                d="M511.8194 166.874074c19.865961 0 36.119929-15.892769 36.119929-36.119929L547.93933 88.855026c0-19.865961-15.892769-36.119929-36.119929-35.75873-19.865961 0-36.119929 15.892769-36.119929 36.119929l0 41.899118C476.06067 150.620106 491.953439 166.874074 511.8194 166.874074z"
-                fill="#575B66"
-                p-id="5299"
-              ></path>
-              <path
-                d="M511.8194 849.179541c-19.865961 0-36.119929 15.892769-36.119929 36.119929l0 41.899118c0 19.865961 15.892769 36.119929 36.119929 36.119929s36.119929-15.892769 36.119929-36.119929l0-42.260317C547.93933 865.07231 531.685362 849.179541 511.8194 849.179541z"
-                fill="#575B66"
-                p-id="5300"
-              ></path>
-              <path
-                d="M892.884656 871.573898c0 7.223986-6.140388 13.003175-13.003175 13.003175l-38.648325 0 0 75.129453 38.648325 0c48.761905 0 88.493827-39.731922 88.493827-88.493827l0-43.705115-75.129453 0L893.245855 871.573898z"
-                fill="#575B66"
-                p-id="5301"
-              ></path>
-              <path
-                d="M879.520282 631.015168l-152.426102 0c-48.761905 0-88.493827 39.731922-88.493827 88.493827l0 152.426102c0 48.761905 39.731922 88.493827 88.493827 88.493827l38.648325 0L765.742504 884.938272l-38.648325 0c-7.223986 0-13.003175-6.140388-13.003175-13.003175l0-152.426102c0-7.223986 6.140388-13.003175 13.003175-13.003175l152.426102 0c7.223986 0 13.003175 6.140388 13.003175 13.003175l0 33.591534L968.014109 753.100529l0-33.591534C968.014109 670.74709 928.282187 631.015168 879.520282 631.015168z"
-                fill="#575B66"
-                p-id="5302"
-              ></path>
-            </svg>
-            扫码登录
-          </span>
-        </div>
-        <!-- 扫码弹窗 -->
-        <el-dialog
-          v-model="showQrcode"
-          width="320px"
-          :show-close="false"
-          center
-        >
-          <template #title>
-            扫码登录
-            <div class="qrcode-title">
-              为了您的账号安全，请使用 Deep Sea App 扫码登录
-            </div>
-          </template>
-          <p class="login-tip login-tip-center">
-            当前扫码登录暂不可用 请使用密码或邮箱登录
-          </p>
-          <div class="qrcode-box">
-            <canvas ref="qrcodeCanvas" class="qrcode-canvas"></canvas>
-          </div>
-          <div class="qrcode-tip">
-            管理员或已有账号的用户可以直接扫码登录哦~
-          </div>
-        </el-dialog>
+        <div class="login-methods"></div>
+
         <div class="login-tip">
           <p>目前支持邮箱验证码登录，手机短信验证功能即将上线，敬请期待！</p>
           <p>未注册过Deep Sea的邮箱/手机号, 我们将自动帮你注册账号</p>
@@ -229,14 +146,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted, computed } from "vue";
+import { ref, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import debounce from "lodash.debounce";
 import axiosConfig from "../../utils/request";
 import { View, Hide } from "@element-plus/icons-vue";
-import QRCode from "qrcode";
-import { useUserStore } from "../../store/userStore";
 import { handlePostLogin } from "../../utils/handlePostLogin";
 import { handleLoginError } from "../../utils/handleLoginError";
 import { useI18n } from "vue-i18n";
@@ -244,12 +159,9 @@ import Cookies from "js-cookie";
 const { locale } = useI18n();
 const router = useRouter();
 let isInputFocused = ref(false);
-let showQrcode = ref(false);
 let isSending = ref(false);
 let countdown = ref(60);
 let loading = ref(false);
-const userStore = useUserStore();
-const user = computed(() => userStore.user);
 
 const accountsclientFeatureCode = Cookies.get("userFeatureCode");
 const countdownTimer = ref<number | null>(null);
@@ -260,34 +172,11 @@ let loginForm = ref({
 });
 let smsForm = ref({ email: "", code: "" });
 let showPassword = ref(false);
-let qrcodeCanvas = ref<HTMLCanvasElement | null>(null);
 let validateEmail = (email: string) => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailPattern.test(email);
 };
-watch(showQrcode, async (val) => {
-  try {
-    if (val) {
-      const res = await axiosConfig.post("/auth/qrcode");
-      const qrcodeId = res.data.data.qrcodeId;
-      const textToEncode = `http://localhost:3000/auth/image/${qrcodeId}`;
 
-      if (qrcodeCanvas.value) {
-        await QRCode.toCanvas(qrcodeCanvas.value, textToEncode, {
-          width: 200,
-          color: {
-            dark: "#000000",
-            light: "#ffffff",
-          },
-        });
-      }
-    }
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  }
-});
 let validate = () => {
   if (!loginForm.value.email) {
     ElMessage.error("请你的输入账号/邮箱/手机号~");
@@ -447,27 +336,5 @@ onUnmounted(() => {
   right: 10px;
   top: 0;
   color: #409eff;
-}
-.qrcode-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0;
-}
-.qrcode-img {
-  width: 180px;
-  height: 180px;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  background: #fff;
-}
-.qrcode-tip,
-.qrcode-title {
-  font-size: 12px;
-  color: #666;
-  margin-top: 8px;
-  text-align: center;
 }
 </style>

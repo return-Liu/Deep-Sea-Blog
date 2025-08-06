@@ -313,30 +313,16 @@ export default function useMessageWall() {
     }
   };
   const reportMessage = async (messageId: string) => {
-    // 从 localStorage 加载已举报的留言 ID
-    const reportedSet = new Set<string>(
-      JSON.parse(localStorage.getItem("reportedMessages") || "[]") as string[]
-    );
-    // 检查用户是否已经举报过该留言
-    if (reportedSet.has(messageId)) {
-      ElMessage.warning("你已经举报过该留言，请勿重复举报");
-      return;
-    }
     try {
-      await axiosConfig.post(`/admin/wall/report/${messageId}`, {
-        userId: userId.value,
-        content: "举报内容: 该留言存在违规行为,请管理员尽快处理",
-      });
-      // 将该留言 ID 添加到已举报集合中
-      reportedSet.add(messageId);
-      reportedMessages.value = reportedSet;
-      // 将更新后的 Set 存储到 localStorage
-      localStorage.setItem(
-        "reportedMessages",
-        JSON.stringify(Array.from(reportedSet))
+      const response = await axiosConfig.post(
+        `/admin/wall/report/${messageId}`,
+        {
+          userId: userId.value,
+          content: "举报内容: 该留言存在违规行为,请管理员尽快处理",
+        }
       );
       // 提示用户举报成功
-      ElMessage.success("举报成功,感谢你的举报");
+      ElMessage.success(response.data.message);
     } catch (error: any) {
       // 兼容 message 字段
       const errorMessage =

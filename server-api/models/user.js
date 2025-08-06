@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Update, { foreignKey: "userId" });
       User.hasMany(models.Wall, { foreignKey: "userId" });
       User.hasMany(models.Device, { foreignKey: "userId" });
+      User.hasMany(models.Feedback, { foreignKey: "userId" });
     }
   }
   User.init(
@@ -72,10 +73,14 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: {
             msg: "邮箱不能为空",
           },
+
           async isUnique(value) {
-            const user = await User.findOne({ where: { email: value } });
-            if (user) {
-              throw new Error("邮箱已被注册,请使用其他邮箱");
+            // 只在创建时或邮箱变更时检查唯一性
+            if (this.isNewRecord || this.changed("email")) {
+              const user = await User.findOne({ where: { email: value } });
+              if (user && user.id !== this.id) {
+                throw new Error("邮箱已被注册,请使用其他邮箱");
+              }
             }
           },
         },
@@ -149,7 +154,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
-   
+
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

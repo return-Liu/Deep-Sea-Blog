@@ -1,6 +1,6 @@
 <template>
   <div class="device-management">
-    <div class="header-section">
+    <div class="header-section" v-if="devices.length !== 0">
       <h1 class="page-title">登录设备管理</h1>
       <el-tag>账号情况</el-tag>
       <p class="page-status">
@@ -205,6 +205,10 @@ const formatDate = (dateString: string | Date | undefined) => {
 const fetchDevices = async () => {
   try {
     loading.value = true;
+    // 如果数据一直是空的 则为false
+    if (!devices.value.length) {
+      loading.value = false;
+    }
     const response = await axiosConfig.get("/auth/devices");
     console.log(response);
     devices.value = response.data.data;
@@ -216,7 +220,6 @@ const fetchDevices = async () => {
     loading.value = false;
   }
 };
-
 const logoutDevice = async (deviceId: string) => {
   try {
     const device = devices.value.find((device: any) => device.id === deviceId);

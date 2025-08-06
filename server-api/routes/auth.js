@@ -11,7 +11,6 @@ const {
   UnauthorizedError,
   BadRequestError,
 } = require("../utils/errors");
-const QRCode = require("qrcode");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
@@ -177,92 +176,6 @@ async function getIpAddress() {
 }
 // 获取ip经纬度
 async function getIPLocation(ip) {}
-// 用于存储二维码状态，生产建议用 Redis
-const qrcodeStore = {};
-
-// 1. 生成二维码（前端请求）
-router.post("/qrcode", async (req, res) => {
-  // 生成唯一二维码ID
-  const qrcodeId = generateUUID();
-  // 存储二维码状态，未登录
-  qrcodeStore[qrcodeId] = {
-    status: "pending",
-    userId: null,
-    expire: Date.now() + 2 * 60 * 1000,
-  }; // 2分钟有效
-  success(res, "二维码生成成功", { qrcodeId });
-});
-// 生成二维码图片
-router.get("/image/:qrcodeId", async (req, res) => {
-  const { qrcodeId } = req.params;
-  try {
-    // 这里二维码内容就是qrcodeId，你也可以自定义内容
-    const qrData = qrcodeId;
-    res.setHeader("Content-Type", "image/png");
-    QRCode.toFileStream(res, qrData, { width: 180 });
-  } catch (err) {
-    failure(res, err);
-  }
-});
-// 2. 轮询二维码状态（前端定时请求）
-router.get("/qrcode/status/:qrcodeId", async (req, res) => {
-  const { qrcodeId } = req.params;
-  const record = qrcodeStore[qrcodeId];
-  if (!record || record.expire < Date.now()) {
-    return failure(res, new BadRequestError("二维码已失效"));
-  }
-  if (record.status === "scanned") {
-    // 生成token
-    const user = await User.findByPk(record.userId);
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      expiresIn: "1h",
-    });
-    // 清理二维码
-    delete qrcodeStore[qrcodeId];
-    return success(res, "扫码成功", { token });
-  }
-  success(res, "等待扫码", { status: record.status });
-});
-
-// 3. 手机端扫码后确认（扫码后跳转到此接口，带上qrcodeId和用户token）
-router.post("/qrcode/scan", async (req, res) => {
-  const { qrcodeId, token } = req.body;
-  try {
-    const decoded = jwt.verify(token, process.env.SECRET);
-    const userId = decoded.userId;
-    const record = qrcodeStore[qrcodeId];
-    if (!record || record.expire < Date.now()) {
-      return failure(res, new BadRequestError("二维码已失效"));
-    }
-    // 标记为已扫码
-    qrcodeStore[qrcodeId] = { ...record, status: "scanned", userId };
-    success(res, "扫码成功");
-  } catch (err) {
-    failure(res, new UnauthorizedError("无效token"));
-  }
-});
-// 切换账号
-router.post("/switch-account", async (req, res) => {
-  try {
-    const { userId } = req.body; // 需要切换到的用户ID
-
-    // 验证用户是否存在
-    const user = await User.findByPk(userId);
-    if (!user) {
-      throw new NotFoundError("用户不存在");
-    }
-
-    // 生成新的JWT Token
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
-      expiresIn: "1h",
-    });
-
-    // 返回新的Token
-    success(res, "切换账号成功", { token });
-  } catch (error) {
-    failure(res, error);
-  }
-});
 // 获取当前用户
 async function getCurrentUser(req) {
   const token = req.headers.authorization?.split(" ")[1]; // 从请求头中获取 token
@@ -532,7 +445,6 @@ router.post("/login/device", async (req, res) => {
   }
 });
 // 获取用户所有登录设备
-// 修改 /devices 路由
 router.get("/devices", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -542,8 +454,12 @@ router.get("/devices", async (req, res) => {
       currentDeviceInfo.userAgent
     );
 
+    // 只查询状态为"已登录"的设备
     const devices = await Device.findAll({
-      where: { userId: currentUser.id },
+      where: {
+        userId: currentUser.id,
+        status: "已登录",
+      },
       order: [["lastLoginTime", "DESC"]],
     });
 
@@ -585,7 +501,28 @@ router.get("/devices", async (req, res) => {
   }
 });
 
+// 修改定时任务，清理未登录设备
+cron.schedule("0 0 * * *", async () => {
+  // 每天凌晨执行
+  try {
+    const result = await Device.destroy({
+      where: {
+        status: "未登录",
+        // 可选：只删除超过一定时间的未登录设备
+        updatedAt: {
+          [Op.lt]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前的未登录设备
+        },
+      },
+    });
+    console.log(`清理了 ${result} 个未登录设备`);
+  } catch (error) {
+    console.error("清理未登录设备时出错:", error);
+  }
+});
+
 // 删除设备（登出设备）
+// 创建设备历史记录表
+// 在登出设备时，将设备信息移动到历史记录表中，然后删除原记录
 router.delete("/devices/:deviceId", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -616,6 +553,10 @@ router.delete("/devices/:deviceId", async (req, res) => {
       return success(res, "设备已登出");
     }
 
+    // 将设备信息保存到历史记录表中（可选）
+    // await DeviceHistory.create(device.toJSON());
+
+    // 删除设备记录
     await device.destroy();
 
     success(res, "设备删除成功");
@@ -623,33 +564,5 @@ router.delete("/devices/:deviceId", async (req, res) => {
     failure(res, error);
   }
 });
-cron.schedule("* * * * *", async () => {
-  try {
-    const now = new Date();
-    // 查找所有已登录但过期的设备
-    const expiredDevices = await Device.findAll({
-      where: {
-        status: "已登录",
-        loginExpire: {
-          [Op.lt]: now, // 小于当前时间
-        },
-      },
-    });
 
-    // 更新这些设备的状态为"未登录"
-    for (const device of expiredDevices) {
-      await device.update({ status: "未登录" });
-    }
-
-    if (expiredDevices.length > 0) {
-      console.log(
-        `[${new Date().toISOString()}] 已将 ${
-          expiredDevices.length
-        } 个设备状态更新为未登录`
-      );
-    }
-  } catch (error) {
-    console.error("定时任务更新设备状态失败:", error);
-  }
-});
 module.exports = router;

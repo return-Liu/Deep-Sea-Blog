@@ -117,6 +117,7 @@ import phoneIcon from "../../components/icon/phone.vue";
 import rightarrowIcon from "../../components/icon/rightarrow.vue";
 import SecurityIcon from "../../components/icon/Security.vue";
 import AccountSecurityIcon from "../../components/icon/AccountSecurity.vue";
+import ReportUserIcon from "../../components/icon/ReportUser.vue";
 const router = useRouter();
 
 const settingRef = ref();
@@ -220,6 +221,13 @@ const securityFeatures = [
     title: "登录设备管理",
     description: "查看和管理已登录的设备",
     handler: handleDeviceManagement,
+  },
+  {
+    id: "reportUser",
+    icon: ReportUserIcon,
+    title: "举报信息中心",
+    description: "查看被举报的用户信息",
+    handler: ReportUserIcon,
   },
 ];
 </script>

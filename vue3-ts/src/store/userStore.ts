@@ -3,6 +3,7 @@ import axiosConfig from "../utils/request";
 import { ElMessage } from "element-plus";
 import { apiUrl } from "../config";
 import { defineStore } from "pinia";
+import { useRouter } from "vue-router";
 
 // 用户相关的接口
 interface User {
@@ -44,6 +45,15 @@ export const useUserStore = defineStore("user", () => {
     theme: "",
   });
 
+  // 获取当前用户信息
+  const currentUser = computed(() => user.value);
+  const router = useRouter();
+  const openAuthorProfile = () => {
+    router.push({
+      name: "users",
+      params: { uuid: user.value.uuid },
+    });
+  };
   const setUser = (userData: User) => {
     user.value = userData;
     if (user.value && "email" in user.value) delete user.value.email;
@@ -132,9 +142,6 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
-  // 获取当前用户信息
-  const currentUser = computed(() => user.value);
-
   return {
     user,
     setUser,
@@ -142,5 +149,6 @@ export const useUserStore = defineStore("user", () => {
     updateUser,
     deleteAllUserImages,
     currentUser,
+    openAuthorProfile,
   };
 });

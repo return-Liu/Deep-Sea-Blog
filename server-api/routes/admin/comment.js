@@ -219,7 +219,16 @@ router.delete("/user/:id", async (req, res) => {
     failure(res, error);
   }
 });
-
+// 举报当前评论的信息
+router.post("/reportUser", async (req, res) => {});
+// 举报访问用户详情页的信息
+router.post("/reportUserDetail/:uuid", async (req, res) => {
+  try {
+    const { uuid } = req.params;
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 修改白名单过滤
 function filterWhiteList(req) {
   return {

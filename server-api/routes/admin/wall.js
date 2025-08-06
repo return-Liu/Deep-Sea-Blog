@@ -115,6 +115,7 @@ router.get("/report", async (req, res) => {
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
   const pageSize = Math.abs(Number(query.pageSize)) || 10;
   const offset = (currentPage - 1) * pageSize;
+
   const condition = {
     order: [["id", "DESC"]],
     limit: pageSize,
@@ -132,7 +133,6 @@ router.get("/report", async (req, res) => {
           "content",
           "category",
           "likesCount",
-
           "createdAt",
         ],
         include: [
@@ -151,6 +151,7 @@ router.get("/report", async (req, res) => {
       },
     ],
   };
+
   try {
     const { count, rows } = await Report.findAndCountAll(condition);
     success(res, "获取举报留言墙列表成功", {
@@ -162,6 +163,10 @@ router.get("/report", async (req, res) => {
         wall: report.Wall,
         createdAt: report.createdAt,
         updatedAt: report.updatedAt,
+        status: report.status,
+        resultType: report.resultType,
+        resultDetail: report.resultDetail,
+        processTime: report.processTime,
       })),
       pagination: {
         total: count,
@@ -267,6 +272,20 @@ router.post("/report/:id", async (req, res) => {
   const id = req.params.id;
   const { userId } = req.body;
   try {
+    // 检查是否已经举报过
+    const existingReport = await Report.findOne({
+      where: {
+        userId,
+        wallId: id,
+      },
+    });
+
+    if (existingReport) {
+      return success(res, "您已经举报过此留言墙,请勿重复举报", {
+        report: true,
+      });
+    }
+
     await Wall.update(
       {
         report: true,
@@ -277,18 +296,19 @@ router.post("/report/:id", async (req, res) => {
         },
       }
     );
+
     await Report.create({
       userId,
       wallId: id,
     });
+
     success(res, "举报留言墙成功", {
       report: true,
     });
   } catch (error) {
     failure(res, error);
   }
-});
-// 编辑留言墙
+}); // 编辑留言墙
 router.put("/:id", async (req, res) => {
   const id = req.params.id;
   const body = filterWhiteList(req);
@@ -304,6 +324,50 @@ router.put("/:id", async (req, res) => {
       category: body.category,
       backgroundColor: body.backgroundColor,
     });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+// 删除举报留言墙
+router.delete("/report/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await Report.findOne({ where: { id } });
+    // 执行删除
+    const result = await Report.destroy({
+      where: {
+        id,
+      },
+    });
+    await Report.findOne({ where: { id } });
+    if (result) {
+      success(res, "删除举报留言墙成功");
+    } else {
+      failure(res, "未找到对应的举报记录");
+    }
+  } catch (error) {
+    failure(res, error);
+  }
+});
+// 处理举报留言墙
+
+router.put("/report/:id/process", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const report = await Report.findByPk(id);
+    if (!report) {
+      return failure(res, "举报记录不存在");
+    }
+
+    // 更新举报记录状态而不是墙状态
+    await report.update({
+      status: true, // 标记为已处理
+      resultType: req.body.resultType,
+      resultDetail: req.body.resultDetail,
+      processTime: req.body.processTime,
+    });
+
+    success(res, "处理举报留言墙成功");
   } catch (error) {
     failure(res, error);
   }
