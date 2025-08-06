@@ -121,8 +121,16 @@
       <!-- 其他登录方式 -->
       <div class="other-login-options">
         <h2 class="login-methods-title">其他登录方式</h2>
-        <div class="login-methods"></div>
-
+        <div class="login-methods">
+          <span>
+            <component :is="QQLoginIcon" class="icon" />
+            <span class="text">QQ登录</span>
+          </span>
+          <span>
+            <component :is="WeChatLoginIcon" class="icon" />
+            <span class="text">微信登录</span>
+          </span>
+        </div>
         <div class="login-tip">
           <p>目前支持邮箱验证码登录，手机短信验证功能即将上线，敬请期待！</p>
           <p>未注册过Deep Sea的邮箱/手机号, 我们将自动帮你注册账号</p>
@@ -154,6 +162,8 @@ import axiosConfig from "../../utils/request";
 import { View, Hide } from "@element-plus/icons-vue";
 import { handlePostLogin } from "../../utils/handlePostLogin";
 import { handleLoginError } from "../../utils/handleLoginError";
+import QQLoginIcon from "../../components/icon/QQLogin.vue";
+import WeChatLoginIcon from "../../components/icon/WeChatLogin.vue";
 import { useI18n } from "vue-i18n";
 import Cookies from "js-cookie";
 const { locale } = useI18n();
@@ -302,7 +312,6 @@ onUnmounted(() => {
   }
 });
 </script>
-
 <style lang="less" scoped>
 @import "../../base-ui/login.less";
 .fade-slide-enter-active,
@@ -330,6 +339,22 @@ onUnmounted(() => {
 .login-methods-title {
   font-size: 14px;
   margin-bottom: 10px;
+}
+.login-methods {
+  display: flex;
+  position: relative;
+  .icon {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+  }
+  .text {
+    margin-left: 23px;
+    font-size: 12px;
+    &:hover {
+      color: #05d2f7;
+    }
+  }
 }
 .send-code-btn {
   position: absolute;
