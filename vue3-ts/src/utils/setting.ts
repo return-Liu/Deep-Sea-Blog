@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { Plus, Camera, User, Lock, Check } from "@element-plus/icons-vue";
-import languagesIcon from "../../components/icon/Languages.vue";
+import languagesIcon from "../components/icon/Languages.vue";
 import { constellations } from "../utils/constellations";
 import { areas } from "../utils/area";
 import {
