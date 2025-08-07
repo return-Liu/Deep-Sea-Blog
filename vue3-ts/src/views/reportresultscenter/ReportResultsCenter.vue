@@ -665,11 +665,12 @@ onMounted(() => {
 
   .feedback-section,
   .report-section {
-    background-color: #fff;
+    background-color: var(--bg2);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 30px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
   }
 }
 
@@ -679,12 +680,12 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--border);
 
   .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--color-bg4);
     display: flex;
     align-items: center;
     margin: 0;
@@ -708,13 +709,17 @@ onMounted(() => {
       .refresh-btn {
         padding: 8px 12px;
         border-radius: 4px;
+        background-color: var(--bg2);
+        border: 1px solid var(--border);
+        color: var(--color-bg4);
 
         i {
           margin-right: 5px;
         }
 
         &:hover {
-          opacity: 0.9;
+          background-color: var(--color-bg4);
+          color: var(--white);
         }
       }
     }
@@ -728,9 +733,10 @@ onMounted(() => {
   .empty-state {
     padding: 40px 0;
     text-align: center;
-    background-color: #fafafa;
+    background-color: var(--bg1);
     border-radius: 4px;
     margin: 20px 0;
+    border: 1px solid var(--border);
   }
 }
 
@@ -739,7 +745,8 @@ onMounted(() => {
   margin-bottom: 20px;
   transition: all 0.3s;
   border-radius: 8px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--border);
+  background-color: var(--bg2);
 
   &:hover {
     transform: translateY(-3px);
@@ -765,8 +772,8 @@ onMounted(() => {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background-color: #409eff;
-      color: white;
+      background: var(--gradient-bg1);
+      color: var(--white);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -780,13 +787,13 @@ onMounted(() => {
         margin: 0;
         font-size: 16px;
         font-weight: 500;
-        color: #303133;
+        color: var(--color-bg4);
       }
 
       .user-email {
         margin: 4px 0 0;
         font-size: 12px;
-        color: #909399;
+        color: var(--color-bg5);
       }
     }
   }
@@ -805,7 +812,7 @@ onMounted(() => {
 
     .feedback-time {
       font-size: 12px;
-      color: #909399;
+      color: var(--color-bg5);
       display: flex;
       align-items: center;
 
@@ -830,7 +837,7 @@ onMounted(() => {
 
     .report-id {
       font-weight: 500;
-      color: #303133;
+      color: var(--color-bg4);
       font-size: 14px;
     }
 
@@ -843,7 +850,7 @@ onMounted(() => {
   }
 
   .report-time {
-    color: #909399;
+    color: var(--color-bg5);
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -859,7 +866,7 @@ onMounted(() => {
 .report-content {
   padding: 12px 0;
   line-height: 1.6;
-  color: #606266;
+  color: var(--color-bg4);
 
   .feedback-preview,
   .report-preview {
@@ -868,7 +875,7 @@ onMounted(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #606266;
+    color: var(--color-bg4);
     font-size: 14px;
   }
 
@@ -881,13 +888,16 @@ onMounted(() => {
       height: auto;
       line-height: 1.6;
       font-size: 14px;
+      color: var(--color-bg4);
+      background-color: transparent;
     }
 
     .el-collapse-item__content {
       padding: 16px 0 0;
-      color: #606266;
+      color: var(--color-bg4);
       font-size: 14px;
       line-height: 1.8;
+      background-color: transparent;
     }
   }
 
@@ -903,15 +913,15 @@ onMounted(() => {
 .process-result {
   margin-top: 15px;
   padding: 12px;
-  background-color: #f8f9fa;
+  background-color: var(--bg1);
   border-radius: 4px;
-  border-left: 4px solid #409eff;
+  border-left: 4px solid var(--gradient-bg1);
 
   .result-header {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-    color: #409eff;
+    color: var(--gradient-bg1);
     font-weight: bold;
     font-size: 14px;
 
@@ -928,13 +938,13 @@ onMounted(() => {
       font-size: 13px;
 
       strong {
-        color: #303133;
+        color: var(--color-bg3);
       }
     }
 
     .process-time {
       font-size: 12px;
-      color: #909399;
+      color: var(--color-bg5);
       display: flex;
       align-items: center;
 
@@ -953,13 +963,14 @@ onMounted(() => {
 
   .info-section {
     padding: 12px;
-    background-color: #f5f7fa;
+    background-color: var(--bg1);
     border-radius: 4px;
+    border: 1px solid var(--border);
 
     .info-title {
       margin: 0 0 12px;
       font-size: 14px;
-      color: #409eff;
+      color: var(--gradient-bg1);
       display: flex;
       align-items: center;
 
@@ -979,12 +990,12 @@ onMounted(() => {
         }
 
         .info-label {
-          color: #909399;
+          color: var(--color-bg5);
           min-width: 70px;
         }
 
         .info-value {
-          color: #606266;
+          color: var(--color-bg4);
           word-break: break-word;
           flex: 1;
         }
@@ -1000,13 +1011,14 @@ onMounted(() => {
   gap: 10px;
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px dashed #ebeef5;
+  border-top: 1px dashed var(--border);
 
   .action-btn {
     padding: 8px 12px;
     border-radius: 4px;
     font-size: 13px;
     transition: all 0.2s;
+    border: 1px solid var(--border);
 
     i {
       margin-right: 5px;
@@ -1020,9 +1032,9 @@ onMounted(() => {
 
   .detail-btn {
     padding: 8px 12px;
-    color: #409eff;
-    background-color: #ecf5ff;
-    border-color: #b3d8ff;
+    color: var(--gradient-bg1);
+    background-color: var(--bg1);
+    border-color: var(--border);
     border-radius: 4px;
     font-size: 13px;
     transition: all 0.2s;
@@ -1037,8 +1049,8 @@ onMounted(() => {
     }
 
     &:hover {
-      background-color: #d9ecff;
-      color: #66b1ff;
+      background-color: var(--bg2);
+      color: var(--gradient-bg1);
     }
   }
 }
@@ -1048,7 +1060,7 @@ onMounted(() => {
   margin: 20px 0;
 
   .load-more-btn {
-    color: #409eff;
+    color: var(--gradient-bg1);
     font-size: 14px;
     display: inline-flex;
     align-items: center;
@@ -1058,16 +1070,19 @@ onMounted(() => {
     }
 
     &:hover {
-      color: #66b1ff;
+      color: var(--gradient-bg2);
     }
   }
 
   .no-more {
-    color: #909399;
+    color: var(--color-bg5);
     font-size: 12px;
 
     .el-divider {
       margin: 0 0 10px;
+      :deep(.el-divider__text) {
+        background-color: var(--bg2);
+      }
     }
   }
 }

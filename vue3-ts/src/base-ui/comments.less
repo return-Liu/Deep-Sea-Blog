@@ -6,12 +6,12 @@
 
   .comment-header {
     margin-bottom: 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
     padding-bottom: 15px;
 
     .comment-title {
       font-size: 18px;
-      color: var(--color-bg5);
+      color: var(--bg5);
       margin: 0;
       display: flex;
       align-items: center;
@@ -23,7 +23,7 @@
 
       .comment-count {
         font-size: 14px;
-        color: #909399;
+        color: var(--gray-500);
         font-weight: normal;
       }
     }
@@ -51,18 +51,17 @@
   }
 
   .comment-list {
-    background-color: #f9f9f9;
+    background-color: var(--bg2);
     border-radius: 10px;
 
     .comment-item {
       padding: 16px;
-      border-bottom: 1px solid #f4efef;
+      border-bottom: 1px solid var(--border);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
       border-radius: 10px;
       margin: 5px 0;
-
 
       .comment-user {
         display: flex;
@@ -75,19 +74,19 @@
           .username {
             font-size: 14px;
             font-weight: 500;
-            color: var(--color-bg7);
+            color: var(--gray-700);
             margin-right: 10px;
           }
 
           .comment-time {
             font-size: 12px;
-            color: var(--color-bg7);
+            color: var(--gray-500);
             display: block;
           }
 
           .area {
             font-size: 12px;
-            color: var(--color-bg7);
+            color: var(--gray-500);
           }
         }
       }
@@ -96,7 +95,7 @@
         margin-left: 48px;
         font-size: 14px;
         line-height: 1.6;
-        color: #666;
+        color: var(--gray-600);
         word-break: break-word;
       }
 
@@ -114,13 +113,12 @@
 
           .likes-count {
             margin-left: 5px;
-
           }
 
           span {
             margin-left: 4px;
             font-size: 14px;
-            color: #666;
+            color: var(--gray-600);
           }
         }
       }
@@ -150,7 +148,7 @@
 
 .skeleton-item {
   padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .emoji-container {
@@ -212,8 +210,6 @@
   justify-content: center;
 }
 
-
-
 .bg-item-selected .bg-preview {
   border: 2px solid #409eff;
 }
@@ -253,7 +249,7 @@
 
       .preview-time {
         font-size: 12px;
-        color: var(--color-bg6);
+        color: var(--gray-500);
         display: block;
         margin-bottom: 4px;
       }
@@ -265,11 +261,12 @@
         .preview-username {
           font-weight: bold;
           margin-right: 8px;
+          color: var(--gray-800);
         }
 
         .preview-area {
           font-size: 12px;
-          color: var(--color-bg6);
+          color: var(--gray-500);
         }
       }
     }
@@ -280,7 +277,7 @@
 
     .preview-message {
       line-height: 1.6;
-      color: #333;
+      color: var(--gray-900);
       word-break: break-word;
       margin-left: 50px;
     }
@@ -297,13 +294,11 @@
       margin-right: 16px;
       cursor: pointer;
       font-size: 14px;
-      color: #666;
+      color: var(--gray-600);
 
       span {
         margin-left: 4px;
       }
     }
   }
-
-
 }
