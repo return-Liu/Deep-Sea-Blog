@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { Note, User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
+const userAuth = require("../../middlewares/user-auth");
 // 查询所有笔记
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   // 通过分页
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
@@ -62,7 +63,7 @@ router.get("/", async (req, res) => {
   }
 });
 // 查询单个笔记
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const note = await Note.findByPk(id, {
@@ -84,7 +85,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 // 创建笔记
-router.post("/", async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
   try {
     const body = filterWhiteList(req);
     // 获取当前登录用户的 ID
@@ -104,7 +105,7 @@ router.post("/", async (req, res) => {
   }
 });
 // 更新笔记
-router.put("/:id", async (req, res) => {
+router.put("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const note = await Note.findByPk(id);
@@ -125,7 +126,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 // 删除笔记
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     await Note.destroy({ where: { id } });
@@ -136,7 +137,7 @@ router.delete("/:id", async (req, res) => {
 });
 // 获取指定用户的笔记
 // 获取指定用户的笔记
-router.get("/user/:uuid", async (req, res) => {
+router.get("/user/:uuid", userAuth, async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({ where: { uuid } });

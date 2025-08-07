@@ -71,7 +71,7 @@
           <div class="stats-list">
             <div class="stat-item">
               <component class="user-icon-right" :is="BlogIcon" />
-              <div class="stat-value">{{ articles.length }}</div>
+              <div class="stat-value">{{ essay.length }}</div>
               <div class="stat-label">文章</div>
             </div>
             <div class="stat-item">
@@ -113,7 +113,7 @@
           <div v-if="getCurrentTabContent().length === 0" class="empty-state">
             <yk-empty
               :description="`暂无${
-                currentTab === 'articles'
+                currentTab === 'essay'
                   ? '文章'
                   : currentTab === 'photography'
                   ? '摄影'
@@ -128,6 +128,7 @@
               v-for="item in getCurrentTabContent()"
               :key="item.id"
               class="content-card"
+              @click="editContent(item.id)"
             >
               <div class="content-image">
                 <img :src="item.image" :alt="item.title" />
@@ -222,7 +223,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import axiosConfig from "../../utils/request";
 import { YkEmpty } from "@yike-design/ui";
@@ -242,6 +243,8 @@ import { el } from "date-fns/locale";
 const userStore = useUserStore();
 const loadmore = ref(false);
 import { modelURL } from "../../config";
+import { useRouter } from "vue-router";
+const router = useRouter();
 interface User {
   id: number;
   avatar: string;
@@ -275,17 +278,17 @@ const {
   cancelReport,
   handleDescriptionInput,
 } = useReportUser();
-const articles = ref<ContentItem[]>([]);
+const essay = ref<ContentItem[]>([]);
 const photos = ref<ContentItem[]>([]);
 const notes = ref<ContentItem[]>([]);
 const showAvatarModal = ref(false); // 控制弹窗显示
 const route = useRoute();
 const user = ref<User | null>(null);
 
-const currentTab = ref("articles");
+const currentTab = ref("essay");
 const uuid = ref<string | string[]>();
 const tabs = [
-  { key: "articles", label: "文章" },
+  { key: "essay", label: "文章" },
   { key: "photography", label: "摄影" },
   { key: "notes", label: "随记" },
 ];
@@ -304,17 +307,17 @@ const reportComment = () => {
 };
 
 const loadUserContents = async () => {
-  contentLoading.value = true; // 开始加载
+  contentLoading.value = true;
   const uuidValue = Array.isArray(route.params.uuid)
     ? route.params.uuid[0]
     : route.params.uuid;
 
-  // 确保 uuid 存在再请求数据
   if (!uuidValue) {
     console.error("用户UUID不存在");
     contentLoading.value = false;
     return;
   }
+
   try {
     const fetchData = (type: string) =>
       axiosConfig.get(`/admin/${type}/user/${uuidValue}`);
@@ -324,15 +327,32 @@ const loadUserContents = async () => {
       fetchData("note"),
     ]);
 
-    articles.value = articleRes.data.data.articles || [];
-    photos.value = photoRes.data.data.photos || [];
-    notes.value = noteRes.data.data.notes || [];
+    // 更安全的数据访问
+    essay.value = articleRes.data?.data?.articles || [];
+    photos.value = photoRes.data?.data?.photos || [];
+    notes.value = noteRes.data?.data?.notes || [];
+    console.log(essay.value);
+
+    // 如果需要在有数据时执行特定操作
+    const totalContentCount =
+      essay.value.length + photos.value.length + notes.value.length;
+    if (totalContentCount > 0) {
+      // 有数据时执行的操作
+      console.log(`加载了 ${totalContentCount} 条内容`);
+    } else {
+      // 无数据时的处理
+      console.log("用户暂无发布内容");
+    }
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     console.error("加载用户内容失败:", errorMessage);
+    // 出错时也设为空数组，确保UI正常显示
+    essay.value = [];
+    photos.value = [];
+    notes.value = [];
   } finally {
-    contentLoading.value = false; // 加载完成
+    contentLoading.value = false;
   }
 };
 
@@ -349,11 +369,20 @@ const fetchUser = async () => {
     ElMessage.error(errorMessage);
   }
 };
-
+const editContent = async (id: number) => {
+  const routeData = router.resolve({
+    name: "overview",
+    query: {
+      id: String(id),
+      type: currentTab.value,
+    },
+  });
+  window.open(routeData.href, `id_${id}`, `content_${currentTab.value}`);
+};
 const getCurrentTabContent = (): ContentItem[] => {
   switch (currentTab.value) {
-    case "articles":
-      return articles.value;
+    case "essay":
+      return essay.value;
     case "photography":
       return photos.value;
     case "notes":
@@ -378,6 +407,15 @@ onMounted(() => {
   fetchUser();
   loadUserContents();
 });
+watch(
+  () => route.params.uuid,
+  (newUuid) => {
+    uuid.value = newUuid;
+    fetchUser();
+    loadUserContents();
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped lang="less">

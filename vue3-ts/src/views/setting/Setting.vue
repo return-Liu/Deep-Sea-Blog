@@ -566,14 +566,13 @@ const addNewAccount = () => {
 };
 const switchAccount = async (id: string) => {
   try {
-    const user = userStore.user;
-    if (userStore.user.id === Number(id)) {
-      ElMessage.info("你已经在该账号下登录啦~");
-      return;
-    }
     const response = await axiosConfig.post("/auth/switch-account", {
       userId: id,
     });
+    if (userStore.user.id === Number(id)) {
+      ElMessage.info(response.data.message);
+      return;
+    }
     const userData = response.data.data;
     // 更新 token 和 uuid 到本地存储
     Cookies.set("ds-token", userData.token);
@@ -811,12 +810,6 @@ const deleteAccount = async () => {
     const userId = userStore.user.id;
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
-
-    // 直接删除用户资源，
-    await axiosConfig.delete("/users/resources", {
-      data: { userId },
-    });
-
     // 直接删除用户评论，
     await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
     await axiosConfig.delete(`/auth/devices/${userStore.user.id}`);

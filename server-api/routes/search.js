@@ -3,8 +3,9 @@ const router = express.Router();
 const { Article, Note, Photography, User } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { Op } = require("sequelize");
+const userAuth = require("../middlewares/user-auth");
 
-router.get("/search", async (req, res) => {
+router.get("/search", userAuth, async (req, res) => {
   try {
     const query = req.query;
     const currentPage = Math.abs(Number(query.currentPage)) || 1;

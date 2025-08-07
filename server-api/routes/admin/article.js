@@ -3,9 +3,10 @@ const router = express.Router();
 const { Article, User, Like, sequelize } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
+const userAuth = require("../../middlewares/user-auth");
 
 // 查询文章列表
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   // 通过分页
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
@@ -88,7 +89,7 @@ router.get("/", async (req, res) => {
 });
 
 // 查询文章详情
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const article = await Article.findByPk(id, {
@@ -111,7 +112,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // 创建文章
-router.post("/", async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
   try {
     // 白名单过滤
     const body = filterWhiteList(req);
@@ -136,7 +137,7 @@ router.post("/", async (req, res) => {
 });
 
 // 删除文章
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const articleId = req.params.id;
     // 先删除所有关联的点赞记录
@@ -158,7 +159,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // 更新文章
-router.put("/:id", async (req, res) => {
+router.put("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const article = await Article.findByPk(id);
@@ -186,7 +187,7 @@ router.put("/:id", async (req, res) => {
     failure(res, error);
   }
 });
-router.post("/views/:id", async (req, res) => {
+router.post("/views/:id", userAuth, async (req, res) => {
   try {
     const articleId = req.params.id;
     await Article.update(
@@ -199,7 +200,7 @@ router.post("/views/:id", async (req, res) => {
   }
 });
 // 查询指定用户的文章列表
-router.get("/user/:uuid", async (req, res) => {
+router.get("/user/:uuid", userAuth, async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({ where: { uuid } });

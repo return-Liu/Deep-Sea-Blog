@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { promisify } = require("util");
+const userAuth = require("../../middlewares/user-auth");
 
 // 确保上传目录存在
 const uploadDir = path.join(__dirname, "../../public/avatar");
@@ -54,7 +55,7 @@ const limits = {
 const upload = multer({ storage, fileFilter, limits });
 
 // 上传头像
-router.post("/", upload.single("avatar"), async (req, res) => {
+router.post("/", userAuth, upload.single("avatar"), async (req, res) => {
   try {
     const { userId } = req.body;
     const user = await User.findByPk(userId);
@@ -95,7 +96,7 @@ router.post("/", upload.single("avatar"), async (req, res) => {
 });
 
 // 删除图片文件
-router.delete("/avatar/:filename", async (req, res) => {
+router.delete("/avatar/:filename", userAuth, async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadDir, filename);
@@ -114,7 +115,7 @@ router.delete("/avatar/:filename", async (req, res) => {
   }
 });
 // 裁剪头像
-router.post("/cropAvatar", async (req, res) => {
+router.post("/cropAvatar", userAuth, async (req, res) => {
   try {
     const { userId, x, y, width, height } = req.body;
     const user = await User.findByPk(userId);

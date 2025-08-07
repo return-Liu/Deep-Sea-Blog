@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { User, Comment, Wall, Like, LikesWall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
+const userAuth = require("../../middlewares/user-auth");
 // 获取指定留言墙的评论列表
-router.get("/:wallId", async (req, res) => {
+router.get("/:wallId", userAuth, async (req, res) => {
   try {
     const { wallId } = req.params;
     const comments = await Comment.findAll({
@@ -45,7 +46,7 @@ router.get("/:wallId", async (req, res) => {
 });
 
 // 创建评论
-router.post("/:wallId", async (req, res) => {
+router.post("/:wallId", userAuth, async (req, res) => {
   try {
     // 过滤白名单数据
     const body = filterWhiteList(req);
@@ -74,7 +75,7 @@ router.post("/:wallId", async (req, res) => {
   }
 });
 // 获取指定留言墙的评论数量
-router.get("/count/:wallId", async (req, res) => {
+router.get("/count/:wallId", userAuth, async (req, res) => {
   try {
     const { wallId } = req.params;
     const commentCount = await Comment.count({
@@ -93,7 +94,7 @@ router.get("/count/:wallId", async (req, res) => {
   }
 });
 // 获取当前评论用户的所有信息
-router.get("/user/:uuid", async (req, res) => {
+router.get("/user/:uuid", userAuth, async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({
@@ -121,7 +122,7 @@ router.get("/user/:uuid", async (req, res) => {
   }
 });
 // 删除特定留言下的所有评论
-router.delete("/comment/wall/:id", async (req, res) => {
+router.delete("/comment/wall/:id", userAuth, async (req, res) => {
   try {
     const wallId = req.params.id;
 
@@ -143,7 +144,7 @@ router.delete("/comment/wall/:id", async (req, res) => {
   }
 });
 // 删除留言
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -178,7 +179,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 // 删除评论
-router.delete("/comment/:id", async (req, res) => {
+router.delete("/comment/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   try {
     // 删除评论
@@ -199,7 +200,7 @@ router.delete("/comment/:id", async (req, res) => {
   }
 });
 // 删除指定用户的所有评论
-router.delete("/user/:id", async (req, res) => {
+router.delete("/user/:id", userAuth, async (req, res) => {
   const userId = req.params.id;
   try {
     // 删除指定用户的所有评论
@@ -220,9 +221,9 @@ router.delete("/user/:id", async (req, res) => {
   }
 });
 // 举报当前评论的信息
-router.post("/reportUser", async (req, res) => {});
+router.post("/reportUser", userAuth, async (req, res) => {});
 // 举报访问用户详情页的信息
-router.post("/reportUserDetail/:uuid", async (req, res) => {
+router.post("/reportUserDetail/:uuid", userAuth, async (req, res) => {
   try {
     const { uuid } = req.params;
   } catch (error) {

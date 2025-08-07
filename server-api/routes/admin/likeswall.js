@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { Wall, LikesWall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
-
-router.post("/like", async (req, res) => {
+const userAuth = require("../../middlewares/user-auth");
+router.post("/like", userAuth, async (req, res) => {
   try {
     const { wallsId, userId } = req.body;
     if (!wallsId || !userId) {

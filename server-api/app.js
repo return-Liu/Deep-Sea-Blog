@@ -38,7 +38,7 @@ app.use(cookieParser());
 // 全局配置 CORS
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"], // 允许的源域
+    origin: ["http://localhost:5173"], // 允许的源域
     credentials: true, // 允许发送 cookies
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 允许的 HTTP 方法
     allowedHeaders: "Content-Type,Authorization", // 允许的请求头

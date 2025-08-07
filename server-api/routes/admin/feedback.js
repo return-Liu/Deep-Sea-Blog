@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { Feedback } = require("../../models");
 const { success, failure } = require("../../utils/responses");
+const userAuth = require("../../middlewares/user-auth");
 // 提交反馈
-router.post("/:id", async (req, res) => {
+router.post("/:id", userAuth, async (req, res) => {
   const userId = req.params.id; // 从URL参数获取userId
   try {
     const body = filterWhiteList(req);
@@ -21,7 +22,7 @@ router.post("/:id", async (req, res) => {
   }
 });
 // 获取所有反馈
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   try {
     // 通过分页
     const query = req.query;
@@ -68,7 +69,7 @@ router.get("/", async (req, res) => {
   }
 });
 // 删除反馈
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const feedback = await Feedback.findByPk(id);
@@ -82,7 +83,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 // 示例：在 report 路由文件中添加类似的处理逻辑
-router.put("/:id/process", async (req, res) => {
+router.put("/:id/process", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const report = await Report.findByPk(id);

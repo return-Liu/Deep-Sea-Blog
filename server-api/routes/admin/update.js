@@ -4,8 +4,10 @@ const { Update, User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize"); // 确保引入 Op
 
+const userAuth = require("../../middlewares/user-auth");
+
 // 查询更新后台信息
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   try {
     const query = req.query;
     const currentPage = Math.abs(Number(query.currentPage)) || 1;
@@ -50,7 +52,7 @@ router.get("/", async (req, res) => {
   }
 });
 // 创建更新后台信息
-router.post("/", async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
   try {
     // 白名单过滤
     const body = filterWhiteList(req);
@@ -78,7 +80,7 @@ router.post("/", async (req, res) => {
   }
 });
 // 单个查询
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
   try {
     const update = await Update.findByPk(req.params.id);
     if (!update) {

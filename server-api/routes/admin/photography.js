@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const { Photography, User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
+const userAuth = require("../../middlewares/user-auth");
 
 // 查询摄影作品
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   // 通过分页
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
@@ -57,7 +58,7 @@ router.get("/", async (req, res) => {
 });
 
 // 查询单个摄影作品
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const photography = await Photography.findByPk(id, {
@@ -80,7 +81,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // 创建摄影作品
-router.post("/", async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
   try {
     const body = filterWhiteList(req);
     // 获取当前登录用户的 ID
@@ -100,7 +101,7 @@ router.post("/", async (req, res) => {
 });
 
 // 更新摄影作品
-router.put("/:id", async (req, res) => {
+router.put("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const photography = await Photography.findByPk(id);
@@ -121,7 +122,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // 删除摄影作品
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const photography = await Photography.findByPk(id);
@@ -138,8 +139,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 // 获取指定用户的摄影作品
-// 获取指定用户的摄影作品
-router.get("/user/:uuid", async (req, res) => {
+router.get("/user/:uuid", userAuth, async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({ where: { uuid } });

@@ -6,6 +6,7 @@ const { createSixNum, verifyEmail } = require("../utils/email");
 const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
 const cron = require("node-cron");
+const userAuth = require("../middlewares/user-auth");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -197,7 +198,7 @@ async function getCurrentUser(req) {
 /**
  * 获取当前用户绑定的所有账号
  */
-router.get("/accounts", async (req, res) => {
+router.get("/accounts", userAuth, async (req, res) => {
   try {
     // 获取当前登录用户
     const currentUser = await getCurrentUser(req);
@@ -288,6 +289,36 @@ async function handlePostLogin(user, req, res, loginMethod) {
     },
   });
 }
+// 切换账号
+router.post("/switch-account", userAuth, async (req, res) => {
+  try {
+    // 获取当前用户
+    const currentUser = await getCurrentUser(req);
+    // 获取目标用户ID
+    const { userId } = req.body;
+    // 验证参数
+    if (!userId) {
+      throw new BadRequestError("目标用户ID不能为空");
+    }
+    // 检查是否是同一个账号
+    if (currentUser.id === parseInt(userId)) {
+      throw new BadRequestError("你已经在该账号下登录啦~");
+    }
+    // 查找目标用户
+    const targetUser = await User.findByPk(userId);
+    if (!targetUser) {
+      throw new NotFoundError("目标用户不存在");
+    }
+    // 验证目标用户是否与当前用户具有相同的特征码（属于同一用户组）
+    if (targetUser.clientFeatureCode !== currentUser.clientFeatureCode) {
+      throw new UnauthorizedError("无权限切换到该账号");
+    }
+    // 执行登录处理逻辑
+    await handlePostLogin(targetUser, req, res);
+  } catch (error) {
+    failure(res, error);
+  }
+});
 
 /**
  * 用户登录
@@ -343,7 +374,7 @@ router.post("/email", async (req, res) => {
   }
 });
 // 邮箱验证码登录 - 发送验证码（带频率限制）
-router.post("/email/verify", async (req, res) => {
+router.post("/email/verify", userAuth, async (req, res) => {
   try {
     const { email, clientFeatureCode } = req.body;
 
@@ -395,7 +426,7 @@ router.post("/email/verify", async (req, res) => {
 });
 
 // 登录设备管理
-router.post("/login/device", async (req, res) => {
+router.post("/login/device", userAuth, async (req, res) => {
   try {
     // 获取当前用户
     const currentUser = await getCurrentUser(req);
@@ -445,7 +476,7 @@ router.post("/login/device", async (req, res) => {
   }
 });
 // 获取用户所有登录设备
-router.get("/devices", async (req, res) => {
+router.get("/devices", userAuth, async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     const currentDeviceInfo = await extractDeviceInfo(req);
@@ -523,7 +554,7 @@ cron.schedule("0 0 * * *", async () => {
 // 删除设备（登出设备）
 // 创建设备历史记录表
 // 在登出设备时，将设备信息移动到历史记录表中，然后删除原记录
-router.delete("/devices/:deviceId", async (req, res) => {
+router.delete("/devices/:deviceId", userAuth, async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     const { deviceId } = req.params;

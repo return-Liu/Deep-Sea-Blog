@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const { Article, Like } = require("../../models");
 const { success, failure } = require("../../utils/responses");
+const userAuth = require("../../middlewares/user-auth");
 
 // 点赞文章
-router.post("/like", async (req, res) => {
+router.post("/like", userAuth, async (req, res) => {
   try {
     const { articleId, userId } = req.body;
 

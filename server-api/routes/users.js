@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const userAuth = require("../middlewares/user-auth");
 const {
   User,
   Article,
@@ -12,7 +13,7 @@ const {
 const { success, failure } = require("../utils/responses");
 const { NotFoundError } = require("../utils/errors");
 // 查询当前登录用户详情
-router.get("/me", async (req, res) => {
+router.get("/me", userAuth, async (req, res) => {
   try {
     const user = await getCurrentUser(req);
     success(res, "查询当前用户信息成功", user);
@@ -22,7 +23,7 @@ router.get("/me", async (req, res) => {
 });
 
 // 更新当前用户信息
-router.put("/info", async (req, res) => {
+router.put("/info", userAuth, async (req, res) => {
   try {
     const body = {
       nickname: req.body.nickname,
@@ -44,7 +45,7 @@ router.put("/info", async (req, res) => {
   }
 });
 // 注销账号
-router.delete("/delete", async (req, res) => {
+router.delete("/delete", userAuth, async (req, res) => {
   try {
     const user = await getCurrentUser(req);
 
@@ -117,37 +118,6 @@ router.delete("/delete", async (req, res) => {
     await user.destroy();
 
     success(res, "注销账号成功");
-  } catch (error) {
-    failure(res, error);
-  }
-});
-// 删除用户资源
-router.delete("/resources", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-
-    // 删除用户的文章
-    await Article.destroy({
-      where: {
-        userId: userId,
-      },
-    });
-
-    // 删除用户的摄影
-    await Photography.destroy({
-      where: {
-        userId: userId,
-      },
-    });
-
-    // 删除用户的随记
-    await Note.destroy({
-      where: {
-        userId: userId,
-      },
-    });
-
-    success(res, "删除用户资源成功");
   } catch (error) {
     failure(res, error);
   }

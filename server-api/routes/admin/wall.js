@@ -5,8 +5,9 @@ const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
 const { sendEmail } = require("../../utils/email");
 const { notifyWallOwner } = require("../../utils/email");
+const userAuth = require("../../middlewares/user-auth");
 // 查询留言墙列表
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
   const pageSize = Math.min(Math.abs(Number(query.pageSize)) || 200, 200);
@@ -67,7 +68,7 @@ router.get("/", async (req, res) => {
   }
 });
 // 创建留言墙列表
-router.post("/", async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
   // 白名单过滤
   const body = filterWhiteList(req);
   //   获取用户id
@@ -89,7 +90,7 @@ router.post("/", async (req, res) => {
   }
 });
 // 删除留言墙列表
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
     // 先删除关联的点赞记录
@@ -110,7 +111,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 // 获取举报留言墙列表
-router.get("/report", async (req, res) => {
+router.get("/report", userAuth, async (req, res) => {
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
   const pageSize = Math.abs(Number(query.pageSize)) || 10;
@@ -180,7 +181,7 @@ router.get("/report", async (req, res) => {
 });
 // 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
 // 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
-router.post("/delete/:id", async (req, res) => {
+router.post("/delete/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   const { email } = req.body; // 可选：用于验证或额外通知
   try {
@@ -220,7 +221,7 @@ router.post("/delete/:id", async (req, res) => {
   }
 });
 // 查询举报留言墙详情
-router.get("/report/:id", async (req, res) => {
+router.get("/report/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   try {
     const report = await Report.findOne({
@@ -268,7 +269,7 @@ router.get("/report/:id", async (req, res) => {
   }
 });
 // 举报留言墙
-router.post("/report/:id", async (req, res) => {
+router.post("/report/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   const { userId } = req.body;
   try {
@@ -309,7 +310,7 @@ router.post("/report/:id", async (req, res) => {
     failure(res, error);
   }
 }); // 编辑留言墙
-router.put("/:id", async (req, res) => {
+router.put("/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   const body = filterWhiteList(req);
   try {
@@ -329,7 +330,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 // 删除举报留言墙
-router.delete("/report/:id", async (req, res) => {
+router.delete("/report/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   try {
     await Report.findOne({ where: { id } });
@@ -351,7 +352,7 @@ router.delete("/report/:id", async (req, res) => {
 });
 // 处理举报留言墙
 
-router.put("/report/:id/process", async (req, res) => {
+router.put("/report/:id/process", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const report = await Report.findByPk(id);
