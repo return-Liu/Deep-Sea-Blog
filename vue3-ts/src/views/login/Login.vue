@@ -124,11 +124,15 @@
         <div class="login-methods">
           <span>
             <component :is="QQLoginIcon" class="icon" />
-            <span class="text">QQ登录</span>
+            <span @click="openQQLoginDialog" class="text">QQ登录</span>
           </span>
           <span>
             <component :is="WeChatLoginIcon" class="icon" />
-            <span class="text">微信登录</span>
+            <span @click="openWeChatLoginDialog" class="text">微信登录</span>
+          </span>
+          <span>
+            <component :is="WeBlogIcon" class="icon" />
+            <span @click="openWeBlogLoginDialog" class="text">微博登录</span>
           </span>
         </div>
         <div class="login-tip">
@@ -164,6 +168,7 @@ import { handlePostLogin } from "../../utils/handlePostLogin";
 import { handleLoginError } from "../../utils/handleLoginError";
 import QQLoginIcon from "../../components/icon/QQLogin.vue";
 import WeChatLoginIcon from "../../components/icon/WeChatLogin.vue";
+import WeBlogIcon from "../../components/icon/WeBlog.vue";
 import { useI18n } from "vue-i18n";
 import Cookies from "js-cookie";
 const { locale } = useI18n();
@@ -281,17 +286,13 @@ let sendSmsCode = debounce(async () => {
   if (!clientFeatureCode || clientFeatureCode.trim() === "") {
     clientFeatureCode = undefined; // 让后端生成新的 UUID
   }
-
   isSending.value = true;
-
   try {
     const response = await axiosConfig.post("/auth/email/verify", {
       email: smsForm.value.email,
       clientFeatureCode: clientFeatureCode,
     });
-
     ElMessage.success(response.data.message);
-
     startCountdown(); // 启动倒计时
   } catch (error: any) {
     isSending.value = false;
@@ -311,6 +312,10 @@ onUnmounted(() => {
     clearInterval(countdownTimer.value!);
   }
 });
+// QQ 微信 微博 登录方法接口
+const openQQLoginDialog = async () => {};
+const openWeChatLoginDialog = async () => {};
+const openWeBlogLoginDialog = async () => {};
 </script>
 <style lang="less" scoped>
 @import "../../base-ui/login.less";
