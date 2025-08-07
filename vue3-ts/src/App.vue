@@ -3,12 +3,11 @@
 </template>
 
 <script setup lang="ts" name="App">
-import { onMounted, watch, onUnmounted } from "vue";
+import { onMounted, watch } from "vue";
 import { useUserStore } from "./store/userStore";
 import { useThemeStore } from "./store/themeStore";
 import { useI18n } from "vue-i18n";
 import { getAllUsers } from "./utils/publicuser";
-
 const userStore = useUserStore();
 const themeStore = useThemeStore();
 const { locale } = useI18n();
