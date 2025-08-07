@@ -20,7 +20,7 @@ CREATE TABLE `articles` (
 `size` float DEFAULT NULL,
 `views` int NOT NULL DEFAULT '0',
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 评论表 -->
 
@@ -34,7 +34,30 @@ CREATE TABLE `comments` (
 `likesCount` int NOT NULL DEFAULT '0',
 `commentbackground` text COLLATE utf8mb4_unicode_ci,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+<!-- 设备与管理 -->
+
+CREATE TABLE `devices` (
+`id` int NOT NULL AUTO_INCREMENT,
+`userId` int DEFAULT NULL,
+`deviceId` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`deviceName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`deviceType` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`os` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`browser` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`lastLoginTime` datetime DEFAULT NULL,
+`userAgent` text COLLATE utf8mb4_unicode_ci,
+`createdAt` datetime NOT NULL,
+`updatedAt` datetime NOT NULL,
+`province` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`loginMethod` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT '未知登录方式',
+`status` enum('已登录','未登录') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '未登录' COMMENT '设备登录状态',
+`loginExpire` datetime DEFAULT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 建议与反馈表 -->
 
@@ -45,8 +68,13 @@ CREATE TABLE `feedbacks` (
 `feedback` text COLLATE utf8mb4_unicode_ci NOT NULL,
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
+`status` tinyint(1) NOT NULL DEFAULT '0',
+`resultType` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`processTime` datetime DEFAULT NULL,
+`resultDetail` text COLLATE utf8mb4_unicode_ci,
+`userId` int DEFAULT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 点赞文章表 -->
 
@@ -57,7 +85,7 @@ CREATE TABLE `likes` (
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=175 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=194 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 点赞评论表 -->
 
@@ -68,7 +96,7 @@ CREATE TABLE `likescomments` (
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 点赞留言墙表 -->
 
@@ -79,7 +107,7 @@ CREATE TABLE `likeswalls` (
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 随笔随记表 -->
 
@@ -93,7 +121,7 @@ CREATE TABLE `notes` (
 `updatedAt` datetime NOT NULL,
 `size` float DEFAULT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 摄影图库表 -->
 
@@ -106,7 +134,7 @@ CREATE TABLE `photographies` (
 `size` float DEFAULT NULL,
 `content` text COLLATE utf8mb4_unicode_ci,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=306 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=326 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 举报留言墙表 -->
 
@@ -116,8 +144,12 @@ CREATE TABLE `reports` (
 `wallId` int unsigned DEFAULT NULL,
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
+`status` tinyint(1) NOT NULL DEFAULT '0',
+`resultType` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`processTime` datetime DEFAULT NULL,
+`resultDetail` text COLLATE utf8mb4_unicode_ci,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- sequelize ORM 模型 -->
 
@@ -137,7 +169,7 @@ CREATE TABLE `updates` (
 `createdAt` datetime NOT NULL,
 `updatedAt` datetime NOT NULL,
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 用户表 -->
 
@@ -161,6 +193,10 @@ CREATE TABLE `users` (
 `area` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
 `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`theme` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'light',
+`isFrozen` tinyint(1) NOT NULL DEFAULT '0',
+`frozenReason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`frozenAt` datetime DEFAULT NULL,
 PRIMARY KEY (`id`),
 UNIQUE KEY `users_email` (`email`),
 UNIQUE KEY `uuid` (`uuid`),
@@ -168,7 +204,7 @@ UNIQUE KEY `uuid_2` (`uuid`),
 UNIQUE KEY `users_username` (`username`),
 UNIQUE KEY `phone` (`phone`),
 KEY `users_nickname` (`nickname`)
-) ENGINE=InnoDB AUTO_INCREMENT=94 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 留言墙表 -->
 
@@ -183,7 +219,7 @@ CREATE TABLE `walls` (
 `updatedAt` datetime NOT NULL,
 `backgroundColor` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT '#ffffff',
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 <!-- 3.最后一点 -->
 
