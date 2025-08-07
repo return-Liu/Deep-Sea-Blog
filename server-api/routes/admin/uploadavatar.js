@@ -6,7 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { promisify } = require("util");
-const userAuth = require("../../middlewares/user-auth");
+const sharp = require("sharp");
 
 // 确保上传目录存在
 const uploadDir = path.join(__dirname, "../../public/avatar");
@@ -55,7 +55,7 @@ const limits = {
 const upload = multer({ storage, fileFilter, limits });
 
 // 上传头像
-router.post("/", userAuth, upload.single("avatar"), async (req, res) => {
+router.post("/", upload.single("avatar"), async (req, res) => {
   try {
     const { userId } = req.body;
     const user = await User.findByPk(userId);
@@ -96,7 +96,7 @@ router.post("/", userAuth, upload.single("avatar"), async (req, res) => {
 });
 
 // 删除图片文件
-router.delete("/avatar/:filename", userAuth, async (req, res) => {
+router.delete("/avatar/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadDir, filename);
@@ -115,24 +115,71 @@ router.delete("/avatar/:filename", userAuth, async (req, res) => {
   }
 });
 // 裁剪头像
-router.post("/cropAvatar", userAuth, async (req, res) => {
+router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
   try {
-    const { userId, x, y, width, height } = req.body;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return failure(res, 400, "用户ID不能为空");
+    }
+
+    if (!req.file) {
+      return failure(res, 400, "未上传文件");
+    }
+
     const user = await User.findByPk(userId);
-    // 验证用户是否存在
     if (!user) {
       return failure(res, 404, "用户不存在");
     }
-    const croppedImage = await croppedImage(user.avatar, x, y, width, height);
-    // 更新用户头像
-    user.avatar = croppedImage;
+
+    // 删除旧头像
+    if (user.avatar) {
+      const oldPath = path.join(uploadDir, user.avatar);
+      if (fs.existsSync(oldPath)) {
+        await fs.promises.unlink(oldPath);
+      }
+    }
+
+    // 生成新文件名
+    const newFilename = `cropped_${Date.now()}${path.extname(
+      req.file.originalname
+    )}`;
+    const newPath = path.join(uploadDir, newFilename);
+
+    // 使用sharp处理图片 - 裁剪为正方形并调整大小
+    const metadata = await sharp(req.file.path).metadata();
+    const size = Math.min(metadata.width, metadata.height);
+
+    await sharp(req.file.path)
+      .extract({
+        left: Math.floor((metadata.width - size) / 2),
+        top: Math.floor((metadata.height - size) / 2),
+        width: size,
+        height: size,
+      })
+      .resize(200, 200)
+      .jpeg({ quality: 90 })
+      .toFile(newPath);
+
+    // 删除临时文件
+    await fs.promises.unlink(req.file.path);
+
+    // 更新用户记录
+    user.avatar = newFilename;
     await user.save();
-    success(res, "裁剪头像成功", {
-      avatar: user.avatar,
+
+    success(res, "头像裁剪成功", {
+      avatar: newFilename,
     });
   } catch (error) {
-    console.error(`裁剪头像失败: ${error}`);
-    failure(res, 500, "服务器内部错误");
+    console.error("裁剪错误:", error);
+
+    // 清理可能创建的文件
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      await fs.promises.unlink(req.file.path).catch(() => {});
+    }
+
+    failure(res, 500, "头像裁剪失败");
   }
 });
 // 检查头像是否存在文件夹

@@ -30,6 +30,12 @@ export const zh_TW = {
       chooseBirthday: "選擇生日",
       chooseArea: "選擇地區",
       chooseConstellation: "選擇星座",
+      cropAvatar: "裁剪頭像",
+      previewAvatar: "預覽頭像",
+      cancel: "取消",
+      confirmCrop: "裁剪",
+      cropperNotInitialized: "Cropper Not Initialized",
+      cropFailed: "Crop Failed",
     },
     security: {
       logout: "退出登錄",

@@ -639,7 +639,9 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
+@import "../../assets/scss/variables.scss";
+
 .dashboard-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -647,14 +649,75 @@ onMounted(() => {
   font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", Arial, sans-serif;
 
-  .feedback-section,
-  .report-section {
-    background-color: var(--bg2);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border);
+  .feedback-actions,
+  .report-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed $border;
+
+    .action-btn {
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: all 0.2s;
+      border: 1px solid $border;
+
+      i {
+        margin-right: 5px;
+      }
+
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+
+    // 优化处理按钮样式
+    .action-btn.process-btn {
+      background-color: #67c23a; // Element Plus success color
+      border-color: #67c23a;
+      color: white;
+
+      &:hover {
+        background-color: #85ce61;
+        border-color: #85ce61;
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      &:focus {
+        background-color: #67c23a;
+        border-color: #67c23a;
+        box-shadow: 0 0 0 2px rgba(103, 194, 58, 0.2);
+      }
+    }
+
+    .detail-btn {
+      padding: 8px 12px;
+      color: $color-bg4;
+      background-color: $bg1;
+      border-color: $border;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: all 0.2s;
+
+      i {
+        margin-left: 5px;
+        transition: transform 0.3s;
+
+        &.rotate {
+          transform: rotate(180deg);
+        }
+      }
+
+      &:hover {
+        background-color: $bg2;
+        color: $gradient-bg1;
+      }
+    }
   }
 }
 
@@ -664,12 +727,12 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid $border;
 
   .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--color-bg4);
+    color: $color-bg5;
     display: flex;
     align-items: center;
     margin: 0;
@@ -693,17 +756,17 @@ onMounted(() => {
       .refresh-btn {
         padding: 8px 12px;
         border-radius: 4px;
-        background-color: var(--bg2);
-        border: 1px solid var(--border);
-        color: var(--color-bg4);
+        background-color: $bg2;
+        border: 1px solid $border;
+        color: $color-bg4;
 
         i {
           margin-right: 5px;
         }
 
         &:hover {
-          background-color: var(--color-bg4);
-          color: var(--white);
+          background-color: $color-bg4;
+          color: $white;
         }
       }
     }
@@ -717,10 +780,10 @@ onMounted(() => {
   .empty-state {
     padding: 40px 0;
     text-align: center;
-    background-color: var(--bg1);
+    background-color: $bg1;
     border-radius: 4px;
     margin: 20px 0;
-    border: 1px solid var(--border);
+    border: 1px solid $border;
   }
 }
 
@@ -729,8 +792,8 @@ onMounted(() => {
   margin-bottom: 20px;
   transition: all 0.3s;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  background-color: var(--bg2);
+  border: 1px solid $border;
+  background-color: $bg2;
 
   &:hover {
     transform: translateY(-3px);
@@ -756,8 +819,8 @@ onMounted(() => {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: var(--gradient-bg1);
-      color: var(--white);
+      background: $gradient-bg1;
+      color: $white;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -771,13 +834,13 @@ onMounted(() => {
         margin: 0;
         font-size: 16px;
         font-weight: 500;
-        color: var(--color-bg4);
+        color: $color-bg4;
       }
 
       .user-email {
         margin: 4px 0 0;
         font-size: 12px;
-        color: var(--color-bg5);
+        color: $color-bg5;
       }
     }
   }
@@ -796,7 +859,7 @@ onMounted(() => {
 
     .feedback-time {
       font-size: 12px;
-      color: var(--color-bg5);
+      color: $color-bg5;
       display: flex;
       align-items: center;
 
@@ -821,7 +884,7 @@ onMounted(() => {
 
     .report-id {
       font-weight: 500;
-      color: var(--color-bg4);
+      color: $color-bg4;
       font-size: 14px;
     }
 
@@ -834,7 +897,7 @@ onMounted(() => {
   }
 
   .report-time {
-    color: var(--color-bg5);
+    color: $color-bg5;
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -850,7 +913,7 @@ onMounted(() => {
 .report-content {
   padding: 12px 0;
   line-height: 1.6;
-  color: var(--color-bg4);
+  color: $color-bg4;
 
   .feedback-preview,
   .report-preview {
@@ -859,7 +922,7 @@ onMounted(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--color-bg4);
+    color: $color-bg4;
     font-size: 14px;
   }
 
@@ -872,13 +935,13 @@ onMounted(() => {
       height: auto;
       line-height: 1.6;
       font-size: 14px;
-      color: var(--color-bg4);
+      color: $color-bg4;
       background-color: transparent;
     }
 
     .el-collapse-item__content {
       padding: 16px 0 0;
-      color: var(--color-bg4);
+      color: $color-bg4;
       font-size: 14px;
       line-height: 1.8;
       background-color: transparent;
@@ -897,15 +960,15 @@ onMounted(() => {
 .process-result {
   margin-top: 15px;
   padding: 12px;
-  background-color: var(--bg1);
+  background-color: $bg1;
   border-radius: 4px;
-  border-left: 4px solid var(--gradient-bg1);
+  border-left: 4px solid $gradient-bg1;
 
   .result-header {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-    color: var(--gradient-bg1);
+    color: $gradient-bg1;
     font-weight: bold;
     font-size: 14px;
 
@@ -922,13 +985,13 @@ onMounted(() => {
       font-size: 13px;
 
       strong {
-        color: var(--color-bg3);
+        color: $color-bg3; // 注意：这个变量在原代码中未定义，需要添加定义
       }
     }
 
     .process-time {
       font-size: 12px;
-      color: var(--color-bg5);
+      color: $color-bg5;
       display: flex;
       align-items: center;
 
@@ -947,14 +1010,14 @@ onMounted(() => {
 
   .info-section {
     padding: 12px;
-    background-color: var(--bg1);
+    background-color: $bg1;
     border-radius: 4px;
-    border: 1px solid var(--border);
+    border: 1px solid $border;
 
     .info-title {
       margin: 0 0 12px;
       font-size: 14px;
-      color: var(--gradient-bg1);
+      color: $gradient-bg1;
       display: flex;
       align-items: center;
 
@@ -974,12 +1037,12 @@ onMounted(() => {
         }
 
         .info-label {
-          color: var(--color-bg5);
+          color: $color-bg5;
           min-width: 70px;
         }
 
         .info-value {
-          color: var(--color-bg4);
+          color: $color-bg4;
           word-break: break-word;
           flex: 1;
         }
@@ -995,14 +1058,14 @@ onMounted(() => {
   gap: 10px;
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px dashed $border;
 
   .action-btn {
     padding: 8px 12px;
     border-radius: 4px;
     font-size: 13px;
     transition: all 0.2s;
-    border: 1px solid var(--border);
+    border: 1px solid $border;
 
     i {
       margin-right: 5px;
@@ -1016,9 +1079,9 @@ onMounted(() => {
 
   .detail-btn {
     padding: 8px 12px;
-    color: var(--gradient-bg1);
-    background-color: var(--bg1);
-    border-color: var(--border);
+    color: $gradient-bg1;
+    background-color: $bg1;
+    border-color: $border;
     border-radius: 4px;
     font-size: 13px;
     transition: all 0.2s;
@@ -1033,8 +1096,8 @@ onMounted(() => {
     }
 
     &:hover {
-      background-color: var(--bg2);
-      color: var(--gradient-bg1);
+      background-color: $bg2;
+      color: $gradient-bg1;
     }
   }
 }
@@ -1044,7 +1107,7 @@ onMounted(() => {
   margin: 20px 0;
 
   .load-more-btn {
-    color: var(--gradient-bg1);
+    color: $gradient-bg1;
     font-size: 14px;
     display: inline-flex;
     align-items: center;
@@ -1054,18 +1117,18 @@ onMounted(() => {
     }
 
     &:hover {
-      color: var(--gradient-bg2);
+      color: $gradient-bg2;
     }
   }
 
   .no-more {
-    color: var(--color-bg5);
+    color: $color-bg5;
     font-size: 12px;
 
     .el-divider {
       margin: 0 0 10px;
       :deep(.el-divider__text) {
-        background-color: var(--bg2);
+        background-color: $bg2;
       }
     }
   }

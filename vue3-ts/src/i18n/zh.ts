@@ -31,6 +31,12 @@ export const zh = {
       chooseArea: "选择地区",
       chooseBirthday: "选择生日",
       chooseConstellation: "选择星座",
+      cropAvatar: "裁剪头像",
+      previewAvatar: "预览头像",
+      cancel: "取消",
+      confirmCrop: "确认裁剪",
+      cropperNotInitialized: "裁剪器未初始化",
+      cropFailed: "裁剪失败",
     },
     security: {
       logout: "退出登录",

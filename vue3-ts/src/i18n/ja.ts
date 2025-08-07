@@ -32,6 +32,12 @@ export const ja = {
       chooseBirthday: "誕生日を選択",
       chooseArea: "地域を選択",
       chooseConstellation: "星座を選択",
+      cropAvatar: "アバターを切り抜く",
+      previewAvatar: "アバターをプレビュー",
+      cancel: "キャンセル",
+      confirmCrop: "切り抜く",
+      cropperNotInitialized: "Cropper Not Initialized",
+      cropFailed: "Crop Failed",
     },
     security: {
       logout: "ログアウト",

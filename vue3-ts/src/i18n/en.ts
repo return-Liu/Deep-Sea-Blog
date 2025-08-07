@@ -31,6 +31,12 @@ export const en = {
       chooseBirthday: "Choose Birthday",
       chooseArea: "Choose Area",
       chooseConstellation: " Choose Constellation",
+      cropAvatar: "Crop Avatar",
+      previewAvatar: "Preview Avatar",
+      cancel: "Cancel",
+      confirmCrop: "Confirm Crop",
+      cropperNotInitialized: "Cropper Not Initialized",
+      cropFailed: "Crop Failed",
     },
     security: {
       logout: "Log Out",

@@ -33,6 +33,7 @@
                 </div>
               </div>
             </el-upload>
+
             <h3 :style="{ color: nicknameColor }" class="profile-name">
               {{ nickname || t("settings.profile.nicknamePlaceholder") }}
             </h3>
@@ -76,15 +77,7 @@
                   <h2 class="card-title">
                     {{ t("settings.title.personals") }}
                   </h2>
-                  <div
-                    style="margin-left: 490px"
-                    v-if="showUploadButton"
-                    class="avatar-upload"
-                    @click="submitUpload"
-                  >
-                    <el-icon><Upload /></el-icon>
-                    <span>{{ t("settings.profile.uploadAvatar") }}</span>
-                  </div>
+
                   <div
                     type="primary"
                     class="avatar-upload"
@@ -416,6 +409,36 @@
         </div>
       </div>
     </div>
+    <div v-if="showCropperModal" class="cropper-modal">
+      <div class="cropper-container">
+        <h3>{{ t("settings.profile.cropAvatar") }}</h3>
+        <div class="cropper-content">
+          <div class="cropper-area">
+            <img
+              ref="cropperImageRef"
+              :src="croppingImage"
+              alt="待裁剪图片"
+              class="cropper-image"
+              @load="initCropper"
+            />
+          </div>
+          <div class="cropper-preview">
+            <h4>{{ t("settings.profile.previewAvatar") }}</h4>
+            <div class="preview-box">
+              <img :src="croppedPreview" class="preview-image" />
+            </div>
+          </div>
+        </div>
+        <div class="cropper-actions">
+          <el-button @click="cancelCrop">{{
+            t("settings.profile.cancel")
+          }}</el-button>
+          <el-button type="primary" @click="confirmCrop">
+            {{ t("settings.profile.confirmCrop") }}
+          </el-button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts" name="Setting">
@@ -461,6 +484,11 @@ const followSystem = computed({
     }
   },
 });
+const showCropperModal = ref(false);
+const croppingImage = ref("");
+const croppedPreview = ref("");
+const cropperImageRef = ref<HTMLImageElement | null>(null);
+let cropper: any = null;
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
 const sex = ref<string>("0");
@@ -525,16 +553,132 @@ const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
 
-const submitUpload = () => {
-  uploadRef.value.submit();
-};
-
-const handleChange = (file: File, fileList: File[]) => {
+const handleChange = (uploadFile: { raw: File }, fileList: { raw: File }[]) => {
   if (!uuid.value) {
     ElMessage.error("ID未找到，请重新登录");
     return;
   }
+
+  // 读取文件并显示裁剪模态框
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    croppingImage.value = e.target?.result as string;
+    showCropperModal.value = true;
+  };
+
+  // Element Plus 的 upload 组件传递的文件对象包含 raw 属性
+  if (uploadFile.raw) {
+    reader.readAsDataURL(uploadFile.raw);
+  } else {
+    ElMessage.error("文件格式不正确");
+    return;
+  }
+
   showUploadButton.value = fileList.length > 0;
+};
+// 初始化裁剪器
+const initCropper = () => {
+  if (cropperImageRef.value) {
+    if (cropper) {
+      cropper.destroy();
+    }
+
+    cropper = {
+      getImageData: () => {
+        if (!cropperImageRef.value) return null;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+
+        const size = Math.min(
+          cropperImageRef.value.naturalWidth,
+          cropperImageRef.value.naturalHeight
+        );
+        canvas.width = 200;
+        canvas.height = 200;
+
+        ctx.drawImage(
+          cropperImageRef.value,
+          (cropperImageRef.value.naturalWidth - size) / 2,
+          (cropperImageRef.value.naturalHeight - size) / 2,
+          size,
+          size,
+          0,
+          0,
+          200,
+          200
+        );
+
+        return canvas.toDataURL("image/png");
+      },
+    };
+
+    // 更新预览图片
+    croppedPreview.value = cropper.getImageData() || "";
+  }
+};
+// 确认裁剪
+// 确认裁剪
+const confirmCrop = async () => {
+  if (!cropper) {
+    ElMessage.error("裁剪器未初始化");
+    return;
+  }
+
+  try {
+    const croppedDataUrl = cropper.getImageData();
+    if (!croppedDataUrl) {
+      ElMessage.error("裁剪失败");
+      return;
+    }
+
+    // 更新预览图片
+    croppedPreview.value = croppedDataUrl;
+
+    // 在确认裁剪时删除旧头像
+    if (avatar.value) {
+      await deleteOldAvatar(true);
+    }
+
+    const blob = await fetch(croppedDataUrl).then((res) => res.blob());
+
+    const formData = new FormData();
+    formData.append("avatar", blob, "avatar.png");
+    formData.append("userId", userStore.user.id.toString());
+
+    const response = await axiosConfig.post(
+      `${apiUrl}/admin/uploadavatar/cropAvatar`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
+    ElMessage.success(response.data.message);
+    showCropperModal.value = false;
+    showUploadButton.value = false;
+
+    userStore.user.avatar = avatar.value;
+    getAllUsers();
+    userStore.loadUser();
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
+  }
+};
+
+// 取消裁剪
+const cancelCrop = () => {
+  showCropperModal.value = false;
+  croppingImage.value = "";
+  croppedPreview.value = "";
+  if (cropper) {
+    cropper = null;
+  }
 };
 
 const changeTab = (tabId: string) => {
@@ -611,10 +755,9 @@ const beforeUpload = (file: File) => {
     return false;
   }
 
-  if (avatar.value) {
-    deleteOldAvatar(true);
-  }
-  return true;
+  // 关键修改：总是返回 false 来阻止自动上传
+  // 文件处理将在 handleChange 中进行
+  return false;
 };
 const deleteOldAvatar = async (isReupload: boolean) => {
   try {
@@ -815,4 +958,109 @@ defineExpose({
 </script>
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
+.cropper-modal {
+  width: 800px;
+  height: 500px;
+  margin: 40px auto; // 水平居中（块级元素）
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .cropper-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    h3 {
+      margin-right: 150px;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #222;
+      letter-spacing: 1px;
+    }
+    .cropper-content {
+      display: flex;
+      gap: 48px;
+      margin-bottom: 32px;
+      .cropper-area {
+        background: #f7f8fa;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .cropper-image {
+          width: 260px;
+          height: 260px;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 3px solid #e6e6e6;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+      }
+      .cropper-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        h4 {
+          font-size: 18px;
+          font-weight: 500;
+          margin-bottom: 12px;
+          color: #666;
+        }
+        .preview-box {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          background: #f7f8fa;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+          .preview-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e6e6e6;
+            background: #fff;
+          }
+        }
+      }
+    }
+    .cropper-actions {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 12px;
+      .el-button {
+        min-width: 110px;
+        font-size: 16px;
+        border-radius: 8px;
+        padding: 10px 0;
+        transition: all 0.18s;
+        &.el-button--primary {
+          background: linear-gradient(90deg, #4f8cff 0%, #6ed0ff 100%);
+          border: none;
+          color: #fff;
+          font-weight: 600;
+          box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
+        }
+        &:hover {
+          filter: brightness(1.07);
+          box-shadow: 0 4px 16px rgba(79, 140, 255, 0.14);
+        }
+      }
+    }
+  }
+}
 </style>

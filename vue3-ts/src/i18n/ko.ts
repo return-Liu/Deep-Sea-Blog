@@ -31,6 +31,12 @@ export const ko = {
       chooseBirthday: "생일 선택",
       chooseArea: "지역 선택",
       chooseConstellation: "별자리 선택",
+      cropAvatar: "아바타 자르기",
+      previewAvatar: "아바타 미리보기",
+      cancel: "취소",
+      confirmCrop: "자르기",
+      cropperNotInitialized: "Cropper Not Initialized",
+      cropFailed: "Crop Failed",
     },
     security: {
       logout: "로그아웃",
