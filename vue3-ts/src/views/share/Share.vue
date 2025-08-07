@@ -172,6 +172,7 @@ import BlogIcon from "../../components/icon/Blog.vue";
 import PhotographyIcon from "../../components/icon/Photography.vue";
 import NoteIcon from "../../components/icon/Note.vue";
 import { ElMessage } from "element-plus";
+import { type Article, type Photography, type Note } from "../../types/share";
 defineExpose({
   fetchData,
 });
@@ -188,37 +189,7 @@ const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
 const selectedContent = ref<Article | Photography | Note | null>(null);
-interface Article {
-  id: number;
-  title: string;
-  content: string;
-  label: string;
-  image: string;
-  createdAt: string;
-  isLiked: boolean;
-  likesCount: number;
-  views: number; // 添加浏览数量字段
-  userId: number;
-  type: string; // 添加类型字段
-  isViewed: boolean; // 新增属性
-}
-interface Photography {
-  id: number;
-  image: string;
-  userId: number;
-  createdAt: string;
-  content: string;
-  type: string; // 添加类型字段
-}
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  userId: number;
-  image: string;
-  type: string;
-}
+
 let essay = ref<Article[]>([]);
 let photography = ref<Photography[]>([]);
 let notes = ref<Note[]>([]);

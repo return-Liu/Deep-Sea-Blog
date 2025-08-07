@@ -245,27 +245,7 @@ const loadmore = ref(false);
 import { modelURL } from "../../config";
 import { useRouter } from "vue-router";
 const router = useRouter();
-interface User {
-  id: number;
-  avatar: string;
-  nickname: string;
-  area: string;
-  birthday: Date;
-  constellation: string;
-  introduce: string;
-  uuid: string;
-  nicknameColor: string;
-}
-export interface ContentItem {
-  id: number;
-  title: string;
-  image: string;
-  createdAt: string;
-  views: number;
-  content?: string;
-  userId: number;
-  label?: string;
-}
+import { type ContentItem, type User } from "../../types/user";
 import { useReportUser } from "../../hooks/useReportUser";
 const {
   showReportModal,

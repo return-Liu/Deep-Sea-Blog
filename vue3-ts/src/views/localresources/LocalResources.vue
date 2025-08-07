@@ -91,24 +91,7 @@ import axiosConfig from "../../utils/request";
 import { useUserStore } from "../../store/userStore";
 import { useResources } from "../../hooks/useResources";
 const { formatFileSize, getFileName } = useResources();
-interface ResourceItem {
-  id: string;
-  name: string;
-  image: string;
-  size: number;
-  date: Date;
-}
-
-interface TreeNode {
-  id: string;
-  label: string;
-  type: "year" | "month" | "week" | "file";
-  count?: number;
-  size?: number;
-  children?: TreeNode[];
-  image?: string;
-  createdAt?: Date;
-}
+import { type ResourceItem, type TreeNode } from "../../types/localresources";
 const resources: ResourceItem[] = [];
 const userStore = useUserStore();
 const user = computed(() => userStore.user);

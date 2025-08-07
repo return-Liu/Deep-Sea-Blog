@@ -93,7 +93,7 @@ import {
 import axiosConfig from "../../utils/request";
 import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
-
+import { type SystemUpdate } from "../../types/viewsystememail";
 const userStore = useUserStore();
 const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
@@ -105,13 +105,6 @@ const formattedContent = computed(() => {
   if (!currentUpdate.value?.content) return "";
   return `<p class="formatted-text">${currentUpdate.value.content}</p>`;
 });
-
-interface SystemUpdate {
-  id: number;
-  title: string;
-  content: string;
-  formattedCreatedAt: string;
-}
 
 const changeAccount = () => {
   router.push({

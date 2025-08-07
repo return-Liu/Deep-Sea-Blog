@@ -424,35 +424,24 @@ import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Camera, User, Lock, Check } from "@element-plus/icons-vue";
-
 import {
-  HeartOutlined,
-  SkinOutlined,
-  GlobalOutlined,
-  SwapOutlined,
-} from "@ant-design/icons-vue";
+  tabs,
+  initialUserInfo,
+  constellationes,
+  areaes,
+} from "../../utils/setting";
 import { useUserStore } from "../../store/userStore";
 import { useThemeStore } from "../../store/themeStore";
-import { constellations } from "../../utils/constellations";
-import { areas } from "../../utils/area";
 import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
-import languagesIcon from "../../components/icon/Languages.vue";
+import { type Article } from "../../utils/article";
 // 省略其他导入
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
   return locale.value;
 });
-interface Article {
-  id: number;
-  title: string;
-  content: string;
-  image: string;
-  likesCount: number;
-  label: string;
-}
+
 const defaultAvatar =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
 const route = useRoute();
@@ -483,18 +472,6 @@ const phone = ref<string>("");
 const showUploadButton = ref<boolean>(false);
 const constellation = ref<string>("");
 const clientFeatureCode = ref<string | null>(null);
-const constellationes = ref(
-  constellations.map((item) => ({
-    value: item.value,
-    label: item.label,
-  }))
-);
-const areaes = ref(
-  areas.map((item) => ({
-    value: item.value,
-    name: item.name,
-  }))
-);
 
 const nicknameColor = ref<string>("#000000");
 const likedArticles = ref<Article[]>([]);
@@ -506,54 +483,7 @@ const activeTab = ref<string>(
 );
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
-// 记录初始信息
-const initialUserInfo = ref<{
-  nickname: string;
-  sex: string;
-  birthday: string;
-  introduce: string;
-  avatar: string;
-  constellation: string;
-  nicknameColor: string;
-  area: string;
-  phone?: string;
-}>({
-  nickname: "",
-  sex: "0",
-  birthday: "",
-  introduce: "",
-  avatar: "",
-  constellation: "",
-  nicknameColor: "",
-  area: "",
-  phone: "",
-});
-const tabs = [
-  {
-    id: "personals",
-    icon: User,
-  },
-  {
-    id: "securitys",
-    icon: Lock,
-  },
-  {
-    id: "likes",
-    icon: HeartOutlined,
-  },
-  {
-    id: "modes",
-    icon: SkinOutlined,
-  },
-  {
-    id: "languages",
-    icon: languagesIcon,
-  },
-  {
-    id: "toggleaccount",
-    icon: SwapOutlined,
-  },
-];
+
 const checkMaintenanceMode = () => {
   if (modelURL === "true") {
     ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");

@@ -152,10 +152,6 @@ const handlePasswordRecovery = () => {
   router.push({ name: "resetpassword" });
 };
 
-const handleAccountUnfreeze = () => {
-  ElMessage.info("目前此功能正在努力开发中，敬请期待！");
-};
-
 const handlePhoneBinding = () => {
   // 要么就是绑定了手机号要么就是没绑定
   if (user.value.phone) {

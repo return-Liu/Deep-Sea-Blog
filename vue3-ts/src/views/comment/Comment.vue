@@ -346,22 +346,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
-interface Comment {
-  id: number;
-  username: string;
-  useravatar: string;
-  content: string;
-  createdAt: Date;
-  likesCount: string;
-  area: string;
-  userId: string;
-  commentbackground: string;
-  nicknameColor: string;
-  uuid: string;
-  articleId: string;
-  noteId: string;
-  photographyId: string;
-}
+import { type Comment } from "../../types/comment";
 import { useReportUser } from "../../hooks/useReportUser";
 const {
   showReportModal,
