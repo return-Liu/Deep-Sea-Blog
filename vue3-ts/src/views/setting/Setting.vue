@@ -409,99 +409,21 @@
         </div>
       </div>
     </div>
-    <el-dialog
+    <avatar-cropper
+      ref="avatarCropper"
       :title="t('settings.profile.cropAvatar')"
-      v-model="dialogVisibleCorpper"
-      width="800px"
-      append-to-body
-      @opened="openDialog"
-      :before-close="beforeClose"
-    >
-      <el-row>
-        <el-col :span="12" style="height: 300px">
-          <vue-cropper
-            ref="cropper"
-            :img="options.img"
-            :info="true"
-            :autoCrop="options.autoCrop"
-            :autoCropWidth="options.autoCropWidth"
-            :autoCropHeight="options.autoCropHeight"
-            :fixedBox="options.fixedBox"
-            :outputType="options.outputType"
-            @realTime="realTime"
-            v-if="showCropper"
-          />
-        </el-col>
-
-        <el-col :span="12" style="height: 300px">
-          <div class="preview-box-title">
-            {{ t("settings.profile.Previewavatar") }}
-          </div>
-          <div class="preview-box">
-            <img
-              v-if="previews.url"
-              :src="previews.url"
-              :style="previews.img"
-            />
-            <span v-else></span>
-          </div>
-        </el-col>
-      </el-row>
-      <el-row style="margin-top: 12px">
-        <el-col :span="12">
-          <el-row>
-            <el-col :span="8">
-              <el-upload
-                action="#"
-                :http-request="() => {}"
-                :before-upload="beforeUploadCropper"
-                :show-file-list="false"
-              >
-                <el-button>{{ t("settings.profile.selectImage") }}</el-button>
-              </el-upload>
-            </el-col>
-            <el-col :span="4">
-              <el-button title="放大头像" :icon="Plus" @click="changeScale(1)">
-              </el-button>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                title="缩小头像"
-                :icon="Minus"
-                @click="changeScale(-1)"
-              >
-              </el-button>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                title="向左旋转"
-                :icon="RefreshLeft"
-                @click="rotateLeft()"
-              >
-              </el-button>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                title="向右旋转"
-                :icon="RefreshRight"
-                @click="rotateRight()"
-              >
-              </el-button>
-            </el-col>
-          </el-row>
-        </el-col>
-        <el-col :span="4" :offset="8" style="margin-left: 22.3%">
-          <el-button type="primary" @click="determine()">{{
-            t("settings.profile.confirmCrop")
-          }}</el-button>
-        </el-col>
-      </el-row>
-    </el-dialog>
+      :preview-title="t('settings.profile.Previewavatar')"
+      :select-image-text="t('settings.profile.selectImage')"
+      :confirm-text="t('settings.profile.confirmCrop')"
+      :api-url="apiUrl"
+      :user-id="userStore.user.id.toString()"
+      @cropped="handleCropped"
+    />
   </div>
 </template>
 
 <script setup lang="ts" name="Setting">
-// 保留原有导入
+import AvatarCropper from "../../components/avatarcropper/AvatarCropper.vue";
 import {
   ref,
   computed,
@@ -512,8 +434,6 @@ import {
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
-import "vue-cropper/dist/index.css";
-import { VueCropper } from "vue-cropper";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   tabs,
@@ -527,7 +447,6 @@ import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
-import "vue-cropper/dist/index.css";
 
 import {
   Plus,
@@ -537,16 +456,9 @@ import {
 } from "@element-plus/icons-vue";
 // 保留原有代码
 const { t, locale } = useI18n();
-const { proxy } = getCurrentInstance() as any;
 const currentLanguage = computed(() => {
   return locale.value;
 });
-interface CropperInstance {
-  getCropData: (callback: (data: string) => void) => void;
-  changeScale: (num: number) => void;
-  rotateLeft: () => void;
-  rotateRight: () => void;
-}
 // 保留原有变量声明
 const defaultAvatar =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
@@ -568,158 +480,56 @@ const followSystem = computed({
   },
 });
 
-// 裁剪相关引用（替换原有裁剪相关代码）
-const dialogVisibleCorpper = ref(false);
-const showCropper = ref(false);
-const cropper = ref<CropperInstance | null>(null);
-// 修改 previews 的定义如下：
-const previews = ref({
-  url: "",
-  img: {}, // 添加 img 属性，用于接收样式对象
-});
-// cropper配置
-// 修改 options 的定义如下：
-const options = ref({
-  img: null as string | null, // 允许赋值字符串或 null
-  autoCropWidth: 200,
-  autoCropHeight: 200,
-  outputType: "png",
-  autoCrop: true,
-  fixedBox: false,
-});
+const avatarCropper = ref();
 
-// 打开裁剪弹窗
-const openDialog = () => {
-  showCropper.value = true;
+const editImage = () => {
+  if (!avatar.value) return;
+  avatarCropper.value.openCropper(avatar.value);
 };
 
-// 修改图片大小 正数为变大 负数变小
-const changeScale = (num: number) => {
-  num = num || 1;
-  cropper.value?.changeScale(num);
-};
-
-// 向左边旋转90度
-const rotateLeft = () => {
-  cropper.value?.rotateLeft();
-};
-
-// 向右边旋转90度
-const rotateRight = () => {
-  cropper.value?.rotateRight();
-};
-
-// 实时预览事件
-const realTime = (data: any) => {
-  previews.value = data;
-};
-
-// 关闭弹窗
-const beforeClose = () => {
-  options.value.img = null;
-  previews.value.url = "";
-  dialogVisibleCorpper.value = false;
-};
-
-// 提交图片
-// 提交图片
-const determine = async () => {
+// 添加处理裁剪结果的方法
+const handleCropped = async (blob: Blob) => {
   try {
-    if (!cropper.value || !uuid.value) {
-      ElMessage.error("缺少必要参数");
-      return;
-    }
-
-    // 使用更兼容的方式获取裁剪数据
-    let croppedData;
-    // 替换原来的第622行代码：
-    croppedData = await new Promise<string>((resolve, reject) => {
-      cropper.value?.getCropData(resolve);
-    });
-
-    if (!croppedData) {
-      ElMessage.error("裁剪数据获取失败");
-      return;
-    }
-
-    // 将 base64 转换为 Blob
-    let blob: Blob;
-    if (typeof croppedData === "string" && croppedData.startsWith("blob:")) {
-      blob = await fetch(croppedData).then((res) => res.blob());
-    } else if (
-      typeof croppedData === "string" &&
-      croppedData.startsWith("data:image/")
-    ) {
-      // 处理 base64 数据
-      const base64Response = await fetch(croppedData);
-      blob = await base64Response.blob();
-    } else {
-      ElMessage.error("不支持的图像数据格式");
-      return;
-    }
-
-    // 创建 FormData 并上传
     const formData = new FormData();
     formData.append("avatar", blob, "avatar.png");
     formData.append("userId", userStore.user.id.toString());
 
-    try {
-      const response = await axiosConfig.post(
-        `${apiUrl}/admin/uploadavatar/cropAvatar`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // 删除旧头像
-      if (avatar.value) {
-        await deleteOldAvatar(true);
+    const response = await axiosConfig.post(
+      `${apiUrl}/admin/uploadavatar/cropAvatar`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
+    );
 
-      // 更新头像URL
-      avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
-      ElMessage.success(response.data.message);
-
-      // 更新用户存储
-      userStore.user.avatar = avatar.value;
-      getAllUsers();
-      userStore.loadUser();
-
-      // 关闭模态框
-      beforeClose();
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "添加失败";
-      ElMessage.error(errorMessage);
+    // 删除旧头像
+    if (avatar.value) {
+      await deleteOldAvatar(true);
     }
+
+    // 更新头像URL
+    avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
+    ElMessage.success(response.data.message);
+
+    // 更新用户存储
+    userStore.user.avatar = avatar.value;
+    getAllUsers();
+    userStore.loadUser();
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.message || error?.message || "上传失败";
+      error?.response?.data?.message || error?.message || "添加失败";
     ElMessage.error(errorMessage);
   }
 };
 
-// 上传图片处理
-const beforeUploadCropper = (rawFile: File) => {
-  if (rawFile.type.indexOf("image/") == -1) {
-    ElMessage.error("只能上传图片文件!");
-    return false;
-  }
-  if (rawFile.size / 1024 / 1024 > 2) {
-    ElMessage.error("图片大小不能超过 2MB!");
-    return false;
-  }
+const handleChange = (uploadFile: { raw: File }) => {
   const reader = new FileReader();
-  reader.readAsDataURL(rawFile);
-  reader.onload = () => {
-    // 图片在这里
-    options.value.img = reader.result as string;
+  reader.onload = (e: ProgressEvent<FileReader>) => {
+    avatarCropper.value.openCropper(e.target?.result as string);
   };
-  // 重要：返回 false 阻止自动上传
-  return false;
+  reader.readAsDataURL(uploadFile.raw);
 };
 
 // 保留原有变量声明
@@ -745,31 +555,6 @@ const activeTab = ref<string>(
 );
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
-
-// 新增方法：编辑图片
-const editImage = () => {
-  if (!uuid.value) {
-    ElMessage.error("请先选择一张图片");
-    return;
-  }
-  dialogVisibleCorpper.value = true;
-};
-
-// 修改 handleChange 方法
-const handleChange = (uploadFile: { raw: File }) => {
-  if (!uuid.value) {
-    ElMessage.error("请先选择一张图片");
-    return;
-  }
-
-  // 读取文件并显示裁剪模态框
-  const reader = new FileReader();
-  reader.onload = (e: ProgressEvent<FileReader>) => {
-    options.value.img = e.target?.result as string;
-    dialogVisibleCorpper.value = true;
-  };
-  reader.readAsDataURL(uploadFile.raw);
-};
 
 // 保留其余原有方法
 const addNewAccount = () => {
@@ -1090,28 +875,4 @@ defineExpose({
 
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
-
-.avatar-container {
-  .img-box {
-    border-radius: 50%;
-    border: 1px solid #ccc;
-    width: 10vw;
-    height: 10vw;
-  }
-}
-.preview-box {
-  position: absolute;
-  top: 50%;
-  transform: translate(50%, -50%);
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  overflow: hidden;
-}
-.preview-box-title {
-  text-align: center;
-  margin-left: 20px;
-  color: #000;
-}
 </style>
