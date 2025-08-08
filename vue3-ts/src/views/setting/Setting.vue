@@ -424,13 +424,7 @@
 
 <script setup lang="ts" name="Setting">
 import AvatarCropper from "../../components/avatarcropper/AvatarCropper.vue";
-import {
-  ref,
-  computed,
-  onMounted,
-  defineExpose,
-  getCurrentInstance,
-} from "vue";
+import { ref, computed, onMounted, defineExpose } from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
@@ -443,17 +437,10 @@ import {
 } from "../../utils/setting";
 import { useUserStore } from "../../store/userStore";
 import { useThemeStore } from "../../store/themeStore";
-import { apiUrl, modelURL } from "../../config";
+import { apiUrl } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
-
-import {
-  Plus,
-  Minus,
-  RefreshLeft,
-  RefreshRight,
-} from "@element-plus/icons-vue";
 // 保留原有代码
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
@@ -643,7 +630,7 @@ const fetchUserInfo = async () => {
 const changeLanguage = (lang: string) => {
   if (uuid.value) {
     locale.value = lang;
-    localStorage.setItem(`language-${uuid.value}`, lang);
+    localStorage.setItem(`language-style-${uuid.value}`, lang);
   }
 };
 

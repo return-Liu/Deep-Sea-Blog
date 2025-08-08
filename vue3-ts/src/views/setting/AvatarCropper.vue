@@ -96,13 +96,25 @@ import {
   RefreshRight,
 } from "@element-plus/icons-vue";
 import "vue-cropper/dist/index.css";
-import { type Props } from "../../types/avatarcropper";
 
 interface CropperInstance {
   getCropData: (callback: (data: string) => void) => void;
   changeScale: (num: number) => void;
   rotateLeft: () => void;
   rotateRight: () => void;
+}
+
+interface Props {
+  title?: string;
+  previewTitle?: string;
+  selectImageText?: string;
+  zoomInText?: string;
+  zoomOutText?: string;
+  rotateLeftText?: string;
+  rotateRightText?: string;
+  confirmText?: string;
+  apiUrl?: string;
+  userId?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {

@@ -33,7 +33,7 @@ export const zh = {
       chooseConstellation: "选择星座",
       cropAvatar: "裁剪头像",
       cancel: "取消",
-      confirmCrop: "确认裁剪",
+      confirmCrop: "更新头像",
       cropperNotInitialized: "裁剪器未初始化",
       cropFailed: "裁剪失败",
       selectImage: "重新选择",
