@@ -1,105 +1,87 @@
 $light-theme: (
-  // 主要黑白颜色 - 更柔和
-  black: #1a1a1a,
-  white: #f8f8f8,
+  "black": #1a1a1a,
+  "white": #f8f8f8,
 
   // 灰色系 - 从深到浅 (柔和的灰色)
-  gray-900: #2a2a2a,
-  gray-800: #424242,
-  gray-700: #5a5a5a,
-  gray-600: #727272,
-  gray-500: #8a8a8a,
-  gray-400: #a2a2a2,
-  gray-300: #bababa,
-  gray-200: #d2d2d2,
-  gray-100: #eaeaea,
+  "gray-900": #2a2a2a,
+  "gray-800": #424242,
+  "gray-700": #5a5a5a,
+  "gray-600": #727272,
+  "gray-500": #8a8a8a,
+  "gray-400": #a2a2a2,
+  "gray-300": #bababa,
+  "gray-200": #d2d2d2,
+  "gray-100": #eaeaea,
 
   // 背景颜色
-  bg1: #f8f8f8,
-  bg2: #f0f0f0,
-  bg3: linear-gradient(135deg, #f5f7fa 0%, #e6eaf0 100%),
-  bg4: #e6e6e6,
-  bg5: #2a2a2a,
+  "bg1": #f8f8f8,
+  "bg2": #f0f0f0,
+  "bg3": linear-gradient(135deg, #f5f7fa 0%, #e6eaf0 100%),
+  "bg4": #e6e6e6,
+  "bg5": #2a2a2a,
 
   // 边框颜色
-  border: #d9d9d9,
+  "border": #d9d9d9,
 
   // 渐变背景
-  gradient-bg: linear-gradient(to bottom, #f5f5f5, #e8e8e8),
-  gradient-bg1: linear-gradient(135deg, #5a7bc5, #3a4e7a),
-  gradient-bg2: linear-gradient(135deg, #ffaa7a, #ff6a5a),
-  gradient-bg3: linear-gradient(135deg, #8fd68f, #50b850),
+  "gradient-bg": linear-gradient(to bottom, #f5f5f5, #e8e8e8),
+  "gradient-bg1": linear-gradient(135deg, #5a7bc5, #3a4e7a),
+  "gradient-bg2": linear-gradient(135deg, #ffaa7a, #ff6a5a),
+  "gradient-bg3": linear-gradient(135deg, #8fd68f, #50b850),
   // 兼容性颜色变量
-  color-bg2: -webkit-linear-gradient(
+  "color-bg2": -webkit-linear-gradient(
       rgba(219, 15, 234, 0.5),
       rgb(20, 197, 241)
     ),
-  color-bg3: #424242,
-  color-bg4: #5a5a5a,
-  color-bg5: #727272,
-  color-bg6: #a2a2a2,
-  color-bg7: #c2c2c2,
-  color-bg8: #2a2a2a,
-  color-bg9: #f8f8f8
+  "color-bg3": #424242,
+  "color-bg4": #5a5a5a,
+  "color-bg5": #727272,
+  "color-bg6": #a2a2a2,
+  "color-bg7": #c2c2c2,
+  "color-bg8": #2a2a2a,
+  "color-bg9": #f8f8f8,
 );
 
 $dark-theme: (
-  // 主要黑白颜色 - 柔和的深色主题
-  black: #121212,
-  white: #eaeaea,
+  "black": #121212,
+  "white": #eaeaea,
 
   // 灰色系 - 从浅到深 (柔和的深色主题)
-  gray-900: #2a2a2a,
-  gray-800: #d2d2d2,
-  gray-700: #bababa,
-  gray-600: #a2a2a2,
-  gray-500: #8a8a8a,
-  gray-400: #727272,
-  gray-300: #5a5a5a,
-  gray-200: #424242,
-  gray-100: #2a2a2a,
+  "gray-900": #2a2a2a,
+  "gray-800": #d2d2d2,
+  "gray-700": #bababa,
+  "gray-600": #a2a2a2,
+  "gray-500": #8a8a8a,
+  "gray-400": #727272,
+  "gray-300": #5a5a5a,
+  "gray-200": #424242,
+  "gray-100": #2a2a2a,
 
   // 背景颜色
-  bg1: #1a1a1a,
-  bg2: #222222,
-  bg3: #1d1d1d,
-  bg4: #333333,
-  bg5: #eaeaea,
+  "bg1": #1a1a1a,
+  "bg2": #222222,
+  "bg3": #1d1d1d,
+  "bg4": #333333,
+  "bg5": #eaeaea,
 
   // 边框颜色
-  border: #2a2a2a,
+  "border": #2a2a2a,
 
   // 渐变背景
-  gradient-bg: linear-gradient(to bottom, #222222, #1a1a1a),
-  gradient-bg1: linear-gradient(135deg, #425a8a, #2a3a5a),
-  gradient-bg2: linear-gradient(135deg, #3a4a7a, #222a42),
-  gradient-bg3: linear-gradient(135deg, #425a8a, #2a3a5a),
+  "gradient-bg": linear-gradient(to bottom, #222222, #1a1a1a),
+  "gradient-bg1": linear-gradient(135deg, #425a8a, #2a3a5a),
+  "gradient-bg2": linear-gradient(135deg, #3a4a7a, #222a42),
+  "gradient-bg3": linear-gradient(135deg, #425a8a, #2a3a5a),
   // 兼容性颜色变量
-  color-bg2: -webkit-linear-gradient(
+  "color-bg2": -webkit-linear-gradient(
       rgba(219, 15, 234, 0.5),
       rgb(20, 197, 241)
     ),
-  color-bg3: #e6e6e6,
-  color-bg4: #d2d2d2,
-  color-bg5: #bababa,
-  color-bg6: #a2a2a2,
-  color-bg7: #727272,
-  color-bg8: #eaeaea,
-  color-bg9: #1a1a1a
+  "color-bg3": #e6e6e6,
+  "color-bg4": #d2d2d2,
+  "color-bg5": #bababa,
+  "color-bg6": #a2a2a2,
+  "color-bg7": #727272,
+  "color-bg8": #eaeaea,
+  "color-bg9": #1a1a1a,
 );
-
-@mixin theme-vars($theme) {
-  @each $name, $value in $theme {
-    --#{$name}: #{$value};
-  }
-}
-
-// 应用默认亮色主题
-:root {
-  @include theme-vars($light-theme);
-}
-
-// 应用暗色主题
-html[data-theme="dark"] {
-  @include theme-vars($dark-theme);
-}

@@ -36,6 +36,9 @@ export const zh = {
       confirmCrop: "确认裁剪",
       cropperNotInitialized: "裁剪器未初始化",
       cropFailed: "裁剪失败",
+      selectImage: "重新选择",
+      Previewavatar: "预览头像",
+      cannotGetCropResult: "无法获取裁剪结果",
     },
     security: {
       logout: "退出登录",

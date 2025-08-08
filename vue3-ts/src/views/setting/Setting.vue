@@ -21,7 +21,7 @@
               ref="uploadRef"
               @change="handleChange"
             >
-              <div class="avatar-container">
+              <div class="avatar-container" @click="editImage()">
                 <img
                   v-if="avatar || defaultAvatar"
                   v-lazy="avatar || defaultAvatar"
@@ -409,38 +409,111 @@
         </div>
       </div>
     </div>
-    <div v-if="showCropperModal" class="cropper-modal">
-      <div class="cropper-container">
-        <h3 class="cropper-title">{{ t("settings.profile.cropAvatar") }}</h3>
-        <div class="cropper-wrapper">
-          <Cropper
-            ref="cropperRef"
-            class="cropper"
-            :src="croppingImage"
-            :stencil-props="{
-              aspectRatio: 1 / 1,
-            }"
+    <el-dialog
+      :title="t('settings.profile.cropAvatar')"
+      v-model="dialogVisibleCorpper"
+      width="800px"
+      append-to-body
+      @opened="openDialog"
+      :before-close="beforeClose"
+    >
+      <el-row>
+        <el-col :span="12" style="height: 300px">
+          <vue-cropper
+            ref="cropper"
+            :img="options.img"
+            :info="true"
+            :autoCrop="options.autoCrop"
+            :autoCropWidth="options.autoCropWidth"
+            :autoCropHeight="options.autoCropHeight"
+            :fixedBox="options.fixedBox"
+            :outputType="options.outputType"
+            @realTime="realTime"
+            v-if="showCropper"
           />
-        </div>
+        </el-col>
 
-        <div class="cropper-actions">
-          <el-button @click="showCropperModal = false">
-            {{ t("settings.profile.cancel") }}
-          </el-button>
-          <el-button type="primary" @click="confirmCrop">
-            {{ t("settings.profile.confirmCrop") }}
-          </el-button>
-        </div>
-      </div>
-    </div>
+        <el-col :span="12" style="height: 300px">
+          <div class="preview-box-title">
+            {{ t("settings.profile.Previewavatar") }}
+          </div>
+          <div class="preview-box">
+            <img
+              v-if="previews.url"
+              :src="previews.url"
+              :style="previews.img"
+            />
+            <span v-else></span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row style="margin-top: 12px">
+        <el-col :span="12">
+          <el-row>
+            <el-col :span="8">
+              <el-upload
+                action="#"
+                :http-request="() => {}"
+                :before-upload="beforeUploadCropper"
+                :show-file-list="false"
+              >
+                <el-button>{{ t("settings.profile.selectImage") }}</el-button>
+              </el-upload>
+            </el-col>
+            <el-col :span="4">
+              <el-button title="放大头像" :icon="Plus" @click="changeScale(1)">
+              </el-button>
+            </el-col>
+            <el-col :span="4">
+              <el-button
+                title="缩小头像"
+                :icon="Minus"
+                @click="changeScale(-1)"
+              >
+              </el-button>
+            </el-col>
+            <el-col :span="4">
+              <el-button
+                title="向左旋转"
+                :icon="RefreshLeft"
+                @click="rotateLeft()"
+              >
+              </el-button>
+            </el-col>
+            <el-col :span="4">
+              <el-button
+                title="向右旋转"
+                :icon="RefreshRight"
+                @click="rotateRight()"
+              >
+              </el-button>
+            </el-col>
+          </el-row>
+        </el-col>
+        <el-col :span="4" :offset="8" style="margin-left: 22.3%">
+          <el-button type="primary" @click="determine()">{{
+            t("settings.profile.confirmCrop")
+          }}</el-button>
+        </el-col>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts" name="Setting">
-import { ref, computed, onMounted, defineExpose } from "vue";
+// 保留原有导入
+import {
+  ref,
+  computed,
+  onMounted,
+  defineExpose,
+  getCurrentInstance,
+} from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
+import "vue-cropper/dist/index.css";
+import { VueCropper } from "vue-cropper";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   tabs,
@@ -454,15 +527,27 @@ import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
-// 引入 vue-advanced-cropper 组件和样式
-import { Cropper } from "vue-advanced-cropper";
-import "vue-advanced-cropper/dist/style.css";
+import "vue-cropper/dist/index.css";
 
+import {
+  Plus,
+  Minus,
+  RefreshLeft,
+  RefreshRight,
+} from "@element-plus/icons-vue";
+// 保留原有代码
 const { t, locale } = useI18n();
+const { proxy } = getCurrentInstance() as any;
 const currentLanguage = computed(() => {
   return locale.value;
 });
-
+interface CropperInstance {
+  getCropData: (callback: (data: string) => void) => void;
+  changeScale: (num: number) => void;
+  rotateLeft: () => void;
+  rotateRight: () => void;
+}
+// 保留原有变量声明
 const defaultAvatar =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
 const route = useRoute();
@@ -483,11 +568,161 @@ const followSystem = computed({
   },
 });
 
-// 裁剪相关引用
-const showCropperModal = ref(false);
-const croppingImage = ref("");
-const cropperRef = ref<any>(null);
+// 裁剪相关引用（替换原有裁剪相关代码）
+const dialogVisibleCorpper = ref(false);
+const showCropper = ref(false);
+const cropper = ref<CropperInstance | null>(null);
+// 修改 previews 的定义如下：
+const previews = ref({
+  url: "",
+  img: {}, // 添加 img 属性，用于接收样式对象
+});
+// cropper配置
+// 修改 options 的定义如下：
+const options = ref({
+  img: null as string | null, // 允许赋值字符串或 null
+  autoCropWidth: 200,
+  autoCropHeight: 200,
+  outputType: "png",
+  autoCrop: true,
+  fixedBox: false,
+});
 
+// 打开裁剪弹窗
+const openDialog = () => {
+  showCropper.value = true;
+};
+
+// 修改图片大小 正数为变大 负数变小
+const changeScale = (num: number) => {
+  num = num || 1;
+  cropper.value?.changeScale(num);
+};
+
+// 向左边旋转90度
+const rotateLeft = () => {
+  cropper.value?.rotateLeft();
+};
+
+// 向右边旋转90度
+const rotateRight = () => {
+  cropper.value?.rotateRight();
+};
+
+// 实时预览事件
+const realTime = (data: any) => {
+  previews.value = data;
+};
+
+// 关闭弹窗
+const beforeClose = () => {
+  options.value.img = null;
+  previews.value.url = "";
+  dialogVisibleCorpper.value = false;
+};
+
+// 提交图片
+// 提交图片
+const determine = async () => {
+  try {
+    if (!cropper.value || !uuid.value) {
+      ElMessage.error("缺少必要参数");
+      return;
+    }
+
+    // 使用更兼容的方式获取裁剪数据
+    let croppedData;
+    // 替换原来的第622行代码：
+    croppedData = await new Promise<string>((resolve, reject) => {
+      cropper.value?.getCropData(resolve);
+    });
+
+    if (!croppedData) {
+      ElMessage.error("裁剪数据获取失败");
+      return;
+    }
+
+    // 将 base64 转换为 Blob
+    let blob: Blob;
+    if (typeof croppedData === "string" && croppedData.startsWith("blob:")) {
+      blob = await fetch(croppedData).then((res) => res.blob());
+    } else if (
+      typeof croppedData === "string" &&
+      croppedData.startsWith("data:image/")
+    ) {
+      // 处理 base64 数据
+      const base64Response = await fetch(croppedData);
+      blob = await base64Response.blob();
+    } else {
+      ElMessage.error("不支持的图像数据格式");
+      return;
+    }
+
+    // 创建 FormData 并上传
+    const formData = new FormData();
+    formData.append("avatar", blob, "avatar.png");
+    formData.append("userId", userStore.user.id.toString());
+
+    try {
+      const response = await axiosConfig.post(
+        `${apiUrl}/admin/uploadavatar/cropAvatar`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // 删除旧头像
+      if (avatar.value) {
+        await deleteOldAvatar(true);
+      }
+
+      // 更新头像URL
+      avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
+      ElMessage.success(response.data.message);
+
+      // 更新用户存储
+      userStore.user.avatar = avatar.value;
+      getAllUsers();
+      userStore.loadUser();
+
+      // 关闭模态框
+      beforeClose();
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "添加失败";
+      ElMessage.error(errorMessage);
+    }
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "上传失败";
+    ElMessage.error(errorMessage);
+  }
+};
+
+// 上传图片处理
+const beforeUploadCropper = (rawFile: File) => {
+  if (rawFile.type.indexOf("image/") == -1) {
+    ElMessage.error("只能上传图片文件!");
+    return false;
+  }
+  if (rawFile.size / 1024 / 1024 > 2) {
+    ElMessage.error("图片大小不能超过 2MB!");
+    return false;
+  }
+  const reader = new FileReader();
+  reader.readAsDataURL(rawFile);
+  reader.onload = () => {
+    // 图片在这里
+    options.value.img = reader.result as string;
+  };
+  // 重要：返回 false 阻止自动上传
+  return false;
+};
+
+// 保留原有变量声明
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
 const sex = ref<string>("0");
@@ -511,10 +746,32 @@ const activeTab = ref<string>(
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
 
-const uploadParams = computed(() => ({
-  userId: userStore.user.id,
-}));
+// 新增方法：编辑图片
+const editImage = () => {
+  if (!uuid.value) {
+    ElMessage.error("请先选择一张图片");
+    return;
+  }
+  dialogVisibleCorpper.value = true;
+};
 
+// 修改 handleChange 方法
+const handleChange = (uploadFile: { raw: File }) => {
+  if (!uuid.value) {
+    ElMessage.error("请先选择一张图片");
+    return;
+  }
+
+  // 读取文件并显示裁剪模态框
+  const reader = new FileReader();
+  reader.onload = (e: ProgressEvent<FileReader>) => {
+    options.value.img = e.target?.result as string;
+    dialogVisibleCorpper.value = true;
+  };
+  reader.readAsDataURL(uploadFile.raw);
+};
+
+// 保留其余原有方法
 const addNewAccount = () => {
   logout();
 };
@@ -541,98 +798,15 @@ const switchAccount = async (id: string) => {
   } catch (error: any) {
     // 错误提示
     const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
+      error?.response?.data?.message ||
+      error?.message ||
+      t("settings.profile.unknownError");
     ElMessage.error(errorMessage);
   }
 };
 
 const changePassword = () => {
   router.push({ name: "resetpassword" });
-};
-
-// 确认裁剪并上传
-const confirmCrop = async () => {
-  try {
-    if (!cropperRef.value || !uuid.value) {
-      ElMessage.error("裁剪器未初始化或用户ID未找到");
-      return;
-    }
-
-    // 获取裁剪后的图片数据
-    const { canvas } = cropperRef.value.getResult();
-    if (!canvas) {
-      ElMessage.error("无法获取裁剪结果");
-      return;
-    }
-
-    // 将 canvas 转换为 Blob
-    canvas.toBlob(async (blob: Blob) => {
-      if (!blob) {
-        ElMessage.error("转换图片失败");
-        return;
-      }
-
-      // 创建 FormData 并上传
-      const formData = new FormData();
-      formData.append("avatar", blob, "avatar.png");
-      formData.append("userId", userStore.user.id.toString());
-
-      try {
-        const response = await axiosConfig.post(
-          `${apiUrl}/admin/uploadavatar/cropAvatar`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        // 删除旧头像
-        if (avatar.value) {
-          await deleteOldAvatar(true);
-        }
-
-        // 更新头像URL
-        avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
-        ElMessage.success(response.data.message);
-
-        // 更新用户存储
-        userStore.user.avatar = avatar.value;
-        getAllUsers();
-        userStore.loadUser();
-
-        // 关闭模态框
-        showCropperModal.value = false;
-        showUploadButton.value = false;
-      } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message || error?.message || "未知错误";
-        ElMessage.error(errorMessage);
-      }
-    }, "image/png");
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  }
-};
-
-// 修改 handleChange 方法
-const handleChange = (uploadFile: { raw: File }) => {
-  if (!uuid.value) {
-    ElMessage.error("ID未找到，请重新登录");
-    return;
-  }
-
-  // 读取文件并显示裁剪模态框
-  const reader = new FileReader();
-  reader.onload = (e: ProgressEvent<FileReader>) => {
-    croppingImage.value = e.target?.result as string;
-    showCropperModal.value = true;
-    showUploadButton.value = true;
-  };
-  reader.readAsDataURL(uploadFile.raw);
 };
 
 const changeTab = (tabId: string) => {
@@ -674,7 +848,9 @@ const fetchUserInfo = async () => {
     };
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
+      error?.response?.data?.message ||
+      error?.message ||
+      t("settings.profile.unknownError");
     ElMessage.error(errorMessage);
   }
 };
@@ -698,22 +874,17 @@ const beforeUpload = (file: File) => {
   const isLt2M = file.size / 1024 / 1024 < 2;
 
   if (!isAllowedType) {
-    ElMessage.error(
-      "上传图片只能是 JPG 或 PNG 或 WEBP 或 JFIF 格式 或 GIF 格式!"
-    );
+    ElMessage.error("上传照片只能是 JPG 或 PNG 或 WEBP 或 GIF ");
     return false;
   }
   if (!isLt2M) {
-    ElMessage.error("上传头像图片大小不能超过 2MB!");
+    ElMessage.error("上传照片大小不能超过 2MB!");
     return false;
   }
   if (!uuid.value) {
-    ElMessage.error("ID未找到，请重新登录");
+    ElMessage.error("请先选择一个用户");
     return false;
   }
-
-  // 关键修改：总是返回 false 来阻止自动上传
-  // 文件处理将在 handleChange 中进行
   return false;
 };
 
@@ -734,13 +905,13 @@ const deleteOldAvatar = async (isReupload: boolean) => {
       `${apiUrl}/admin/uploadavatar/avatar/${avatarFileName}`
     );
     if (isReupload) {
-      ElMessage.error("旧头像已删除, 已重新上传新头像");
+      ElMessage.info("重新上传成功");
     } else {
-      ElMessage.info("头像删除成功");
+      ElMessage.info("删除成功");
     }
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
+      error?.response?.data?.message || error?.message || "删除失败";
     ElMessage.error(errorMessage);
   }
 };
@@ -766,7 +937,7 @@ const updateUserInfo = async () => {
     area.value === initialUserInfo.value.area &&
     phone.value === initialUserInfo.value.phone
   ) {
-    ElMessage.info("没有发现任何更改,请修改后再来保存");
+    ElMessage.info("暂无数据修改");
     return;
   }
   try {
@@ -808,7 +979,7 @@ const updateUserInfo = async () => {
     };
     ElMessage.success(response.data.message);
   } catch (error: any) {
-    let errorMessage = "未知错误";
+    let errorMessage = "添加失败";
 
     // 检查 error 是否包含 errors 数组
     if (
@@ -816,11 +987,11 @@ const updateUserInfo = async () => {
       Array.isArray(error.response.data.errors)
     ) {
       // 获取 errors 数组的第一个元素作为错误消息
-      errorMessage = error.response.data.errors[0] || "未知错误";
+      errorMessage = error.response.data.errors[0] || "添加失败";
     } else {
       // 兼容 message 字段
       errorMessage =
-        error?.response?.data?.message || error?.message || "未知错误";
+        error?.response?.data?.message || error?.message || "添加失败";
     }
 
     ElMessage.error(errorMessage);
@@ -830,17 +1001,11 @@ const updateUserInfo = async () => {
 // 注销账号
 const deleteAccount = async () => {
   try {
-    await ElMessageBox.confirm(
-      "您确定要注销账号吗？您的所有资源将被删除。请谨慎操作。",
-      "确认注销",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      }
-    );
-
-    const userId = userStore.user.id;
+    await ElMessageBox.confirm("确定注销账号吗？", "账号注销确认", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
     // 直接删除用户评论，
@@ -871,7 +1036,9 @@ const deleteAccount = async () => {
     router.push({ name: "login/index" });
   } catch (error: any) {
     const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
+      error?.response?.data?.message ||
+      error?.message ||
+      "删除失败，请稍后再试。";
     ElMessage.error(errorMessage);
   }
 };
@@ -879,7 +1046,7 @@ const deleteAccount = async () => {
 const fetchLikedArticles = async () => {
   try {
     if (!userStore.user.id) {
-      ElMessage.error("用户ID获取失败");
+      ElMessage.error("请先登录");
       return;
     }
     const response = await axiosConfig.get("/admin/article", {
@@ -924,70 +1091,27 @@ defineExpose({
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
 
-.cropper-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-
-  .cropper-container {
-    width: 100%;
-    max-width: 800px;
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-
-    h3 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.5rem;
-      color: #333;
-    }
-
-    .cropper-wrapper {
-      flex: 1;
-      margin-bottom: 20px;
-
-      .cropper {
-        max-width: 100%;
-        height: 100%;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-      }
-    }
-
-    .preview-wrapper {
-      margin-bottom: 20px;
-      border: 1px dashed #ddd;
-      border-radius: 5px;
-      padding: 10px;
-      text-align: center;
-
-      .preview-image {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 5px;
-      }
-    }
-
-    .cropper-actions {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-
-      .el-button {
-        padding: 10px 20px;
-        font-size: 1rem;
-      }
-    }
+.avatar-container {
+  .img-box {
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    width: 10vw;
+    height: 10vw;
   }
+}
+.preview-box {
+  position: absolute;
+  top: 50%;
+  transform: translate(50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+.preview-box-title {
+  text-align: center;
+  margin-left: 20px;
+  color: #000;
 }
 </style>
