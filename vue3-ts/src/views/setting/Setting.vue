@@ -411,28 +411,22 @@
     </div>
     <div v-if="showCropperModal" class="cropper-modal">
       <div class="cropper-container">
-        <h3>{{ t("settings.profile.cropAvatar") }}</h3>
-        <div class="cropper-content">
-          <div class="cropper-area">
-            <img
-              ref="cropperImageRef"
-              :src="croppingImage"
-              alt="待裁剪图片"
-              class="cropper-image"
-              @load="initCropper"
-            />
-          </div>
-          <div class="cropper-preview">
-            <h4>{{ t("settings.profile.previewAvatar") }}</h4>
-            <div class="preview-box">
-              <img :src="croppedPreview" class="preview-image" />
-            </div>
-          </div>
+        <h3 class="cropper-title">{{ t("settings.profile.cropAvatar") }}</h3>
+        <div class="cropper-wrapper">
+          <Cropper
+            ref="cropperRef"
+            class="cropper"
+            :src="croppingImage"
+            :stencil-props="{
+              aspectRatio: 1 / 1,
+            }"
+          />
         </div>
+
         <div class="cropper-actions">
-          <el-button @click="cancelCrop">{{
-            t("settings.profile.cancel")
-          }}</el-button>
+          <el-button @click="showCropperModal = false">
+            {{ t("settings.profile.cancel") }}
+          </el-button>
           <el-button type="primary" @click="confirmCrop">
             {{ t("settings.profile.confirmCrop") }}
           </el-button>
@@ -441,6 +435,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts" name="Setting">
 import { ref, computed, onMounted, defineExpose } from "vue";
 import axiosConfig from "../../utils/request";
@@ -459,7 +454,10 @@ import { apiUrl, modelURL } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
-// 省略其他导入
+// 引入 vue-advanced-cropper 组件和样式
+import { Cropper } from "vue-advanced-cropper";
+import "vue-advanced-cropper/dist/style.css";
+
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
   return locale.value;
@@ -484,11 +482,12 @@ const followSystem = computed({
     }
   },
 });
+
+// 裁剪相关引用
 const showCropperModal = ref(false);
 const croppingImage = ref("");
-const croppedPreview = ref("");
-const cropperImageRef = ref<HTMLImageElement | null>(null);
-let cropper: any = null;
+const cropperRef = ref<any>(null);
+
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
 const sex = ref<string>("0");
@@ -512,16 +511,14 @@ const activeTab = ref<string>(
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
 
-const checkMaintenanceMode = () => {
-  if (modelURL === "true") {
-    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
-    return true; // 表示处于维护模式
-  }
-  return false; // 不在维护模式中
-};
+const uploadParams = computed(() => ({
+  userId: userStore.user.id,
+}));
+
 const addNewAccount = () => {
   logout();
 };
+
 const switchAccount = async (id: string) => {
   try {
     const response = await axiosConfig.post("/auth/switch-account", {
@@ -553,7 +550,76 @@ const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
 
-const handleChange = (uploadFile: { raw: File }, fileList: { raw: File }[]) => {
+// 确认裁剪并上传
+const confirmCrop = async () => {
+  try {
+    if (!cropperRef.value || !uuid.value) {
+      ElMessage.error("裁剪器未初始化或用户ID未找到");
+      return;
+    }
+
+    // 获取裁剪后的图片数据
+    const { canvas } = cropperRef.value.getResult();
+    if (!canvas) {
+      ElMessage.error("无法获取裁剪结果");
+      return;
+    }
+
+    // 将 canvas 转换为 Blob
+    canvas.toBlob(async (blob: Blob) => {
+      if (!blob) {
+        ElMessage.error("转换图片失败");
+        return;
+      }
+
+      // 创建 FormData 并上传
+      const formData = new FormData();
+      formData.append("avatar", blob, "avatar.png");
+      formData.append("userId", userStore.user.id.toString());
+
+      try {
+        const response = await axiosConfig.post(
+          `${apiUrl}/admin/uploadavatar/cropAvatar`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        // 删除旧头像
+        if (avatar.value) {
+          await deleteOldAvatar(true);
+        }
+
+        // 更新头像URL
+        avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
+        ElMessage.success(response.data.message);
+
+        // 更新用户存储
+        userStore.user.avatar = avatar.value;
+        getAllUsers();
+        userStore.loadUser();
+
+        // 关闭模态框
+        showCropperModal.value = false;
+        showUploadButton.value = false;
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message || error?.message || "未知错误";
+        ElMessage.error(errorMessage);
+      }
+    }, "image/png");
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
+  }
+};
+
+// 修改 handleChange 方法
+const handleChange = (uploadFile: { raw: File }) => {
   if (!uuid.value) {
     ElMessage.error("ID未找到，请重新登录");
     return;
@@ -561,26 +627,19 @@ const handleChange = (uploadFile: { raw: File }, fileList: { raw: File }[]) => {
 
   // 读取文件并显示裁剪模态框
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = (e: ProgressEvent<FileReader>) => {
     croppingImage.value = e.target?.result as string;
     showCropperModal.value = true;
+    showUploadButton.value = true;
   };
-
-  // Element Plus 的 upload 组件传递的文件对象包含 raw 属性
-  if (uploadFile.raw) {
-    reader.readAsDataURL(uploadFile.raw);
-  } else {
-    ElMessage.error("文件格式不正确");
-    return;
-  }
-
-  showUploadButton.value = fileList.length > 0;
+  reader.readAsDataURL(uploadFile.raw);
 };
 
 const changeTab = (tabId: string) => {
   activeTab.value = tabId;
   router.push({ name: "setting", params: { tab: tabId } });
 };
+
 const fetchUserInfo = async () => {
   try {
     const response = await axiosConfig.get("/users/me");
@@ -619,12 +678,14 @@ const fetchUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
+
 const changeLanguage = (lang: string) => {
   if (uuid.value) {
     locale.value = lang;
     localStorage.setItem(`language-${uuid.value}`, lang);
   }
 };
+
 const beforeUpload = (file: File) => {
   const allowedTypes = [
     "image/jpeg",
@@ -655,6 +716,7 @@ const beforeUpload = (file: File) => {
   // 文件处理将在 handleChange 中进行
   return false;
 };
+
 const deleteOldAvatar = async (isReupload: boolean) => {
   try {
     // 如果是默认头像，直接跳过删除
@@ -682,12 +744,14 @@ const deleteOldAvatar = async (isReupload: boolean) => {
     ElMessage.error(errorMessage);
   }
 };
+
 const handleSuccess = (response: any, file: File) => {
   avatar.value = `${apiUrl}/avatar/${response.data.avatar}`;
   ElMessage.success("头像上传成功");
   uploadRef.value.clearFiles();
   showUploadButton.value = false;
 };
+
 // 更新信息
 const updateUserInfo = async () => {
   // 检查信息是否发生更改
@@ -762,7 +826,7 @@ const updateUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
-// 注销账号
+
 // 注销账号
 const deleteAccount = async () => {
   try {
@@ -811,6 +875,7 @@ const deleteAccount = async () => {
     ElMessage.error(errorMessage);
   }
 };
+
 const fetchLikedArticles = async () => {
   try {
     if (!userStore.user.id) {
@@ -837,10 +902,12 @@ const fetchLikedArticles = async () => {
     ElMessage.error(errorMessage);
   }
 };
+
 const logout = () => {
   Cookies.remove("ds-token");
   router.push({ name: "login/index" });
 };
+
 onMounted(() => {
   fetchUserInfo().then(() => {
     fetchLikedArticles();
@@ -848,149 +915,77 @@ onMounted(() => {
     userStore.loadUser();
   });
 });
+
 defineExpose({
   deleteAccount,
 });
 </script>
+
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
+
 .cropper-modal {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 2000;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2000;
 
   .cropper-container {
-    width: 800px;
-    max-width: 90vw;
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 
     h3 {
-      margin: 0 0 20px;
-      font-size: 20px;
-      color: #333;
       text-align: center;
-    }
-
-    .cropper-toolbar {
       margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
+      font-size: 1.5rem;
+      color: #333;
+    }
 
-      .el-button-group {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
+    .cropper-wrapper {
+      flex: 1;
+      margin-bottom: 20px;
 
-        .el-button {
-          padding: 8px 12px;
-        }
+      .cropper {
+        max-width: 100%;
+        height: 100%;
+        border: 1px solid #ddd;
+        border-radius: 5px;
       }
     }
 
-    .cropper-content {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .preview-wrapper {
+      margin-bottom: 20px;
+      border: 1px dashed #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
 
-      @media (min-width: 768px) {
-        flex-direction: row;
-      }
-
-      .cropper-area {
-        flex: 1;
-        min-height: 300px;
-        max-height: 60vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #f5f7fa;
-        border-radius: 8px;
-        overflow: hidden;
-
-        .cropper-image {
-          max-width: 100%;
-          max-height: 100%;
-          display: block;
-        }
-      }
-
-      .cropper-preview {
-        width: 200px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        h4 {
-          margin: 0 0 12px;
-          font-size: 16px;
-          color: #666;
-        }
-
-        .preview-box {
-          width: 120px;
-          height: 120px;
-          background: #f5f7fa;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-          margin-bottom: 8px;
-
-          &.circle-preview {
-            border-radius: 50%;
-            overflow: hidden;
-          }
-
-          .preview-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-          }
-        }
-
-        .preview-text {
-          font-size: 12px;
-          color: #999;
-          text-align: center;
-        }
+      .preview-image {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 5px;
       }
     }
 
     .cropper-actions {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin-top: 24px;
+      gap: 20px;
 
       .el-button {
-        min-width: 100px;
-      }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .cropper-modal .cropper-container {
-    width: 95%;
-    padding: 16px;
-
-    .cropper-content {
-      flex-direction: column;
-
-      .cropper-preview {
-        width: 100%;
-        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 1rem;
       }
     }
   }
