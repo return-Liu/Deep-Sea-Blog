@@ -1,0 +1,13 @@
+// src/assets/scss/_variables.scss
+
+// 原有变量...
+$bg1: #f5f5f5;
+$bg2: #ffffff;
+$border: #ebeef5;
+$color-bg4: #303133;
+$color-bg5: #909399;
+$white: #ffffff;
+$gradient-bg1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-bg2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+// 新增变量
+$color-bg3: #606266; // 添加这一行，用于强调文字颜色

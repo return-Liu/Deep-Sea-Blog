@@ -576,110 +576,6 @@ const handleChange = (uploadFile: { raw: File }, fileList: { raw: File }[]) => {
 
   showUploadButton.value = fileList.length > 0;
 };
-// 初始化裁剪器
-const initCropper = () => {
-  if (cropperImageRef.value) {
-    if (cropper) {
-      cropper.destroy();
-    }
-
-    cropper = {
-      getImageData: () => {
-        if (!cropperImageRef.value) return null;
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return null;
-
-        const size = Math.min(
-          cropperImageRef.value.naturalWidth,
-          cropperImageRef.value.naturalHeight
-        );
-        canvas.width = 200;
-        canvas.height = 200;
-
-        ctx.drawImage(
-          cropperImageRef.value,
-          (cropperImageRef.value.naturalWidth - size) / 2,
-          (cropperImageRef.value.naturalHeight - size) / 2,
-          size,
-          size,
-          0,
-          0,
-          200,
-          200
-        );
-
-        return canvas.toDataURL("image/png");
-      },
-    };
-
-    // 更新预览图片
-    croppedPreview.value = cropper.getImageData() || "";
-  }
-};
-// 确认裁剪
-// 确认裁剪
-const confirmCrop = async () => {
-  if (!cropper) {
-    ElMessage.error("裁剪器未初始化");
-    return;
-  }
-
-  try {
-    const croppedDataUrl = cropper.getImageData();
-    if (!croppedDataUrl) {
-      ElMessage.error("裁剪失败");
-      return;
-    }
-
-    // 更新预览图片
-    croppedPreview.value = croppedDataUrl;
-
-    // 在确认裁剪时删除旧头像
-    if (avatar.value) {
-      await deleteOldAvatar(true);
-    }
-
-    const blob = await fetch(croppedDataUrl).then((res) => res.blob());
-
-    const formData = new FormData();
-    formData.append("avatar", blob, "avatar.png");
-    formData.append("userId", userStore.user.id.toString());
-
-    const response = await axiosConfig.post(
-      `${apiUrl}/admin/uploadavatar/cropAvatar`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
-    ElMessage.success(response.data.message);
-    showCropperModal.value = false;
-    showUploadButton.value = false;
-
-    userStore.user.avatar = avatar.value;
-    getAllUsers();
-    userStore.loadUser();
-  } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  }
-};
-
-// 取消裁剪
-const cancelCrop = () => {
-  showCropperModal.value = false;
-  croppingImage.value = "";
-  croppedPreview.value = "";
-  if (cropper) {
-    cropper = null;
-  }
-};
 
 const changeTab = (tabId: string) => {
   activeTab.value = tabId;
@@ -959,106 +855,142 @@ defineExpose({
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
 .cropper-modal {
-  width: 800px;
-  height: 500px;
-  margin: 40px auto; // 水平居中（块级元素）
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
 
   .cropper-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    width: 800px;
+    max-width: 90vw;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
     h3 {
-      margin-right: 150px;
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #222;
-      letter-spacing: 1px;
+      margin: 0 0 20px;
+      font-size: 20px;
+      color: #333;
+      text-align: center;
     }
+
+    .cropper-toolbar {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+
+      .el-button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+
+        .el-button {
+          padding: 8px 12px;
+        }
+      }
+    }
+
     .cropper-content {
       display: flex;
-      gap: 48px;
-      margin-bottom: 32px;
+      flex-direction: column;
+      gap: 20px;
+
+      @media (min-width: 768px) {
+        flex-direction: row;
+      }
+
       .cropper-area {
-        background: #f7f8fa;
-        border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        padding: 20px;
+        flex: 1;
+        min-height: 300px;
+        max-height: 60vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: #f5f7fa;
+        border-radius: 8px;
+        overflow: hidden;
+
         .cropper-image {
-          width: 260px;
-          height: 260px;
-          object-fit: cover;
-          border-radius: 50%;
-          border: 3px solid #e6e6e6;
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          max-width: 100%;
+          max-height: 100%;
+          display: block;
         }
       }
+
       .cropper-preview {
+        width: 200px;
         display: flex;
         flex-direction: column;
         align-items: center;
+
         h4 {
-          font-size: 18px;
-          font-weight: 500;
-          margin-bottom: 12px;
+          margin: 0 0 12px;
+          font-size: 16px;
           color: #666;
         }
+
         .preview-box {
           width: 120px;
           height: 120px;
-          border-radius: 50%;
-          background: #f7f8fa;
+          background: #f5f7fa;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-          .preview-image {
-            width: 100px;
-            height: 100px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+          margin-bottom: 8px;
+
+          &.circle-preview {
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #e6e6e6;
-            background: #fff;
+            overflow: hidden;
           }
+
+          .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .preview-text {
+          font-size: 12px;
+          color: #999;
+          text-align: center;
         }
       }
     }
+
     .cropper-actions {
       display: flex;
-      gap: 24px;
       justify-content: center;
-      margin-top: 12px;
+      gap: 16px;
+      margin-top: 24px;
+
       .el-button {
-        min-width: 110px;
-        font-size: 16px;
-        border-radius: 8px;
-        padding: 10px 0;
-        transition: all 0.18s;
-        &.el-button--primary {
-          background: linear-gradient(90deg, #4f8cff 0%, #6ed0ff 100%);
-          border: none;
-          color: #fff;
-          font-weight: 600;
-          box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
-        }
-        &:hover {
-          filter: brightness(1.07);
-          box-shadow: 0 4px 16px rgba(79, 140, 255, 0.14);
-        }
+        min-width: 100px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .cropper-modal .cropper-container {
+    width: 95%;
+    padding: 16px;
+
+    .cropper-content {
+      flex-direction: column;
+
+      .cropper-preview {
+        width: 100%;
+        margin-top: 20px;
       }
     }
   }
