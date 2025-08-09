@@ -6,6 +6,7 @@
         <common-header
           :showSearchBox="route.name === 'home' || route.name === 'share'"
         >
+          <!-- 只在合适的位置展示搜索框  -->
           <template #search-box>
             <div class="search-box">
               <div class="search-input">

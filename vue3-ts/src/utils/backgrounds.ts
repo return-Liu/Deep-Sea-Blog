@@ -1,4 +1,4 @@
-export const backgrounds = [
+export const backgroundes = [
   {
     id: 1,
     gradient: "linear-gradient(135deg, #ffe0b2, #ffccbc)",

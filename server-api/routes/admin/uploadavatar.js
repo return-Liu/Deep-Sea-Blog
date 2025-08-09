@@ -53,68 +53,21 @@ const limits = {
 };
 
 const upload = multer({ storage, fileFilter, limits });
+// 添加用户头像更换频率限制Map
+const avatarChangeLimiter = new Map();
 
-// 上传头像
-router.post("/", upload.single("avatar"), async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const user = await User.findByPk(userId);
-
-    // 验证用户是否存在
-    if (!user) {
-      return failure(res, 404, "用户不存在");
+// 清理过期的限制记录（可选）
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of avatarChangeLimiter.entries()) {
+    // 如果超过60秒，则清除记录
+    if (now - value.timestamp > 60000) {
+      avatarChangeLimiter.delete(key);
     }
-
-    // 确保文件已成功上传
-    if (!req.file) {
-      return failure(res, 400, "未上传文件");
-    }
-
-    // 删除旧头像文件
-    if (user.avatar) {
-      const oldAvatarPath = path.join(uploadDir, user.avatar);
-      if (fs.existsSync(oldAvatarPath)) {
-        await promisify(fs.unlink)(oldAvatarPath);
-      }
-    }
-
-    // 更新用户头像
-    user.avatar = req.file.filename;
-    await user.save();
-
-    success(res, "头像上传成功", {
-      avatar: user.avatar,
-    });
-  } catch (error) {
-    if (error instanceof multer.MulterError) {
-      if (error.code === "LIMIT_FILE_SIZE") {
-        return failure(res, 400, "文件大小超过限制（2MB）");
-      }
-    }
-    failure(res, 500, "服务器内部错误");
   }
-});
+}, 30000); // 每30秒清理一次
 
-// 删除图片文件
-router.delete("/avatar/:filename", async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
-
-    // 检查文件是否存在
-    if (!fs.existsSync(filePath)) {
-      return failure(res, 404, "文件不存在");
-    }
-
-    // 删除文件
-    await promisify(fs.unlink)(filePath);
-    success(res, "删除头像成功");
-  } catch (error) {
-    console.error(`删除头像失败: ${error}`);
-    failure(res, 500, "服务器内部错误");
-  }
-});
-// 裁剪头像
+// 裁剪头像 - 添加频率限制
 router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
   try {
     const { userId } = req.body;
@@ -125,6 +78,16 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
 
     if (!req.file) {
       return failure(res, 400, "未上传文件");
+    }
+
+    // 检查用户是否在限制时间内
+    const userLimitKey = `user_${userId}`;
+    const userLimit = avatarChangeLimiter.get(userLimitKey);
+    const now = Date.now();
+
+    // 如果用户在10秒内重复操作，则拒绝请求
+    if (userLimit && now - userLimit.timestamp < 10000) {
+      return failure(res, 429, "操作过于频繁，请稍后再试");
     }
 
     const user = await User.findByPk(userId);
@@ -168,6 +131,11 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
     user.avatar = newFilename;
     await user.save();
 
+    // 记录用户操作时间
+    avatarChangeLimiter.set(userLimitKey, {
+      timestamp: now,
+    });
+
     success(res, "头像裁剪成功", {
       avatar: newFilename,
     });
@@ -180,6 +148,82 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
     }
 
     failure(res, 500, "头像裁剪失败");
+  }
+});
+
+// 上传头像 - 同样添加频率限制
+router.post("/", upload.single("avatar"), async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    // 检查用户是否在限制时间内
+    const userLimitKey = `user_${userId}`;
+    const userLimit = avatarChangeLimiter.get(userLimitKey);
+    const now = Date.now();
+
+    // 如果用户在10秒内重复操作，则拒绝请求
+    if (userLimit && now - userLimit.timestamp < 10000) {
+      return failure(res, 429, "操作过于频繁，请稍后再试");
+    }
+
+    const user = await User.findByPk(userId);
+
+    // 验证用户是否存在
+    if (!user) {
+      return failure(res, 404, "用户不存在");
+    }
+
+    // 确保文件已成功上传
+    if (!req.file) {
+      return failure(res, 400, "未上传文件");
+    }
+
+    // 删除旧头像文件
+    if (user.avatar) {
+      const oldAvatarPath = path.join(uploadDir, user.avatar);
+      if (fs.existsSync(oldAvatarPath)) {
+        await promisify(fs.unlink)(oldAvatarPath);
+      }
+    }
+
+    // 更新用户头像
+    user.avatar = req.file.filename;
+    await user.save();
+
+    // 记录用户操作时间
+    avatarChangeLimiter.set(userLimitKey, {
+      timestamp: now,
+    });
+
+    success(res, "头像上传成功", {
+      avatar: user.avatar,
+    });
+  } catch (error) {
+    if (error instanceof multer.MulterError) {
+      if (error.code === "LIMIT_FILE_SIZE") {
+        return failure(res, 400, "文件大小超过限制（2MB）");
+      }
+    }
+    failure(res, 500, "服务器内部错误");
+  }
+});
+// 删除图片文件
+router.delete("/avatar/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(uploadDir, filename);
+
+    // 检查文件是否存在
+    if (!fs.existsSync(filePath)) {
+      return failure(res, 404, "文件不存在");
+    }
+
+    // 删除文件
+    await promisify(fs.unlink)(filePath);
+    success(res, "删除头像成功");
+  } catch (error) {
+    console.error(`删除头像失败: ${error}`);
+    failure(res, 500, "服务器内部错误");
   }
 });
 // 检查头像是否存在文件夹

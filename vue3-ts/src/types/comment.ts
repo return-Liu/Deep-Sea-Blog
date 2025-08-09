@@ -13,4 +13,5 @@ export interface Comment {
   articleId: string;
   noteId: string;
   photographyId: string;
+  replies?: Comment[]; // 添加这一行，表示可选的回复列表
 }

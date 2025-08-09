@@ -9,6 +9,7 @@ export const ja = {
       languages: "多言語と翻訳",
       toggleaccount: "アカウント切り替え",
       changenicknamecolor: "ニックネームの色を選択",
+      supercolorpalette: "スーパーカラーパレット",
     },
     profile: {
       username: "ユーザー名",
@@ -77,6 +78,11 @@ export const ja = {
       description: "複数のアカウントを追加して、いつでも切り替えられます。",
       currentAccount: "現在のアカウント",
       addNewAccount: "アカウントを追加または登録",
+    },
+    supercolorpalette: {
+      title: "スーパーカラーパレット",
+      description:
+        "1回テストしてください。完全なカラーパレットを定義するカラーパレット",
     },
   },
   // 侧边栏

@@ -2,7 +2,7 @@
   <div class="share-container">
     <div class="profile-section">
       <div class="profile-info">
-        <div class="avatar" @click="viewAvatar">
+        <div class="avatar" @click="openAuthorProfile">
           <img
             v-if="
               user?.avatar ||
@@ -185,6 +185,7 @@ import { useGeneral } from "../../hooks/usegeneral";
 import { useUserStore } from "../../store/userStore";
 const { isLoading, contentSection, loadMore, currentPage } = useGeneral();
 const userStore = useUserStore();
+const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
@@ -198,13 +199,6 @@ const photographyTotal = ref(0);
 const noteTotal = ref(0);
 let userId = ref<number | null>(null);
 userId.value = user.value?.id || null;
-const viewAvatar = () => {
-  if (user.value?.avatar) {
-    window.open(user.value.avatar, "_blank");
-  } else {
-    ElMessage.error("头像未设置");
-  }
-};
 
 // 获取文章、摄影、随记数据
 async function fetchData(currentPage: number = 1) {

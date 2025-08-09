@@ -8,6 +8,7 @@ export const ko = {
       languages: "다국어 및 번역",
       toggleaccount: "계정 전환",
       changenicknamecolor: "닉네임 색상 선택",
+      supercolorpalette: "슈퍼 색상",
     },
     profile: {
       username: "사용자 이름",
@@ -76,6 +77,11 @@ export const ko = {
       description: "계정을 추가하고 언제든지 전환할 수 있습니다.",
       currentAccount: "현재 계정",
       addNewAccount: "계정 추가 또는 등록",
+    },
+    supercolorpalette: {
+      title: "슈퍼 컬러 팔레트",
+      description:
+        "시간에 한 번 테스트해 보세요. 컬러 힘을 정의하는 완전한 컬러 팔레트",
     },
   },
   commonaside: {

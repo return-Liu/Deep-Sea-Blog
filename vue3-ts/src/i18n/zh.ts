@@ -9,6 +9,7 @@ export const zh = {
       languages: "多种语言和翻译",
       toggleaccount: "切换账号",
       changenicknamecolor: "选择你的昵称颜色",
+      supercolorpalette: "超级调色盘",
     },
     profile: {
       username: "用户名",
@@ -74,6 +75,10 @@ export const zh = {
       description: "添加多个账号后，可同时进行管理和切换。 ",
       currentAccount: "当前账号",
       addNewAccount: "添加或注册新账号",
+    },
+    supercolorpalette: {
+      title: "超级调色盘",
+      description: "限时尝鲜 感受色彩活力 定制你的专属主题",
     },
   },
   // 侧边栏

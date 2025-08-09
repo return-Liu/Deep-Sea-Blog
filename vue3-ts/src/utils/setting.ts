@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { Plus, Camera, User, Lock, Check } from "@element-plus/icons-vue";
 import languagesIcon from "../components/icon/Languages.vue";
+import SuperColorPaletteIcon from "../components/icon/SuperColorPalette.vue";
 import { constellations } from "../utils/constellations";
 import { areas } from "../utils/area";
 import {
@@ -55,6 +56,10 @@ export const tabs = [
   {
     id: "toggleaccount",
     icon: SwapOutlined,
+  },
+  {
+    id: "supercolorpalette",
+    icon: SuperColorPaletteIcon,
   },
 ];
 export const constellationes = ref(

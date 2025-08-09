@@ -3,7 +3,7 @@
     <!-- 安全中心头部 -->
     <header class="security-header">
       <div class="header-content">
-        <div class="header-icon">
+        <div class="header-icon" @click="openAuthorProfile">
           <img
             v-if="
               user?.avatar ||
@@ -119,7 +119,7 @@ import SecurityIcon from "../../components/icon/Security.vue";
 import AccountSecurityIcon from "../../components/icon/AccountSecurity.vue";
 import ReportUserIcon from "../../components/icon/ReportUser.vue";
 const router = useRouter();
-
+const { openAuthorProfile } = useUserStore();
 const settingRef = ref();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
@@ -162,31 +162,10 @@ const handlePhoneBinding = () => {
   }
 };
 
-const handleIndependentPassword = () => {
-  ElMessage.info("目前此功能正在努力开发中，敬请期待！");
-};
-
 const handleDeviceManagement = () => {
   router.push({ name: "devicemanagement", params: { uuid: user.value.uuid } });
 };
 
-const handleAccountDeletion = () => {
-  ElMessageBox.confirm(
-    "确定要注销账号吗？此操作将永久删除您的所有数据且无法恢复。",
-    "账号注销确认",
-    {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    }
-  )
-    .then(() => {
-      settingRef.value.deleteAccount();
-    })
-    .catch(() => {
-      ElMessage.info("已取消账号注销操作");
-    });
-};
 const securityFeatures = [
   {
     id: "passwordRecovery",

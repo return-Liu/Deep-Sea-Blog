@@ -77,9 +77,9 @@
         </el-row>
       </el-col>
       <el-col :span="4" :offset="8" style="margin-left: 22.3%">
-        <el-button type="primary" @click="determine">{{
-          confirmText
-        }}</el-button>
+        <el-button type="primary" @click="determine" :loading="uploading">
+          {{ uploading ? uploadingText : confirmText }}
+        </el-button>
       </el-col>
     </el-row>
   </el-dialog>
@@ -117,6 +117,10 @@ const props = withDefaults(defineProps<Props>(), {
   apiUrl: "",
   userId: "",
 });
+
+// 添加上传状态相关属性
+const uploading = ref(false);
+const uploadingText = ref("上传中...");
 
 const emit = defineEmits(["update:modelValue", "cropped"]);
 
@@ -164,6 +168,12 @@ const realTime = (data: any) => {
 
 // 关闭弹窗
 const beforeClose = () => {
+  // 如果正在上传，不允许关闭
+  if (uploading.value) {
+    ElMessage.warning("正在上传中，请稍候...");
+    return;
+  }
+
   options.value.img = null;
   previews.value.url = "";
   dialogVisible.value = false;
@@ -196,10 +206,15 @@ const beforeUploadCropper = (rawFile: File) => {
 // 提交裁剪结果
 const determine = async () => {
   try {
-    if (!cropper.value || !props.userId) {
-      ElMessage.error("缺少必要参数");
+    // 防止重复点击
+    if (uploading.value || !cropper.value || !props.userId) {
+      if (!props.userId) {
+        ElMessage.error("缺少必要参数");
+      }
       return;
     }
+
+    uploading.value = true;
 
     const croppedData = await new Promise<string>((resolve) => {
       cropper.value?.getCropData(resolve);
@@ -207,6 +222,7 @@ const determine = async () => {
 
     if (!croppedData) {
       ElMessage.error("裁剪数据获取失败");
+      uploading.value = false;
       return;
     }
 
@@ -221,14 +237,25 @@ const determine = async () => {
       blob = await base64Response.blob();
     } else {
       ElMessage.error("不支持的图像数据格式");
+      uploading.value = false;
       return;
     }
 
     emit("cropped", blob);
+    // 重置上传状态
+    uploading.value = false;
     beforeClose();
   } catch (error: any) {
-    const errorMessage = error?.message || "上传失败";
-    ElMessage.error(errorMessage);
+    // 重置上传状态
+    uploading.value = false;
+
+    // 处理频率限制错误
+    if (error?.response?.status === 429) {
+      ElMessage.error("操作过于频繁，请稍后再试");
+    } else {
+      const errorMessage = error?.message || "上传失败";
+      ElMessage.error(errorMessage);
+    }
   }
 };
 

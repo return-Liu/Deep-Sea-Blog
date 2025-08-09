@@ -8,6 +8,7 @@ export const zh_TW = {
       languages: "多种語言和翻譯",
       toggleaccount: "切換帳號",
       changenicknamecolor: "選擇你的暱稱顏色",
+      supercolorpalette: "超級顏色",
     },
     profile: {
       username: "用戶名",
@@ -71,6 +72,10 @@ export const zh_TW = {
       description: "添加多個帳號並隨時切換",
       currentAccount: "當前帳號",
       addNewAccount: "添加或註冊新帳號",
+    },
+    supercolorpalette: {
+      title: "超級调色板",
+      description: "限時嘗鲜 體驗色彩活力 定義你的專屬主題",
     },
   },
   commonaside: {

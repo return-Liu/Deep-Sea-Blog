@@ -195,6 +195,12 @@ export default function useHeader() {
       {
         name: "支持多种语言,欢迎使用 如有问题请反馈",
       },
+      {
+        name: "欢迎 使用 Deep Sea 管理系统",
+      },
+      {
+        name: "裁剪上传图片功能已上线,请使用",
+      },
     ]),
     handleInput,
     changeSetting,

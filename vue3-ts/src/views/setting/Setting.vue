@@ -398,13 +398,24 @@
                   </li>
                 </ul>
               </div>
-
               <!-- 添加新账号 -->
               <div class="add-new-account" @click="addNewAccount">
                 <el-icon name="plus"></el-icon>
                 <span>{{ t("settings.toggleaccount.addNewAccount") }}</span>
               </div>
             </div>
+          </div>
+          <!-- 超级调色盘 -->
+          <div
+            v-if="activeTab === 'supercolorpalette'"
+            class="super-color-palette"
+          >
+            <h2 class="super-color-palette-title">
+              {{ t("settings.supercolorpalette.title") }}
+            </h2>
+              <p class="super-color-palette-description">
+              {{ t("settings.supercolorpalette.description") }}
+            </p>
           </div>
         </div>
       </div>
@@ -424,7 +435,7 @@
 
 <script setup lang="ts" name="Setting">
 import AvatarCropper from "../../components/avatarcropper/AvatarCropper.vue";
-import { ref, computed, onMounted, defineExpose } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
@@ -441,12 +452,10 @@ import { apiUrl } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
-// 保留原有代码
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
   return locale.value;
 });
-// 保留原有变量声明
 const defaultAvatar =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
 const route = useRoute();
@@ -466,14 +475,13 @@ const followSystem = computed({
     }
   },
 });
-
+// 添加图片裁剪功能
 const avatarCropper = ref();
-
+// 添加图片编辑功能
 const editImage = () => {
   if (!avatar.value) return;
   avatarCropper.value.openCropper(avatar.value);
 };
-
 // 添加处理裁剪结果的方法
 const handleCropped = async (blob: Blob) => {
   try {
@@ -490,16 +498,13 @@ const handleCropped = async (blob: Blob) => {
         },
       }
     );
-
     // 删除旧头像
     if (avatar.value) {
       await deleteOldAvatar(true);
     }
-
     // 更新头像URL
     avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
     ElMessage.success(response.data.message);
-
     // 更新用户存储
     userStore.user.avatar = avatar.value;
     getAllUsers();
@@ -510,7 +515,7 @@ const handleCropped = async (blob: Blob) => {
     ElMessage.error(errorMessage);
   }
 };
-
+//   添加图片上传功能
 const handleChange = (uploadFile: { raw: File }) => {
   const reader = new FileReader();
   reader.onload = (e: ProgressEvent<FileReader>) => {
@@ -518,7 +523,6 @@ const handleChange = (uploadFile: { raw: File }) => {
   };
   reader.readAsDataURL(uploadFile.raw);
 };
-
 // 保留原有变量声明
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
@@ -531,7 +535,6 @@ const phone = ref<string>("");
 const showUploadButton = ref<boolean>(false);
 const constellation = ref<string>("");
 const clientFeatureCode = ref<string | null>(null);
-
 const nicknameColor = ref<string>("#000000");
 const likedArticles = ref<Article[]>([]);
 const previousImageUrl = ref<string>("");
@@ -542,12 +545,9 @@ const activeTab = ref<string>(
 );
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
-
-// 保留其余原有方法
 const addNewAccount = () => {
   logout();
 };
-
 const switchAccount = async (id: string) => {
   try {
     const response = await axiosConfig.post("/auth/switch-account", {
@@ -576,16 +576,13 @@ const switchAccount = async (id: string) => {
     ElMessage.error(errorMessage);
   }
 };
-
 const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
-
 const changeTab = (tabId: string) => {
   activeTab.value = tabId;
   router.push({ name: "setting", params: { tab: tabId } });
 };
-
 const fetchUserInfo = async () => {
   try {
     const response = await axiosConfig.get("/users/me");
@@ -605,7 +602,6 @@ const fetchUserInfo = async () => {
     nicknameColor.value = userInfo.nicknameColor || "#000000";
     phone.value = userInfo.phone || "";
     themeStore.user = userInfo.uuid.toString();
-
     // 记录初始状态
     initialUserInfo.value = {
       nickname: nickname.value,
@@ -626,14 +622,12 @@ const fetchUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
-
 const changeLanguage = (lang: string) => {
   if (uuid.value) {
     locale.value = lang;
     localStorage.setItem(`language-style-${uuid.value}`, lang);
   }
 };
-
 const beforeUpload = (file: File) => {
   const allowedTypes = [
     "image/jpeg",
@@ -644,7 +638,6 @@ const beforeUpload = (file: File) => {
   ];
   const isAllowedType = allowedTypes.includes(file.type);
   const isLt2M = file.size / 1024 / 1024 < 2;
-
   if (!isAllowedType) {
     ElMessage.error("上传照片只能是 JPG 或 PNG 或 WEBP 或 GIF ");
     return false;
@@ -659,7 +652,6 @@ const beforeUpload = (file: File) => {
   }
   return false;
 };
-
 const deleteOldAvatar = async (isReupload: boolean) => {
   try {
     // 如果是默认头像，直接跳过删除
@@ -687,14 +679,12 @@ const deleteOldAvatar = async (isReupload: boolean) => {
     ElMessage.error(errorMessage);
   }
 };
-
 const handleSuccess = (response: any, file: File) => {
   avatar.value = `${apiUrl}/avatar/${response.data.avatar}`;
   ElMessage.success("头像上传成功");
   uploadRef.value.clearFiles();
   showUploadButton.value = false;
 };
-
 // 更新信息
 const updateUserInfo = async () => {
   // 检查信息是否发生更改
@@ -752,7 +742,6 @@ const updateUserInfo = async () => {
     ElMessage.success(response.data.message);
   } catch (error: any) {
     let errorMessage = "添加失败";
-
     // 检查 error 是否包含 errors 数组
     if (
       error?.response?.data?.errors &&
@@ -765,11 +754,9 @@ const updateUserInfo = async () => {
       errorMessage =
         error?.response?.data?.message || error?.message || "添加失败";
     }
-
     ElMessage.error(errorMessage);
   }
 };
-
 // 注销账号
 const deleteAccount = async () => {
   try {
@@ -785,10 +772,8 @@ const deleteAccount = async () => {
     await axiosConfig.delete(`/auth/devices/${userStore.user.id}`);
     // 删除账户
     const response = await axiosConfig.delete("/users/delete");
-
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
-
     // 删除头像
     if (
       avatar.value &&
@@ -798,12 +783,10 @@ const deleteAccount = async () => {
     ) {
       await deleteOldAvatar(false);
     }
-
     // 清除 cookie 和缓存
     Cookies.remove("ds-token");
     themeStore.clearUserTheme();
     localStorage.removeItem("reportedMessages");
-
     ElMessage.success(response.data.message);
     router.push({ name: "login/index" });
   } catch (error: any) {
@@ -814,7 +797,6 @@ const deleteAccount = async () => {
     ElMessage.error(errorMessage);
   }
 };
-
 const fetchLikedArticles = async () => {
   try {
     if (!userStore.user.id) {
@@ -841,22 +823,16 @@ const fetchLikedArticles = async () => {
     ElMessage.error(errorMessage);
   }
 };
-
 const logout = () => {
   Cookies.remove("ds-token");
   router.push({ name: "login/index" });
 };
-
 onMounted(() => {
   fetchUserInfo().then(() => {
     fetchLikedArticles();
     getAllUsers();
     userStore.loadUser();
   });
-});
-
-defineExpose({
-  deleteAccount,
 });
 </script>
 

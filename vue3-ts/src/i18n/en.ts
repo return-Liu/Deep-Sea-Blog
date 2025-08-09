@@ -8,6 +8,7 @@ export const en = {
       languages: "More Languages and Translations",
       toggleaccount: "Toggle Account",
       changenicknamecolor: "Choose NickName Color",
+      supercolorpalette: "Super Color Palette",
     },
     profile: {
       username: "Username",
@@ -78,13 +79,10 @@ export const en = {
       currentAccount: "Current Account",
       addNewAccount: "Add or Register New Account",
     },
-    settings: {
-      title: {
-        personals: "Personal Profile",
-        securitys: "Account Security",
-        likes: "My Likes",
-        modes: "Mode Selection",
-      },
+    supercolorpalette: {
+      title: "Super Color Palette",
+      description:
+        "Test once. Define a complete color palette with a color palette.",
     },
   },
   commonaside: {

@@ -1,0 +1,441 @@
+.comment-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+
+    .comment-main {
+        border-radius: 10px;
+
+        .comment-user {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 15px;
+
+            .comment-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                margin-right: 12px;
+            }
+
+            .user-info {
+                flex: 1;
+
+                .comment-time {
+                    font-size: 12px;
+                    color: var(--gray-500);
+                    display: block;
+                    margin-bottom: 4px;
+                }
+
+                .username {
+                    font-weight: 500;
+                    margin-right: 8px;
+                    color: var(--gray-700);
+                }
+
+                .area {
+                    font-size: 12px;
+                    color: var(--gray-500);
+                    margin-right: 8px;
+                }
+
+                .delete-btn,
+                .report-btn {
+                    font-size: 12px;
+                    color: #ff4d4f;
+                    cursor: pointer;
+                    margin-left: 8px;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
+            }
+        }
+
+        .comment-content {
+            margin-left: 52px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--gray-600);
+            word-break: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            margin-left: 52px;
+            margin-top: 8px;
+            justify-content: flex-end;
+
+            .comment-like,
+            .comment-reply {
+                display: flex;
+                align-items: center;
+                margin-right: 16px;
+                cursor: pointer;
+
+                .likes-count,
+                .reply-text {
+                    margin-left: 4px;
+                    font-size: 14px;
+                    color: var(--gray-600);
+                }
+            }
+        }
+    }
+
+    .replies-container {
+        background-color: #fff;
+        margin-top: 10px;
+        border-radius: 10px;
+        position: relative;
+
+        .show-more-replies {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            padding: 8px 12px;
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
+
+            &:hover {
+                border-color: #409eff;
+                background-color: #f0f8ff;
+                color: #409eff;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 6px rgba(64, 158, 255, 0.2);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+
+        .comment-item {
+            border-bottom: none;
+            padding: 10px 0;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .comment-main {
+                .comment-user {
+                    padding: 8px;
+
+                    .comment-avatar {
+                        width: 30px;
+                        height: 30px;
+                        margin-right: 8px;
+                    }
+
+                    .user-info {
+                        .comment-time {
+                            font-size: 11px;
+                        }
+
+                        .username {
+                            font-size: 13px;
+                        }
+
+                        .area {
+                            font-size: 11px;
+                        }
+                    }
+                }
+
+                .comment-content {
+                    margin-left: 40px;
+                    font-size: 13px;
+                }
+
+                .comment-actions {
+                    margin-left: 40px;
+                    margin-top: 4px;
+
+                    .comment-like,
+                    .comment-reply {
+                        margin-right: 12px;
+
+                        .likes-count,
+                        .reply-text {
+                            font-size: 12px;
+                        }
+                    }
+                }
+            }
+
+            .reply-form {
+                margin-left: 40px;
+                margin-top: 8px;
+
+                :deep(.el-textarea__inner) {
+                    min-height: 50px;
+                    font-size: 13px;
+                }
+            }
+        }
+    }
+
+    .reply-form {
+        margin-left: 52px;
+        margin-top: 10px;
+
+        :deep(.el-textarea__inner) {
+            min-height: 60px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+
+            .emoji-trigger {
+                position: absolute;
+                right: 60px;
+                bottom: 10px;
+                z-index: 1;
+            }
+
+            .bg-trigger {
+                position: absolute;
+                right: 90px;
+                bottom: 10px;
+                z-index: 1;
+            }
+        }
+
+        // 回复预览卡样式
+        .comment-bg-preview {
+            margin-top: 15px;
+
+            .preview-card {
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                transition: all 0.3s ease;
+
+                .preview-content {
+                    .preview-user-info {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 10px;
+
+                        .preview-avatar {
+                            width: 35px;
+                            height: 35px;
+                            border-radius: 50%;
+                            margin-right: 10px;
+                        }
+
+                        .user-detail {
+                            flex: 1;
+
+                            .preview-header {
+                                display: flex;
+                                align-items: center;
+                                margin-bottom: 2px;
+
+                                .preview-time {
+                                    font-size: 12px;
+                                    color: rgba(0, 0, 0, 0.6);
+                                }
+                            }
+
+                            .preview-name-area {
+                                display: flex;
+                                align-items: center;
+                                flex-wrap: wrap;
+
+                                .preview-username {
+                                    font-weight: 500;
+                                    margin-right: 8px;
+                                    font-size: 14px;
+                                }
+
+                                .preview-area {
+                                    font-size: 12px;
+                                    color: rgba(0, 0, 0, 0.5);
+                                }
+                            }
+                        }
+                    }
+
+                    .preview-text {
+                        .preview-message {
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: rgba(0, 0, 0, 0.8);
+                            word-break: break-word;
+                        }
+                    }
+                }
+
+                .preview-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+                    .action-item {
+                        display: flex;
+                        align-items: center;
+                        margin-left: 15px;
+                        font-size: 13px;
+                        color: rgba(0, 0, 0, 0.6);
+                    }
+                }
+            }
+        }
+    }
+
+    // 表情包和背景卡样式
+    .emoji-container {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 8px;
+        padding: 8px;
+
+        .emoji-item {
+            cursor: pointer;
+            font-size: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+
+            &:hover {
+                transform: scale(1.2);
+            }
+        }
+    }
+
+    .bg-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+
+        .bg-item {
+            cursor: pointer;
+
+            .bg-preview {
+                width: 80px;
+                height: 50px;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            }
+
+            &.bg-item-selected .bg-preview {
+                border: 2px solid #409eff;
+                box-shadow: 0 0 0 2px #409eff;
+            }
+        }
+    }
+}
+
+// 表情包和背景卡样式
+.emoji-container {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    padding: 8px;
+
+    .emoji-item {
+        cursor: pointer;
+        font-size: 20px;
+        text-align: center;
+        transition: transform 0.2s;
+
+        &:hover {
+            transform: scale(1.2);
+        }
+    }
+}
+
+.bg-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+
+    .bg-item {
+        cursor: pointer;
+
+        .bg-preview {
+            width: 80px;
+            height: 50px;
+            border-radius: 4px;
+        }
+
+        &.bg-item-selected .bg-preview {
+            border: 2px solid #409eff;
+        }
+    }
+}
+
+// 响应式适配
+@media screen and (max-width: 768px) {
+    .comment-item {
+        padding: 12px;
+
+        .comment-main {
+            .comment-user {
+                padding: 10px;
+
+                .comment-avatar {
+                    width: 35px;
+                    height: 35px;
+                    margin-right: 10px;
+                }
+            }
+
+            .comment-content {
+                margin-left: 45px;
+            }
+
+            .comment-actions {
+                margin-left: 45px;
+            }
+        }
+
+        .replies-container {
+            margin-left: 15px;
+
+            .comment-item {
+                .comment-main {
+                    .comment-user {
+                        padding: 6px;
+
+                        .comment-avatar {
+                            width: 25px;
+                            height: 25px;
+                            margin-right: 6px;
+                        }
+                    }
+
+                    .comment-content {
+                        margin-left: 32px;
+                    }
+
+                    .comment-actions {
+                        margin-left: 32px;
+                    }
+                }
+            }
+
+            .reply-form {
+                margin-left: 32px;
+            }
+        }
+
+        .reply-form {
+            margin-left: 45px;
+        }
+    }
+}
