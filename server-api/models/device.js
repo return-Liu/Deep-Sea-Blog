@@ -24,7 +24,6 @@ module.exports = (sequelize, DataTypes) => {
       deviceType: DataTypes.STRING,
       os: DataTypes.STRING,
       browser: DataTypes.STRING,
-      location: DataTypes.STRING,
       lastLoginTime: DataTypes.DATE,
       loginMethod: DataTypes.STRING,
       userAgent: DataTypes.TEXT,
@@ -37,8 +36,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      province: DataTypes.STRING,
-      city: DataTypes.STRING,
     },
     {
       sequelize,

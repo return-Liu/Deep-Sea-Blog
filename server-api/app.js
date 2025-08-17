@@ -13,6 +13,7 @@ const searchRouter = require("./routes/search");
 const authRouter = require("./routes/auth");
 const emailRouter = require("./routes/email");
 const themeRouter = require("./routes/theme");
+const locationRouter = require("./routes/location");
 // 后台路由
 // const adminAuthRouter = require("./routes/admin/auth");
 const adminArticleRouter = require("./routes/admin/article");
@@ -51,6 +52,7 @@ app.use("/search", searchRouter);
 app.use("/auth", authRouter);
 app.use("/email", emailRouter);
 app.use("/theme", themeRouter);
+app.use("/location", locationRouter);
 // 后台路由配置
 // app.use("/admin/auth", adminAuthRouter);
 app.use("/admin/article", adminArticleRouter);

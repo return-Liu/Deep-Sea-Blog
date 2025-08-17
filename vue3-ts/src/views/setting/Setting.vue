@@ -413,7 +413,7 @@
             <h2 class="super-color-palette-title">
               {{ t("settings.supercolorpalette.title") }}
             </h2>
-              <p class="super-color-palette-description">
+            <p class="super-color-palette-description">
               {{ t("settings.supercolorpalette.description") }}
             </p>
           </div>
@@ -565,6 +565,7 @@ const switchAccount = async (id: string) => {
     fetchUserInfo();
     getAllUsers(); // 重新获取账号列表
     userStore.loadUser();
+
     // 跳转到首页或其他页面
     router.push("/home");
   } catch (error: any) {
@@ -833,6 +834,12 @@ onMounted(() => {
     getAllUsers();
     userStore.loadUser();
   });
+  const savedLanguage = localStorage.getItem(
+    `language-style-${userStore.user.uuid}`
+  );
+  if (savedLanguage) {
+    changeLanguage(savedLanguage);
+  }
 });
 </script>
 

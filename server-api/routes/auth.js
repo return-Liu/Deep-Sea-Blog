@@ -251,9 +251,6 @@ async function handlePostLogin(user, req, res, loginMethod) {
     lastLoginTime: new Date(),
     isTrusted: false,
     userAgent: deviceInfo.userAgent,
-    location: locationInfo.city,
-    province: locationInfo.province,
-    city: locationInfo.city,
     loginMethod: loginMethod,
     status: "已登录",
     loginExpire: loginExpire, // 添加过期时间
@@ -267,9 +264,6 @@ async function handlePostLogin(user, req, res, loginMethod) {
       deviceName: deviceInfo.deviceName,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      location: deviceData.location,
-      province: deviceData.province,
-      city: deviceData.city,
       loginMethod: loginMethod || device.loginMethod,
       status: "已登录",
       loginExpire: loginExpire, // 更新过期时间
@@ -283,9 +277,6 @@ async function handlePostLogin(user, req, res, loginMethod) {
       isTrusted: device.isTrusted,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
-      location: deviceData.location,
-      province: deviceData.province,
-      city: deviceData.city,
     },
   });
 }

@@ -15,7 +15,11 @@
       <p class="page-description">
         尊贵的用户，您的账号目前{{
           currentDeviceStatus
-        }}，请继续保持。请妥善保管账号，建议移除不常用，非自用设备。
+        }}，请继续保持。请妥善保管账号，建议移除不常用，非自用设备。 。<br />
+        <el-text type="warning" size="small">
+          *
+          登录参考地可能因网络环境、代理服务器等原因存在定位误差，请以实际为准。
+        </el-text>
       </p>
     </div>
     <el-card class="device-card">
@@ -108,10 +112,7 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">参考登录地点:</span>
-                <span
-                  >{{ device.province }}
-                  {{ device.location || "未知参考登录地点" }}</span
-                >
+                <span>{{ currentprovince }} {{ currentCity }}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">登录状态:</span>
@@ -141,11 +142,12 @@
         </div>
       </div>
     </el-card>
-
     <DeviceDetailModal
       v-model="modalVisible"
       :device="selectedDevice"
       @close="modalVisible = false"
+      :currentprovince="currentprovince"
+      :currentcity="currentCity"
     />
   </div>
 </template>
@@ -161,9 +163,13 @@ const user = computed(() => userStore.user);
 import { Monitor, Iphone, Warning, Cellphone } from "@element-plus/icons-vue";
 import axiosConfig from "../../utils/request";
 import type { Device } from "../../types/device";
-
+import {
+  getCity,
+  currentprovince,
+  currentCity,
+  loading,
+} from "../../utils/location";
 const devices = ref<Device[]>([]);
-const loading = ref(false);
 const modalVisible = ref(false);
 const selectedDevice = ref<Device>({} as Device);
 
@@ -172,9 +178,9 @@ const handleClick = (device: Device) => {
   modalVisible.value = true;
 };
 onMounted(() => {
+  getCity();
   fetchDevices();
 });
-
 // 获取设备图标
 const getDeviceIcon = (deviceType: string) => {
   switch (deviceType) {
@@ -186,13 +192,10 @@ const getDeviceIcon = (deviceType: string) => {
       return Monitor;
   }
 };
-
 const formatDate = (dateString: string | Date | undefined) => {
   if (!dateString) return "未知";
-
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return "未知"; // 检查日期是否有效
-
   return date.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
@@ -205,12 +208,7 @@ const formatDate = (dateString: string | Date | undefined) => {
 const fetchDevices = async () => {
   try {
     loading.value = true;
-    // 如果数据一直是空的 则为false
-    if (!devices.value.length) {
-      loading.value = false;
-    }
     const response = await axiosConfig.get("/auth/devices");
-    console.log(response);
     devices.value = response.data.data;
   } catch (error: any) {
     const errorMessage =
@@ -234,7 +232,6 @@ const logoutDevice = async (deviceId: string) => {
         type: "warning",
       }
     );
-
     device.actionLoading = true;
     const response = await axiosConfig.delete(`/auth/devices/${deviceId}`);
     devices.value = devices.value.filter(
@@ -276,6 +273,7 @@ const logoutAllDevices = async () => {
     loading.value = false;
   }
 };
+
 const currentDeviceStatus = computed(() => {
   const currentDevice = devices.value.find((d) => d.isCurrentDevice);
   return currentDevice ? (currentDevice.status ? "正常" : "异常") : "未知";
