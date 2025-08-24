@@ -200,16 +200,35 @@ router.post("/views/:id", userAuth, async (req, res) => {
   }
 });
 // 查询指定用户的文章列表
-router.get("/user/:uuid", userAuth, async (req, res) => {
+router.get("/user/:uuid", async (req, res) => {
   try {
     const { uuid } = req.params;
-    const user = await User.findOne({ where: { uuid } });
+
+    // 先检查用户是否存在
+    const user = await User.findOne({
+      where: { uuid },
+      attributes: ["id"], // 只获取需要的字段
+    });
+
     if (!user) {
       throw new Error("用户不存在");
     }
-    const userId = user.id;
+
+    // 直接使用sequelize的count方法检查是否有文章
+    const articleCount = await Article.count({
+      where: { userId: user.id },
+    });
+
+    // 如果没有文章，直接返回空数组，避免执行findAll查询
+    if (articleCount === 0) {
+      return success(res, "暂无文章列表", {
+        articles: [],
+      });
+    }
+
+    // 只有当存在文章时才执行查询
     const articles = await Article.findAll({
-      where: { userId: userId },
+      where: { userId: user.id },
       attributes: [
         "id",
         "image",
@@ -224,10 +243,7 @@ router.get("/user/:uuid", userAuth, async (req, res) => {
         "updatedAt",
       ],
     });
-    // 优化：检查数组长度而不是是否存在
-    if (articles.length === 0) {
-      return failure(res, 404, "用户博客文章不存在");
-    }
+
     success(res, "查询指定用户博客文章列表成功", {
       articles,
     });

@@ -326,30 +326,6 @@
                   </el-icon>
                 </span>
               </div>
-              <div
-                class="language-button"
-                :class="{ active: currentLanguage === 'ja' }"
-                @click="changeLanguage('ja')"
-              >
-                {{ t("settings.language.ja") }}
-                <span v-if="currentLanguage === 'ja'" class="check-icon">
-                  <el-icon class="check-icon">
-                    <Check v-if="currentLanguage === 'ja'" />
-                  </el-icon>
-                </span>
-              </div>
-              <div
-                class="language-button"
-                :class="{ active: currentLanguage === 'ko' }"
-                @click="changeLanguage('ko')"
-              >
-                {{ t("settings.language.ko") }}
-                <span v-if="currentLanguage === 'ko'" class="check-icon">
-                  <el-icon class="check-icon">
-                    <Check v-if="currentLanguage === 'ko'" />
-                  </el-icon>
-                </span>
-              </div>
             </div>
           </div>
           <!-- 切换账号 -->

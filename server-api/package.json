@@ -8,6 +8,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "ali-oss": "^6.23.0",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "connect-redis": "^8.0.1",

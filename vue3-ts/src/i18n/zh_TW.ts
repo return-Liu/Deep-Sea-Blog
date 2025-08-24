@@ -8,7 +8,7 @@ export const zh_TW = {
       languages: "多种語言和翻譯",
       toggleaccount: "切換帳號",
       changenicknamecolor: "選擇你的暱稱顏色",
-      supercolorpalette: "超級顏色",
+      supercolorpalette: "超級调色盘",
     },
     profile: {
       username: "用戶名",

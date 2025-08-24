@@ -95,8 +95,8 @@
               <span>参考登录地点</span>
             </div>
             <div class="detail-value">
-              {{ device.province }}
-              {{ device.location || "未知参考登录地点" }}
+              {{ currentprovince }}
+              {{ currentCity || "未知参考登录地点" }}
             </div>
           </div>
 
@@ -153,6 +153,8 @@ import {
 const props = defineProps<{
   modelValue: boolean;
   device: Device;
+  currentprovince: any;
+  currentCity: any;
 }>();
 
 const emit = defineEmits<{

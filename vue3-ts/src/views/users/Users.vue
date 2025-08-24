@@ -128,7 +128,6 @@
               v-for="item in getCurrentTabContent()"
               :key="item.id"
               class="content-card"
-              @click="editContent(item.id)"
             >
               <div class="content-image">
                 <img :src="item.image" :alt="item.title" />
@@ -273,14 +272,6 @@ const tabs = [
   { key: "notes", label: "随记" },
 ];
 const contentLoading = ref(false);
-const checkMaintenanceMode = () => {
-  if (modelURL === "true") {
-    loadmore.value = true;
-    ElMessage.warning("我们正在努力升级服务，请稍后再来查看~");
-    return true; // 表示处于维护模式
-  }
-  return false; // 不在维护模式中
-};
 
 const reportComment = () => {
   showReportModal.value = true;
@@ -348,16 +339,6 @@ const fetchUser = async () => {
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
   }
-};
-const editContent = async (id: number) => {
-  const routeData = router.resolve({
-    name: "overview",
-    query: {
-      id: String(id),
-      type: currentTab.value,
-    },
-  });
-  window.open(routeData.href, `id_${id}`, `content_${currentTab.value}`);
 };
 const getCurrentTabContent = (): ContentItem[] => {
   switch (currentTab.value) {

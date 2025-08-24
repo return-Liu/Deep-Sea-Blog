@@ -14,7 +14,7 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import "nprogress/nprogress.css";
 import i18n from "./i18n/index";
 
-const app = createApp(App); // 修复点：在 createApp 中传入根组件
+const app = createApp(App);
 const pinia = createPinia();
 
 // 注册 Element Plus Icons

@@ -112,7 +112,10 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">参考登录地点:</span>
-                <span>{{ currentprovince }} {{ currentCity }}</span>
+                <span
+                  >{{ currentprovince }}
+                  {{ currentCity || "未知参考登录地点" }}</span
+                >
               </div>
               <div class="detail-row">
                 <span class="detail-label">登录状态:</span>
@@ -147,7 +150,7 @@
       :device="selectedDevice"
       @close="modalVisible = false"
       :currentprovince="currentprovince"
-      :currentcity="currentCity"
+      :currentCity="currentCity"
     />
   </div>
 </template>

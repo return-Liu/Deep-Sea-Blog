@@ -129,7 +129,6 @@ const handleSearch = async () => {
     });
 
     results.value = response.data.data;
-    searchStore.searchQuery = "";
     router.push({
       name: "search",
       query: {
@@ -137,9 +136,11 @@ const handleSearch = async () => {
         type: searchType.value,
       },
     });
-  } catch (err) {
-    error.value = "搜索失败，请重试";
-    console.error("搜索失败:", err);
+  } catch (error: any) {
+    // 兼容 message 字段
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
   } finally {
     loading.value = false;
   }

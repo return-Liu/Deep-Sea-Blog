@@ -148,35 +148,6 @@ function generateUUID() {
   return result;
 }
 
-// 获取ip地址
-async function getIpAddress() {
-  try {
-    const response = await axios.get(
-      "https://apis.map.qq.com/ws/location/v1/ip",
-      {
-        params: {
-          key: "B3QBZ-57BWV-3MIPO-5QBY6-ZPUCS-F7BUJ",
-          ip: "223.104.174.0",
-        },
-        timeout: 3000, // 3秒超时
-      }
-    );
-
-    const result = response.data?.result;
-    if (!result) {
-      console.error("Invalid API response:", response.data);
-      return { city: "未知", province: "未知" };
-    }
-
-    const { city = "未知", province = "未知" } = result.ad_info || {};
-    return { city, province };
-  } catch (error) {
-    console.error("获取位置信息失败:", error.message);
-    return { city: "未知", province: "未知" };
-  }
-}
-// 获取ip经纬度
-async function getIPLocation(ip) {}
 // 获取当前用户
 async function getCurrentUser(req) {
   const token = req.headers.authorization?.split(" ")[1]; // 从请求头中获取 token
@@ -222,7 +193,14 @@ router.get("/accounts", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-async function handlePostLogin(user, req, res, loginMethod) {
+// 登录方式
+async function handlePostLogin(
+  user,
+  req,
+  res,
+  loginMethod,
+  successMessage = "登录成功"
+) {
   // 生成token
   const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
     expiresIn: "1h",
@@ -231,9 +209,6 @@ async function handlePostLogin(user, req, res, loginMethod) {
   // 记录设备信息
   const deviceInfo = await extractDeviceInfo(req);
   const deviceId = generateDeviceId(user.id, deviceInfo.userAgent);
-
-  // 获取位置信息
-  const locationInfo = await getIpAddress();
 
   // 查找或创建设备记录
   let device = await Device.findOne({ where: { deviceId } });
@@ -270,7 +245,7 @@ async function handlePostLogin(user, req, res, loginMethod) {
     });
   }
 
-  success(res, "登录成功", {
+  success(res, successMessage, {
     token,
     deviceInfo: {
       deviceName: deviceInfo.deviceName,
@@ -280,6 +255,7 @@ async function handlePostLogin(user, req, res, loginMethod) {
     },
   });
 }
+
 // 切换账号
 router.post("/switch-account", userAuth, async (req, res) => {
   try {
@@ -304,8 +280,8 @@ router.post("/switch-account", userAuth, async (req, res) => {
     if (targetUser.clientFeatureCode !== currentUser.clientFeatureCode) {
       throw new UnauthorizedError("无权限切换到该账号");
     }
-    // 执行登录处理逻辑
-    await handlePostLogin(targetUser, req, res);
+    // 执行登录处理逻辑，传递"切换账号"作为登录方式和特定成功消息
+    await handlePostLogin(targetUser, req, res, "切换账号", "账号切换成功");
   } catch (error) {
     failure(res, error);
   }
@@ -324,11 +300,11 @@ router.post("/sign_in", async (req, res) => {
     let condition = { where: {} };
     let loginMethod = "未知登录方式";
 
-    // 根据输入类型构建查询条件并确定登录方式
     if (/^1[3-9]\d{9}$/.test(login)) {
       // 手机号登录
       condition.where.phone = login;
       loginMethod = "手机号登录";
+      // 根据输入类型构建查询条件并确定登录方式
     } else if (login.includes("@")) {
       // 邮箱登录
       condition.where.email = login;
@@ -539,51 +515,6 @@ cron.schedule("0 0 * * *", async () => {
     console.log(`清理了 ${result} 个未登录设备`);
   } catch (error) {
     console.error("清理未登录设备时出错:", error);
-  }
-});
-
-// 删除设备（登出设备）
-// 创建设备历史记录表
-// 在登出设备时，将设备信息移动到历史记录表中，然后删除原记录
-router.delete("/devices/:deviceId", userAuth, async (req, res) => {
-  try {
-    const currentUser = await getCurrentUser(req);
-    const { deviceId } = req.params;
-
-    // 检查设备是否属于当前用户
-    const device = await Device.findOne({
-      where: {
-        deviceId: deviceId,
-        userId: currentUser.id,
-      },
-    });
-
-    if (!device) {
-      throw new NotFoundError("设备不存在或不属于当前用户");
-    }
-
-    // 不允许删除当前设备
-    const currentDeviceInfo = extractDeviceInfo(req);
-    const currentDeviceId = generateDeviceId(
-      currentUser.id,
-      currentDeviceInfo.userAgent
-    );
-
-    if (device.deviceId === currentDeviceId) {
-      // 将当前设备状态设为未登录而不是删除
-      await device.update({ status: "未登录" });
-      return success(res, "设备已登出");
-    }
-
-    // 将设备信息保存到历史记录表中（可选）
-    // await DeviceHistory.create(device.toJSON());
-
-    // 删除设备记录
-    await device.destroy();
-
-    success(res, "设备删除成功");
-  } catch (error) {
-    failure(res, error);
   }
 });
 

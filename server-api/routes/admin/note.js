@@ -137,7 +137,7 @@ router.delete("/:id", userAuth, async (req, res) => {
 });
 // 获取指定用户的笔记
 // 获取指定用户的笔记
-router.get("/user/:uuid", userAuth, async (req, res) => {
+router.get("/user/:uuid", async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({ where: { uuid } });
@@ -145,6 +145,20 @@ router.get("/user/:uuid", userAuth, async (req, res) => {
       throw new Error("用户不存在");
     }
     const userId = user.id;
+
+    // 先检查是否有笔记，避免不必要的查询
+    const noteCount = await Note.count({
+      where: { userId },
+    });
+
+    // 如果没有笔记，直接返回空数组
+    if (noteCount === 0) {
+      return success(res, "暂无笔记列表", {
+        notes: [],
+      });
+    }
+
+    // 只有当存在笔记时才执行查询
     const notes = await Note.findAll({
       where: { userId: userId },
       attributes: [
@@ -157,18 +171,14 @@ router.get("/user/:uuid", userAuth, async (req, res) => {
         "updatedAt",
       ],
     });
-    // 修复：检查 notes 而不是 articles
-    if (notes.length === 0) {
-      return failure(res, 404, "用户随笔随记不存在");
-    }
+
     success(res, "查询指定用户随笔随记列表成功", {
       notes,
     });
   } catch (error) {
     failure(res, error);
   }
-});
-// 白名单过滤
+}); // 白名单过滤
 function filterWhiteList(req) {
   return {
     title: req.body.title,

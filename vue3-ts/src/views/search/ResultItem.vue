@@ -22,6 +22,10 @@
 import { defineProps, computed } from "vue";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { useRouter } from "vue-router";
+import { type Article, type Photography, type Note } from "../../types/share";
+import { ElMessage } from "element-plus";
+const router = useRouter();
 
 const props = defineProps<{
   item: {
@@ -31,6 +35,7 @@ const props = defineProps<{
     image: string;
     content: string;
     createdAt: string;
+    type: string;
   };
   keyword: string;
 }>();

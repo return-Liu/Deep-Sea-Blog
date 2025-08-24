@@ -139,7 +139,7 @@ router.delete("/:id", userAuth, async (req, res) => {
   }
 });
 // 获取指定用户的摄影作品
-router.get("/user/:uuid", userAuth, async (req, res) => {
+router.get("/user/:uuid", async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({ where: { uuid } });
@@ -147,6 +147,20 @@ router.get("/user/:uuid", userAuth, async (req, res) => {
       throw new Error("用户不存在");
     }
     const userId = user.id;
+
+    // 先检查是否有摄影作品，避免不必要的查询
+    const photoCount = await Photography.count({
+      where: { userId },
+    });
+
+    // 如果没有摄影作品，直接返回空数组
+    if (photoCount === 0) {
+      return success(res, "暂无摄影作品列表", {
+        photos: [],
+      });
+    }
+
+    // 只有当存在摄影作品时才执行查询
     const photos = await Photography.findAll({
       where: { userId },
       attributes: [
@@ -159,10 +173,7 @@ router.get("/user/:uuid", userAuth, async (req, res) => {
         "updatedAt",
       ],
     });
-    // 优化：检查数组长度而不是是否存在
-    if (photos.length === 0) {
-      return failure(res, 404, "用户摄影作品不存在");
-    }
+
     success(res, "获取指定用户的摄影作品成功", {
       photos,
     });
