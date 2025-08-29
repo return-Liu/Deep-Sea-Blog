@@ -4,17 +4,8 @@ const { User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const multer = require("multer");
 const path = require("path");
-const OSS = require("ali-oss");
 const userAuth = require("../../middlewares/user-auth");
-
-// OSS客户端配置
-const client = new OSS({
-  region: "oss-cn-beijing",
-  accessKeyId: process.env.ALIBABA_CLOUD_ACCESS_KEY_ID,
-  accessKeySecret: process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET,
-  authorizationV4: true,
-  bucket: process.env.OSS_BUCKET,
-});
+const { client } = require("../../utils/oss");
 
 // 自定义请求头
 const headers = {
@@ -62,7 +53,7 @@ router.get("/image/sign", async (req, res) => {
     // 确保只使用文件名，而不是完整路径
     const url = await client.signatureUrl(`images/${filename}`, {
       method: "GET",
-      expires: 3600,
+      expires: 32400,
     });
     success(res, "获取签名URL成功", { url });
   } catch (error) {
@@ -127,5 +118,36 @@ router.delete("/image/:filename", userAuth, async (req, res) => {
     failure(res, 500, "服务器内部错误");
   }
 });
+router.delete("/user/:id", userAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    // 应该验证是否是当前用户或具有管理员权限
+    if (req.user.id !== parseInt(userId) && req.user.role !== "admin") {
+      return failure(res, 403, "无权限执行此操作");
+    }
 
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return failure(res, 404, "用户不存在");
+    }
+
+    // 删除用户在 OSS 中的所有图片资源
+    if (user.image) {
+      try {
+        await client.delete(user.image);
+      } catch (ossError) {
+        console.error("删除用户图片失败:", ossError);
+      }
+    }
+
+    // 删除用户数据
+    await user.destroy();
+
+    success(res, "用户删除成功"); // 修改为正确的信息
+  } catch (error) {
+    console.error("删除用户失败:", error);
+    failure(res, 500, "删除用户失败");
+  }
+});
 module.exports = router;

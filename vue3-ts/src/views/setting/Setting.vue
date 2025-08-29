@@ -411,7 +411,7 @@
 
 <script setup lang="ts" name="Setting">
 import AvatarCropper from "../../components/avatarcropper/AvatarCropper.vue";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
@@ -451,16 +451,78 @@ const followSystem = computed({
     }
   },
 });
-// 添加图片裁剪功能
+// / 添加图片裁剪功能
 const avatarCropper = ref();
 // 添加图片编辑功能
 const editImage = () => {
   if (!avatar.value) return;
   avatarCropper.value.openCropper(avatar.value);
 };
+// 定时刷新签名
+let refreshTimer: number | null = null;
+//  增加默认头像判断函数
+const isDefaultAvatar = (filename: string) => {
+  return filename.includes("defaultAvatar");
+};
+const setupAvatarRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+
+  refreshTimer = window.setInterval(async () => {
+    if (userStore.user.avatar) {
+      try {
+        const url = new URL(userStore.user.avatar);
+        const pathname = url.pathname;
+        const filename = pathname.split("/").pop();
+
+        if (filename && !isDefaultAvatar(filename)) {
+          const newSignedUrl = await refreshAvatarSignature(filename);
+          if (newSignedUrl) {
+            avatar.value = newSignedUrl;
+            userStore.user.avatar = newSignedUrl;
+          } else {
+            // 如果刷新失败，下次继续尝试
+            console.warn("签名刷新失败，将在下次重试");
+          }
+        }
+      } catch (error) {
+        console.error("定时刷新签名失败:", error);
+        // 可以考虑增加重试次数限制
+      }
+    }
+  }, (32400 - 7200) * 1000); // 提前2小时刷新
+};
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+});
+// 刷新头像签名URL（增加重试机制）
+const refreshAvatarSignature = async (filename: string, retries = 3) => {
+  try {
+    const signedUrlResponse = await axiosConfig.get(
+      `${apiUrl}/admin/uploadavatar/avatar/sign?filename=${filename}`
+    );
+    return signedUrlResponse.data.data.url;
+  } catch (error) {
+    if (retries > 0) {
+      console.warn(`签名刷新失败，${retries}次重试机会`);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 等待1秒后重试
+      return refreshAvatarSignature(filename, retries - 1);
+    }
+    console.error("刷新签名URL失败:", error);
+    return null;
+  }
+};
 // 添加处理裁剪结果的方法
 const handleCropped = async (blob: Blob) => {
   try {
+    // 在上传新头像之前，先删除旧头像
+    if (userStore.user.avatar && !isDefaultAvatar(userStore.user.avatar)) {
+      await deleteOldAvatar(true); // 传入true表示是重新上传
+    }
+
     const formData = new FormData();
     formData.append("avatar", blob, "avatar.png");
     formData.append("userId", userStore.user.id.toString());
@@ -470,32 +532,27 @@ const handleCropped = async (blob: Blob) => {
       formData
     );
 
-    // 删除旧头像
-    if (avatar.value) {
-      await deleteOldAvatar(true);
-    }
     // 获取新头像的签名 URL
     const newAvatarFilename = response.data.data.avatar;
-    const signedUrlResponse = await axiosConfig.get(
-      `${apiUrl}/admin/uploadavatar/avatar/sign?filename=${newAvatarFilename}`
-    );
-    console.log(signedUrlResponse);
+    const signedUrl = await refreshAvatarSignature(newAvatarFilename);
 
-    // 使用签名 URL 更新头像
-    avatar.value = signedUrlResponse.data.data.url;
-    ElMessage.success(response.data.message);
+    if (signedUrl) {
+      avatar.value = signedUrl;
+      userStore.user.avatar = signedUrl;
+      ElMessage.success(response.data.message);
+      getAllUsers();
+      userStore.loadUser();
 
-    // 更新用户存储
-    userStore.user.avatar = avatar.value;
-    getAllUsers();
-    userStore.loadUser();
+      // 重新设置定时刷新
+      setupAvatarRefresh();
+    }
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "添加失败";
     ElMessage.error(errorMessage);
   }
 };
-//   添加图片上传功能
+///   添加图片上传功能
 const handleChange = (uploadFile: { raw: File }) => {
   const reader = new FileReader();
   reader.onload = (e: ProgressEvent<FileReader>) => {
@@ -745,10 +802,12 @@ const deleteAccount = async () => {
       cancelButtonText: "取消",
       type: "warning",
     });
-    // 删除用户所有图片
-    await userStore.deleteAllUserImages();
     // 删除账户
     const response = await axiosConfig.delete("/users/delete");
+    // 删除照片
+    const image = await axiosConfig.delete(
+      `admin/upload/user/${userStore.user.id}`
+    );
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
     // 删除头像
@@ -764,6 +823,7 @@ const deleteAccount = async () => {
     Cookies.remove("ds-token");
     themeStore.clearUserTheme();
     ElMessage.success(response.data.message);
+    ElMessage.info(image.data.message);
     router.push({ name: "login/index" });
   } catch (error: any) {
     const errorMessage =
@@ -804,6 +864,7 @@ const logout = () => {
   router.push({ name: "login/index" });
 };
 onMounted(() => {
+  setupAvatarRefresh();
   fetchUserInfo().then(() => {
     fetchLikedArticles();
     getAllUsers();

@@ -77,76 +77,11 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
-  // 删除所有用户图片
-  const deleteAllUserImages = async () => {
-    try {
-      if (!user.value) {
-        ElMessage.error("用户信息未找到，请重新登录");
-        return;
-      }
-
-      const endpoints = [
-        { endpoint: "/admin/article", key: "articles" },
-        { endpoint: "/admin/photography", key: "photography" },
-        { endpoint: "/admin/note", key: "notes" },
-      ];
-
-      const imagePaths = new Set<string>();
-
-      for (const { endpoint, key } of endpoints) {
-        try {
-          const response = await axiosConfig.get(endpoint, {
-            params: { userId: user.value.id },
-          });
-
-          response.data.data[key].forEach((item: { image: string }) => {
-            if (item.image && item.image.startsWith(apiUrl)) {
-              imagePaths.add(item.image);
-            }
-          });
-        } catch (error) {
-          console.error(`获取 ${endpoint} 数据失败`, error);
-          ElMessage.error(`获取 ${endpoint} 数据失败，请稍后再试`);
-          return;
-        }
-      }
-
-      if (imagePaths.size === 0) {
-        return;
-      }
-
-      const failedImages: string[] = [];
-      const deletePromises = Array.from(imagePaths).map(async (imagePath) => {
-        const imageName = imagePath.split("/").pop();
-        if (!imageName) return;
-
-        try {
-          await axiosConfig.delete(`${apiUrl}/admin/upload/image/${imageName}`);
-        } catch (error) {
-          console.error(`删除图片 ${imageName} 失败`, error);
-          failedImages.push(imageName);
-        }
-      });
-
-      await Promise.all(deletePromises);
-
-      if (failedImages.length > 0) {
-        ElMessage.error(`部分图片删除失败：${failedImages.join(", ")}`);
-      } else {
-        ElMessage.success("所有图片删除成功");
-      }
-    } catch (error) {
-      console.error("删除所有用户图片失败", error);
-      ElMessage.error("删除所有用户图片失败，请稍后再试");
-    }
-  };
-
   return {
     user,
     setUser,
     loadUser,
     updateUser,
-    deleteAllUserImages,
     currentUser,
     openAuthorProfile,
   };

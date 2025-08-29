@@ -3,6 +3,7 @@ const router = express.Router();
 const { Photography, User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const userAuth = require("../../middlewares/user-auth");
+const { deleteFromOSS } = require("../../utils/oss");
 
 // 查询摄影作品
 router.get("/", userAuth, async (req, res) => {
@@ -120,8 +121,6 @@ router.put("/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-
-// 删除摄影作品
 router.delete("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -132,13 +131,24 @@ router.delete("/:id", userAuth, async (req, res) => {
 
     // 删除关联的图片文件（如果存在）
     if (photography.image) {
-      const imageName = photography.image.split("/").pop();
-      if (imageName) {
-        const filePath = path.join(uploadDir, imageName);
-        if (fs.existsSync(filePath)) {
-          await promisify(fs.unlink)(filePath).catch((err) => {
-            console.warn(`删除摄影作品图片文件失败: ${err.message}`);
-          });
+      // 判断是否是OSS图片
+      if (photography.image.startsWith("http")) {
+        // 从完整URL中提取OSS文件路径
+        const urlObj = new URL(photography.image);
+        const ossFilePath = urlObj.pathname.substring(1); // 移除开头的 '/'
+
+        // 删除OSS文件
+        await deleteFromOSS(ossFilePath);
+      } else {
+        // 本地文件删除逻辑
+        const imageName = photography.image.split("/").pop();
+        if (imageName) {
+          const filePath = path.join(uploadDir, imageName);
+          if (fs.existsSync(filePath)) {
+            await promisify(fs.unlink)(filePath).catch((err) => {
+              console.warn(`删除摄影作品图片文件失败: ${err.message}`);
+            });
+          }
         }
       }
     }

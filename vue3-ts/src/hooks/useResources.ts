@@ -8,10 +8,15 @@ export function useResources() {
     else return (size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
   }
   // 获取文件名
-  function getFileName(url: string) {
+  function getFileName(url: string): string {
     if (!url) return "未知文件";
-    const parts = url.split("/");
-    return parts[parts.length - 1];
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.pathname.split("/").pop() || "未知文件";
+    } catch (error) {
+      // 如果不是合法 URL，则退回到原来的逻辑
+      return url.split("/").pop() || "未知文件";
+    }
   }
   return {
     formatFileSize,

@@ -4,17 +4,8 @@ const { User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const multer = require("multer");
 const path = require("path");
-const OSS = require("ali-oss");
 const sharp = require("sharp");
-
-// OSS客户端配置
-const client = new OSS({
-  region: "oss-cn-beijing",
-  accessKeyId: LTAI5tC4zS7PyMMtvWbBpJWX,
-  accessKeySecret: Ztd6JU5cTH0XyUxS63QDRXvbmrNz4Q,
-  authorizationV4: true,
-  bucket: process.env.OSS_BUCKET,
-});
+const { client } = require("../../utils/oss");
 
 // 自定义请求头
 const headers = {
@@ -80,7 +71,7 @@ router.get("/avatar/sign", async (req, res) => {
   const { filename } = req.query;
   const url = await client.signatureUrl(`avatar/${filename}`, {
     method: "GET",
-    expires: 3600,
+    expires: 32400,
   });
   success(res, "获取签名URL成功", { url });
 });

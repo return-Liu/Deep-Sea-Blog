@@ -45,7 +45,6 @@
               <div @click="submitUpload('essay')">
                 <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -129,7 +128,6 @@
               <div @click="submitUpload('photography')">
                 <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -180,7 +178,6 @@
               <div @click="submitUpload('notes')">
                 <span>更换图片</span>
               </div>
-              <el-button @click="handleSave" type="primary">更新图片</el-button>
             </div>
           </div>
         </div>
@@ -289,90 +286,6 @@ const deleteContent = async (contentId: number) => {
   }
 };
 
-// 保存文章 摄影 随记
-const handleSave = async () => {
-  if (!hasContentChanged()) {
-    ElMessage.info("未检测到任何修改");
-    return;
-  }
-  try {
-    // 检查用户是否登录
-    if (!userId.value) {
-      ElMessage.error("请先登录");
-      return;
-    }
-
-    // 检查图片是否存在
-    if (!content.value?.image) {
-      ElMessage.error("请上传图片");
-      return;
-    }
-
-    // 根据不同类型验证必要字段
-    if (contentType.value === "essay") {
-      if (!content.value.title?.trim()) {
-        ElMessage.error("请输入文章标题");
-        return;
-      }
-      if (!content.value.label?.trim()) {
-        ElMessage.error("请输入文章标签");
-        return;
-      }
-    } else if (contentType.value === "notes") {
-      if (!content.value.title?.trim()) {
-        ElMessage.error("请输入随笔标题");
-        return;
-      }
-    }
-
-    // 所有类型都必须有内容
-    if (!content.value.content?.trim()) {
-      ElMessage.error("请输入内容");
-      return;
-    }
-
-    // 构造请求体
-    const payload = {
-      image: content.value.image,
-      userId: userId.value,
-      ...(contentType.value !== "photography" && {
-        title: content.value.title,
-      }),
-      ...(contentType.value === "essay" && { label: content.value.label }),
-      content: content.value.content,
-    };
-
-    // 获取当前路由中的内容 ID
-    const id = route.query.id;
-
-    // 发送更新请求（PUT）
-    const endpoints = {
-      essay: "/admin/article",
-      photography: "/admin/photography",
-      notes: "/admin/note",
-    };
-
-    if (!(contentType.value in endpoints)) {
-      ElMessage.error("不支持的内容类型");
-      return;
-    }
-
-    const endpoint = endpoints[contentType.value as keyof typeof endpoints];
-    const response = await axiosConfig.put(`${endpoint}/${id}`, payload);
-
-    ElMessage.success(response.data.message);
-    // 保存成功后隐藏“更新图片”按钮
-    showUploadButton.value = false;
-
-    // 可选：更新原始内容以避免重复提示“已修改”
-    originalContent.value = JSON.parse(JSON.stringify(content.value));
-  } catch (error: any) {
-    // 兼容 message 字段
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  }
-};
 const handleChange = (uploadFile?: UploadFile) => {
   const file = uploadFile?.raw;
   if (!file) return;
@@ -485,6 +398,92 @@ const handleSuccess = async (response: any) => {
   photoUploadRef.value?.clearFiles();
   notesUploadRef.value?.clearFiles();
   showUploadButton.value = false;
+
+  // 更新原始内容的图片地址
+  if (originalContent.value) {
+    originalContent.value.image = imageUrl.value;
+  }
+
+  // 自动保存更新
+  await autoSaveContent();
+};
+
+// 新增自动保存函数
+const autoSaveContent = async () => {
+  try {
+    // 检查用户是否登录
+    if (!userId.value) {
+      ElMessage.error("请先登录");
+      return;
+    }
+
+    // 检查图片是否存在
+    if (!content.value?.image) {
+      ElMessage.error("图片上传失败");
+      return;
+    }
+
+    // 根据不同类型验证必要字段
+    if (contentType.value === "essay") {
+      if (!content.value.title?.trim()) {
+        ElMessage.error("文章标题不能为空");
+        return;
+      }
+      if (!content.value.label?.trim()) {
+        ElMessage.error("文章标签不能为空");
+        return;
+      }
+    } else if (contentType.value === "notes") {
+      if (!content.value.title?.trim()) {
+        ElMessage.error("随笔标题不能为空");
+        return;
+      }
+    }
+
+    // 所有类型都必须有内容
+    if (!content.value.content?.trim()) {
+      ElMessage.error("内容不能为空");
+      return;
+    }
+
+    // 构造请求体
+    const payload = {
+      image: content.value.image,
+      userId: userId.value,
+      ...(contentType.value !== "photography" && {
+        title: content.value.title,
+      }),
+      ...(contentType.value === "essay" && { label: content.value.label }),
+      content: content.value.content,
+    };
+
+    // 获取当前路由中的内容 ID
+    const id = route.query.id;
+
+    // 发送更新请求（PUT）
+    const endpoints = {
+      essay: "/admin/article",
+      photography: "/admin/photography",
+      notes: "/admin/note",
+    };
+
+    if (!(contentType.value in endpoints)) {
+      ElMessage.error("不支持的内容类型");
+      return;
+    }
+
+    const endpoint = endpoints[contentType.value as keyof typeof endpoints];
+    const response = await axiosConfig.put(`${endpoint}/${id}`, payload);
+
+    ElMessage.success(response.data.message);
+
+    // 更新原始内容以避免重复提示"已修改"
+    originalContent.value = JSON.parse(JSON.stringify(content.value));
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "保存失败";
+    ElMessage.error(errorMessage);
+  }
 };
 
 onMounted(async () => {
