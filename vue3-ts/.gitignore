@@ -6,6 +6,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.env
+.env.development
+.env.test
+.env.production
 
 node_modules
 .DS_Store

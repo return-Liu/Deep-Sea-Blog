@@ -10,8 +10,8 @@ const userAuth = require("../../middlewares/user-auth");
 // OSS客户端配置
 const client = new OSS({
   region: "oss-cn-beijing",
-  accessKeyId: process.env.OSS_ACCESS_KEY_ID,
-  accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+  accessKeyId: LTAI5tC4zS7PyMMtvWbBpJWX,
+  accessKeySecret: Ztd6JU5cTH0XyUxS63QDRXvbmrNz4Q,
   authorizationV4: true,
   bucket: process.env.OSS_BUCKET,
 });
