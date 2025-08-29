@@ -14,6 +14,7 @@ Deep Sea 管理端是一个基于 Vue3+ts+ElementPlus 的管理端，用于管�
 │ ├── router
 │ ├── store
 │ ├── views
+| |── types
 │ ├── components
 │ ├── router
 │ ├── store
