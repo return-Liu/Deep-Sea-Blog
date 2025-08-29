@@ -70,6 +70,7 @@ axiosConfig.interceptors.response.use(
 const handleTokenExpired = () => {
   ElMessage.error("登录已过期，请重新登录");
   Cookies.remove("ds-token");
+  const router = useRouter();
   router.push({ name: "login/index" });
 };
 export default axiosConfig;

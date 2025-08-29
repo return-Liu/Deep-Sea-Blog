@@ -40,7 +40,8 @@ $light-theme: (
   color-bg6: #a2a2a2,
   color-bg7: #c2c2c2,
   color-bg8: #2a2a2a,
-  color-bg9: #f8f8f8
+  color-bg9: #f8f8f8,
+  color-bg10: #f5f5f5
 );
 
 $dark-theme: (
@@ -85,7 +86,8 @@ $dark-theme: (
   color-bg6: #727272,
   color-bg7: #5a5a5a,
   color-bg8: #f8f8f8,
-  color-bg9: #1a1a1a
+  color-bg9: #1a1a1a,
+  color-bg10: #f5f5f5
 );
 
 @mixin theme-vars($theme) {

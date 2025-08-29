@@ -69,7 +69,7 @@ function send(mail, code) {
   let mailobj = {
     from: "3829626016@qq.com", // 移除尖括号
     to: mail,
-    subject: "Deep Sea - 密码重置验证码",
+    subject: "Deep Sea - 重置密码验证码",
     html: mailContent,
   };
 
@@ -107,7 +107,7 @@ function verifyEmail(mail, code) {
   let mailobj = {
     from: "3829626016@qq.com",
     to: mail,
-    subject: "Deep Sea - 邮箱验证验证码",
+    subject: "Deep Sea - 邮箱验证码",
     html: mailContent,
   };
 
@@ -150,7 +150,7 @@ function notifyWallOwner(mail, content) {
   const mailOptions = {
     from: "3829626016@qq.com",
     to: mail,
-    subject: "【通知】您的留言墙需核实处理",
+    subject: "温馨提醒：您的留言墙需要确认处理",
     html: mailContent,
   };
 

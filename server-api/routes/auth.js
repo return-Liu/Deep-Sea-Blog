@@ -341,7 +341,7 @@ router.post("/email", async (req, res) => {
   }
 });
 // 邮箱验证码登录 - 发送验证码（带频率限制）
-router.post("/email/verify", userAuth, async (req, res) => {
+router.post("/email/verify", async (req, res) => {
   try {
     const { email, clientFeatureCode } = req.body;
 

@@ -178,7 +178,7 @@ const getWebsocketUrl = () => {
 };
 const connectWebSocket = () => {
   try {
-    ws = new WebSocket("ws://localhost:8080");
+    ws = new WebSocket("ws://localhost:3001");
     ws.onopen = () => {
       console.log("Socket连接成功");
       // 添加连接成功的提示
