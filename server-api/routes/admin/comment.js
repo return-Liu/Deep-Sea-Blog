@@ -255,6 +255,11 @@ router.delete("/comment/:id", userAuth, async (req, res) => {
 router.delete("/user/:id", userAuth, async (req, res) => {
   const userId = req.params.id;
   try {
+    // 验证用户是否有权限执行此操作
+    if (req.user.id !== parseInt(userId)) {
+      return failure(res, "无权限删除其他用户的评论");
+    }
+
     // 删除指定用户的所有评论
     const commentsDeleted = await Comment.destroy({
       where: {
@@ -265,14 +270,13 @@ router.delete("/user/:id", userAuth, async (req, res) => {
     if (commentsDeleted > 0) {
       success(res, "用户的所有评论已删除", commentsDeleted);
     } else {
-      failure(res, "该用户没有评论或删除失败");
+      success(res, "该用户没有评论", commentsDeleted);
     }
   } catch (error) {
     console.error("删除用户评论失败:", error);
     failure(res, error);
   }
 });
-
 // 举报当前评论的信息
 router.post("/reportUser", userAuth, async (req, res) => {});
 

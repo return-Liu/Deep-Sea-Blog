@@ -3,10 +3,9 @@ const router = express.Router();
 const { User } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { NotFoundError } = require("../utils/errors");
-const userAuth = require("../middlewares/user-auth");
 
 // 获取主题
-router.get("/:uuid/style", userAuth, async (req, res) => {
+router.get("/:uuid/style", async (req, res) => {
   try {
     const { uuid } = req.params;
     const user = await User.findOne({
@@ -23,7 +22,7 @@ router.get("/:uuid/style", userAuth, async (req, res) => {
 });
 
 // 更新主题
-router.put("/:uuid/style", userAuth, async (req, res) => {
+router.put("/:uuid/style", async (req, res) => {
   try {
     const { uuid } = req.params;
     const { theme } = req.body;

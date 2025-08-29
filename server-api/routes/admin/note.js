@@ -129,13 +129,30 @@ router.put("/:id", userAuth, async (req, res) => {
 router.delete("/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    await Note.destroy({ where: { id } });
+    const note = await Note.findByPk(id);
+    if (!note) {
+      return failure(res, 404, "随笔随记不存在");
+    }
+
+    // 删除关联的图片文件（如果存在）
+    if (note.image) {
+      const imageName = note.image.split("/").pop();
+      if (imageName) {
+        const filePath = path.join(uploadDir, imageName);
+        if (fs.existsSync(filePath)) {
+          await promisify(fs.unlink)(filePath).catch((err) => {
+            console.warn(`删除笔记图片文件失败: ${err.message}`);
+          });
+        }
+      }
+    }
+
+    await note.destroy();
     success(res, "删除随笔随记成功");
   } catch (error) {
     failure(res, error);
   }
 });
-// 获取指定用户的笔记
 // 获取指定用户的笔记
 router.get("/user/:uuid", async (req, res) => {
   try {

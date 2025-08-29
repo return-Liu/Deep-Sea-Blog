@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // 关联用户
       Article.belongsTo(models.User, { foreignKey: "userId" });
       // 关联点赞
-      Article.hasMany(models.Like, { foreignKey: "articleId", as: "Likes" });
+      Article.hasMany(models.Like, { foreignKey: "articleId" });
     }
   }
   Article.init(

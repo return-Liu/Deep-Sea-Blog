@@ -140,17 +140,32 @@ router.post("/", userAuth, async (req, res) => {
 router.delete("/:id", userAuth, async (req, res) => {
   try {
     const articleId = req.params.id;
+    const article = await Article.findByPk(articleId);
+
+    if (!article) {
+      return failure(res, 404, "博客文章不存在");
+    }
+
     // 先删除所有关联的点赞记录
     await Like.destroy({
       where: { articleId: articleId },
     });
-    // 再删除文章本身
-    const deleted = await Article.destroy({
-      where: { id: articleId },
-    });
-    if (!deleted) {
-      failure(res, 404, "博客文章不存在");
+
+    // 删除关联的图片文件（如果存在）
+    if (article.image) {
+      const imageName = article.image.split("/").pop();
+      if (imageName) {
+        const filePath = path.join(uploadDir, imageName);
+        if (fs.existsSync(filePath)) {
+          await promisify(fs.unlink)(filePath).catch((err) => {
+            console.warn(`删除文章图片文件失败: ${err.message}`);
+          });
+        }
+      }
     }
+
+    // 再删除文章本身
+    await article.destroy();
     success(res, "博客文章及关联点赞记录已删除");
   } catch (error) {
     console.error(error);

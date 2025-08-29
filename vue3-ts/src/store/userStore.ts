@@ -56,7 +56,6 @@ export const useUserStore = defineStore("user", () => {
   };
   const setUser = (userData: User) => {
     user.value = userData;
-    if (user.value && "email" in user.value) delete user.value.email;
   };
 
   // 加载用户信息

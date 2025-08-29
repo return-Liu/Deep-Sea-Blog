@@ -4,38 +4,41 @@ const { User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
-const { promisify } = require("util");
+const OSS = require("ali-oss");
+const userAuth = require("../../middlewares/user-auth");
 
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, "../../public/image");
-const mkdir = promisify(fs.mkdir);
+// OSS客户端配置
+const client = new OSS({
+  region: "oss-cn-beijing",
+  accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+  accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+  authorizationV4: true,
+  bucket: process.env.OSS_BUCKET,
+});
 
-async function ensureDirectoryExists(dir) {
+// 自定义请求头
+const headers = {
+  "x-oss-storage-class": "Standard",
+  "x-oss-forbid-overwrite": "false",
+};
+
+// 上传文件到OSS的函数 - 修改为直接使用buffer
+async function uploadToOSS(fileBuffer, ossFileName) {
   try {
-    await mkdir(dir, { recursive: true });
-  } catch (error) {
-    console.error("无法创建目录:", error);
-    throw error;
+    const result = await client.put(
+      ossFileName, // OSS上的文件路径和名称
+      fileBuffer, // 直接使用文件buffer
+      { headers } // 自定义headers
+    );
+    return result;
+  } catch (e) {
+    console.log(e);
+    throw e;
   }
 }
 
-ensureDirectoryExists(uploadDir).catch((error) => {
-  console.error("初始化上传目录失败:", error);
-  process.exit(1); // 如果目录创建失败，退出应用
-});
-
-// 配置 Multer 存储
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now();
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  },
-});
+// 配置 Multer 使用内存存储
+const storage = multer.memoryStorage();
 
 // 设置文件过滤器，只允许上传图片
 const fileFilter = (req, file, cb) => {
@@ -46,15 +49,29 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// 文件大小限制（例如 2MB）
+// 文件大小限制（例如 5MB）
 const limits = {
   fileSize: 5 * 1024 * 1024,
 };
 
 const upload = multer({ storage, fileFilter, limits });
-
-// 上传头像
-router.post("/",  upload.single("image"), async (req, res) => {
+// 获取图片签名URL
+router.get("/image/sign", async (req, res) => {
+  try {
+    const { filename } = req.query;
+    // 确保只使用文件名，而不是完整路径
+    const url = await client.signatureUrl(`images/${filename}`, {
+      method: "GET",
+      expires: 3600,
+    });
+    success(res, "获取签名URL成功", { url });
+  } catch (error) {
+    console.error("获取签名URL失败:", error);
+    failure(res, 500, "获取签名URL失败");
+  }
+});
+// 上传图片
+router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { userId } = req.body;
     const user = await User.findByPk(userId);
@@ -69,11 +86,19 @@ router.post("/",  upload.single("image"), async (req, res) => {
       return failure(res, 400, "未上传文件");
     }
 
-    // 更新用户上传的图片
-    user.image = req.file.filename;
+    // 生成OSS文件名
+    const ext = path.extname(req.file.originalname);
+    const ossFileName = `images/${Date.now()}${ext}`;
+
+    // 直接从内存上传到OSS
+    await uploadToOSS(req.file.buffer, ossFileName);
+
+    // 更新用户上传的图片（保存OSS路径）
+    user.image = ossFileName;
     await user.save();
+
     success(res, "图片上传成功", {
-      image: user.image,
+      image: ossFileName,
     });
   } catch (error) {
     if (error instanceof multer.MulterError) {
@@ -81,24 +106,23 @@ router.post("/",  upload.single("image"), async (req, res) => {
         return failure(res, 400, "文件大小超过限制（5MB）");
       }
     }
+    console.error("上传失败:", error);
     failure(res, 500, "服务器内部错误");
   }
 });
 
-router.delete("/image/:filename", async (req, res) => {
+router.delete("/image/:filename", userAuth, async (req, res) => {
   try {
     const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
 
-    // 检查文件是否存在
-    if (!fs.existsSync(filePath)) {
-      return failure(res, 404, "文件不存在");
-    }
+    // 从OSS删除文件
+    await client.delete(`images/${filename}`);
 
-    // 删除文件
-    await promisify(fs.unlink)(filePath);
     success(res, "删除图片成功");
   } catch (error) {
+    if (error.code === "NoSuchKey") {
+      return failure(res, 404, "文件不存在");
+    }
     console.error(`删除图片失败: ${error}`);
     failure(res, 500, "服务器内部错误");
   }

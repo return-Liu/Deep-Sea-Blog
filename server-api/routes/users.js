@@ -9,6 +9,8 @@ const {
   LikesWall,
   Like,
   Wall,
+  Commont,
+  Deivce,
 } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { NotFoundError } = require("../utils/errors");
@@ -111,6 +113,16 @@ router.delete("/delete", userAuth, async (req, res) => {
     });
 
     await Note.destroy({
+      where: { userId: user.id },
+    });
+    await Commont.destroy({
+      where: { userId: user.id },
+    });
+    await Comment.update(
+      { replyToUserId: null },
+      { where: { replyToUserId: user.id } }
+    );
+    await Deivce.destroy({
       where: { userId: user.id },
     });
 

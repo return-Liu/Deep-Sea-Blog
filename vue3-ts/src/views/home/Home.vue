@@ -210,6 +210,7 @@
       width="50%"
       :before-close="handleClose"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form
         ref="formRef"
@@ -254,7 +255,7 @@
               <div v-else class="upload-placeholder">
                 <el-icon class="upload-icon"><Plus /></el-icon>
                 <span class="upload-text"
-                  >支持图片 (JPG/PNG/GIF/WEBP/BMP) 格式，大小不超过 2MB</span
+                  >支持图片 (JPG/PNG/GIF/WEBP/BMP) 格式，大小不超过 5MB</span
                 >
               </div>
             </div>

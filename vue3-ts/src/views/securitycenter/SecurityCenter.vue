@@ -87,25 +87,10 @@
             </div>
           </div>
         </section>
-
-        <!-- 安全提示 -->
-        <section class="security-tips">
-          <h2 class="section-title">
-            安全提示
-            <component :is="SecurityIcon" class="security-icon" />
-          </h2>
-          <ul class="tips-list">
-            <li>定期修改密码可以提高账号安全性</li>
-            <li>不要将密码告诉他人或在公共场合输入密码</li>
-            <li>绑定手机号可以更方便地找回密码</li>
-            <li>发现异常登录请立即修改密码</li>
-          </ul>
-        </section>
       </div>
     </main>
   </div>
 </template>
-
 <script setup>
 import { ref, computed } from "vue";
 import { useUserStore } from "../../store/userStore";
@@ -115,36 +100,78 @@ import FoundpasswordIcon from "../../components/icon/Foundpassword.vue";
 import LogindevicemanageIcon from "../../components/icon/Logindevicemanage.vue";
 import phoneIcon from "../../components/icon/phone.vue";
 import rightarrowIcon from "../../components/icon/rightarrow.vue";
-import SecurityIcon from "../../components/icon/Security.vue";
 import AccountSecurityIcon from "../../components/icon/AccountSecurity.vue";
 import ReportUserIcon from "../../components/icon/ReportUser.vue";
+import QQLogin from "../../components/icon/QQLogin.vue";
+
 const router = useRouter();
 const { openAuthorProfile } = useUserStore();
 const settingRef = ref();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
 
-// 计算安全等级 (示例逻辑)
+// 计算是否拥有独立密码
+const hasIndependentPassword = computed(() => {
+  // 根据用户数据判断是否拥有独立密码
+  return !!(
+    user.value.hasIndependentPassword ||
+    user.value.password ||
+    (user.value.authMethods && user.value.authMethods.includes("password"))
+  );
+});
+
+// 计算是否查看过设备管理
+const hasViewedDeviceManagement = computed(() => {
+  // 根据用户数据判断是否查看过设备管理
+  return !!(
+    user.value.hasViewedDeviceManagement ||
+    (user.value.securityActions &&
+      user.value.securityActions.includes("view_device_management"))
+  );
+});
+
+// 计算安全等级
 const securityLevel = computed(() => {
   let level = 30; // 基础分
+
+  // 绑定手机 +30分
   if (user.value.phone) level += 30;
+
+  // 独立密码 +20分
   if (hasIndependentPassword.value) level += 20;
-  if (user.value.emailVerified) level += 20;
+
+  // 绑定邮箱 +20分
+  if (user.value.email) level += 20;
+
+  // 查看设备管理 +10分
+  if (hasViewedDeviceManagement.value) level += 10;
+
   return Math.min(level, 100);
 });
 
 const securityText = computed(() => {
+  if (securityLevel.value >= 90) return "极高安全";
   if (securityLevel.value >= 80) return "非常安全";
   if (securityLevel.value >= 60) return "安全";
   if (securityLevel.value >= 40) return "一般";
   return "较低";
 });
 
-const hasIndependentPassword = ref(false);
 const maskedPhone = computed(() => {
   if (!user.value.phone) return "";
   const phone = user.value.phone.toString();
   return `${phone.slice(0, 3)}****${phone.slice(7)}`;
+});
+
+const maskedEmail = computed(() => {
+  if (!user.value.email) return "";
+  const email = user.value.email;
+  const [localPart, domain] = email.split("@");
+  if (localPart.length <= 2) {
+    return `${localPart[0]}****@${domain}`;
+  } else {
+    return `${localPart.slice(0, 2)}****@${domain}`;
+  }
 });
 
 // 处理功能点击
@@ -163,21 +190,28 @@ const handlePhoneBinding = () => {
 };
 
 const handleDeviceManagement = () => {
+  // 标记用户已查看设备管理
+  // 这里可以调用API更新用户状态或使用Vuex/Pinia存储状态
   router.push({ name: "devicemanagement", params: { uuid: user.value.uuid } });
+};
+
+const handleQQEmailBinding = () => {
+  if (user.value.email) {
+    ElMessage.info("QQ邮箱已绑定,请勿重复操作");
+  }
 };
 
 const securityFeatures = [
   {
     id: "passwordRecovery",
-    icon: FoundpasswordIcon, // 使用导入的组件而不是CSS类名
+    icon: FoundpasswordIcon,
     title: "找回密码",
     description: "忘记Deep Sea账号密码? 从这里找回",
     handler: handlePasswordRecovery,
   },
-
   {
     id: "phoneBinding",
-    icon: phoneIcon, // 使用导入的组件
+    icon: phoneIcon,
     title: "手机号绑定",
     description: computed(() =>
       user.value.phone ? `已绑定: ${maskedPhone.value}` : "未绑定手机号"
@@ -189,20 +223,26 @@ const securityFeatures = [
     ),
     handler: handlePhoneBinding,
   },
-
   {
     id: "deviceManagement",
-    icon: LogindevicemanageIcon, // 使用导入的组件
+    icon: LogindevicemanageIcon,
     title: "登录设备管理",
     description: "查看和管理已登录的设备",
     handler: handleDeviceManagement,
   },
   {
-    id: "reportUser",
-    icon: ReportUserIcon,
-    title: "举报信息中心",
-    description: "查看被举报的用户信息",
-    handler: ReportUserIcon,
+    id: "qqEmail",
+    icon: QQLogin,
+    title: "QQ邮箱绑定",
+    description: computed(() =>
+      user.value.email ? `已绑定: ${maskedEmail.value}` : "未绑定QQ邮箱"
+    ),
+    status: computed(() =>
+      user.value.email
+        ? { text: "已绑定", bound: true }
+        : { text: "未绑定", bound: false }
+    ),
+    handler: handleQQEmailBinding,
   },
 ];
 </script>
@@ -273,12 +313,11 @@ $transition: all 0.3s ease;
     font-size: 16px;
     opacity: 0.9;
     margin: 0;
-    color: var(--color-bg4);
+    color: var(--color-bg3);
   }
 }
 
 .security-main {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 
@@ -430,30 +469,6 @@ $transition: all 0.3s ease;
       transition: all 0.3s;
       width: 12px;
       height: 12px;
-    }
-  }
-}
-
-.security-tips {
-  .tips-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-
-    li {
-      position: relative;
-      padding-left: 20px;
-      margin-bottom: 10px;
-      font-size: 14px;
-      color: var(--color-bg6);
-
-      &::before {
-        content: "•";
-        position: absolute;
-        left: 0;
-        color: var(--color-bg6);
-        font-weight: bold;
-      }
     }
   }
 }

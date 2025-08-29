@@ -4,39 +4,26 @@ const { User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
-const { promisify } = require("util");
+const OSS = require("ali-oss");
 const sharp = require("sharp");
 
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, "../../public/avatar");
-const mkdir = promisify(fs.mkdir);
-
-async function ensureDirectoryExists(dir) {
-  try {
-    await mkdir(dir, { recursive: true });
-  } catch (error) {
-    console.error("无法创建目录:", error);
-    throw error;
-  }
-}
-
-ensureDirectoryExists(uploadDir).catch((error) => {
-  console.error("初始化上传目录失败:", error);
-  process.exit(1); // 如果目录创建失败，退出应用
+// OSS客户端配置
+const client = new OSS({
+  region: "oss-cn-beijing",
+  accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+  accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+  authorizationV4: true,
+  bucket: process.env.OSS_BUCKET,
 });
 
-// 配置 Multer 存储
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now();
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  },
-});
+// 自定义请求头
+const headers = {
+  "x-oss-storage-class": "Standard",
+  "x-oss-forbid-overwrite": "false",
+};
+
+// 配置 Multer 使用内存存储
+const storage = multer.memoryStorage();
 
 // 设置文件过滤器，只允许上传图片
 const fileFilter = (req, file, cb) => {
@@ -53,6 +40,28 @@ const limits = {
 };
 
 const upload = multer({ storage, fileFilter, limits });
+
+// 上传文件到OSS的函数
+async function uploadToOSS(buffer, ossFileName) {
+  try {
+    const result = await client.put(ossFileName, buffer, { headers });
+    return result;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+// 从OSS删除文件
+async function deleteFromOSS(ossFileName) {
+  try {
+    await client.delete(ossFileName);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
 // 添加用户头像更换频率限制Map
 const avatarChangeLimiter = new Map();
 
@@ -66,6 +75,15 @@ setInterval(() => {
     }
   }
 }, 30000); // 每30秒清理一次
+
+router.get("/avatar/sign", async (req, res) => {
+  const { filename } = req.query;
+  const url = await client.signatureUrl(`avatar/${filename}`, {
+    method: "GET",
+    expires: 3600,
+  });
+  success(res, "获取签名URL成功", { url });
+});
 
 // 裁剪头像 - 添加频率限制
 router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
@@ -95,11 +113,12 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
       return failure(res, 404, "用户不存在");
     }
 
-    // 删除旧头像
+    // 从OSS删除旧头像
     if (user.avatar) {
-      const oldPath = path.join(uploadDir, user.avatar);
-      if (fs.existsSync(oldPath)) {
-        await fs.promises.unlink(oldPath);
+      try {
+        await deleteFromOSS(`avatar/${user.avatar}`);
+      } catch (e) {
+        console.log("删除旧头像失败:", e);
       }
     }
 
@@ -107,13 +126,13 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
     const newFilename = `cropped_${Date.now()}${path.extname(
       req.file.originalname
     )}`;
-    const newPath = path.join(uploadDir, newFilename);
 
     // 使用sharp处理图片 - 裁剪为正方形并调整大小
-    const metadata = await sharp(req.file.path).metadata();
+    const metadata = await sharp(req.file.buffer).metadata();
     const size = Math.min(metadata.width, metadata.height);
 
-    await sharp(req.file.path)
+    // 处理图片并直接上传到OSS
+    const processedImageBuffer = await sharp(req.file.buffer)
       .extract({
         left: Math.floor((metadata.width - size) / 2),
         top: Math.floor((metadata.height - size) / 2),
@@ -122,10 +141,11 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
       })
       .resize(200, 200)
       .jpeg({ quality: 90 })
-      .toFile(newPath);
+      .toBuffer();
 
-    // 删除临时文件
-    await fs.promises.unlink(req.file.path);
+    // 上传到OSS
+    const ossFileName = `avatar/${newFilename}`;
+    await uploadToOSS(processedImageBuffer, ossFileName);
 
     // 更新用户记录
     user.avatar = newFilename;
@@ -141,12 +161,6 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
     });
   } catch (error) {
     console.error("裁剪错误:", error);
-
-    // 清理可能创建的文件
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      await fs.promises.unlink(req.file.path).catch(() => {});
-    }
-
     failure(res, 500, "头像裁剪失败");
   }
 });
@@ -178,16 +192,24 @@ router.post("/", upload.single("avatar"), async (req, res) => {
       return failure(res, 400, "未上传文件");
     }
 
-    // 删除旧头像文件
+    // 从OSS删除旧头像
     if (user.avatar) {
-      const oldAvatarPath = path.join(uploadDir, user.avatar);
-      if (fs.existsSync(oldAvatarPath)) {
-        await promisify(fs.unlink)(oldAvatarPath);
+      try {
+        await deleteFromOSS(`avatar/${user.avatar}`);
+      } catch (e) {
+        console.log("删除旧头像失败:", e);
       }
     }
 
+    // 生成新文件名
+    const newFilename = `${Date.now()}${path.extname(req.file.originalname)}`;
+
+    // 上传到OSS
+    const ossFileName = `avatar/${newFilename}`;
+    await uploadToOSS(req.file.buffer, ossFileName);
+
     // 更新用户头像
-    user.avatar = req.file.filename;
+    user.avatar = newFilename;
     await user.save();
 
     // 记录用户操作时间
@@ -207,50 +229,21 @@ router.post("/", upload.single("avatar"), async (req, res) => {
     failure(res, 500, "服务器内部错误");
   }
 });
+
 // 删除图片文件
 router.delete("/avatar/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
 
-    // 检查文件是否存在
-    if (!fs.existsSync(filePath)) {
-      return failure(res, 404, "文件不存在");
-    }
+    // 从OSS删除文件
+    await deleteFromOSS(`avatar/${filename}`);
 
-    // 删除文件
-    await promisify(fs.unlink)(filePath);
     success(res, "删除头像成功");
   } catch (error) {
-    console.error(`删除头像失败: ${error}`);
-    failure(res, 500, "服务器内部错误");
-  }
-});
-// 检查头像是否存在文件夹
-router.get("/avatar/:filename", async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
-
-    // 如果文件不存在，返回默认头像
-    if (!fs.existsSync(filePath)) {
-      const defaultAvatarPath = path.join(
-        uploadDir,
-        "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png"
-      ); // 默认头像路径
-      if (fs.existsSync(defaultAvatarPath)) {
-        const defaultFile = await promisify(fs.readFile)(defaultAvatarPath);
-        return success(res, "使用默认头像", defaultFile);
-      } else {
-        return failure(res, 404, "默认头像也不存在");
-      }
+    if (error.code === "NoSuchKey") {
+      return failure(res, 404, "文件不存在");
     }
-
-    // 正常读取头像
-    const file = await promisify(fs.readFile)(filePath);
-    success(res, "获取头像成功", file);
-  } catch (error) {
-    console.error(`读取文件失败: ${error}`);
+    console.error(`删除头像失败: ${error}`);
     failure(res, 500, "服务器内部错误");
   }
 });

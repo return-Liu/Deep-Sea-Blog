@@ -517,5 +517,23 @@ cron.schedule("0 0 * * *", async () => {
     console.error("清理未登录设备时出错:", error);
   }
 });
+// 删除登录设备
+router.delete("/devices/:id", userAuth, async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+    const { id } = req.params;
+
+    const device = await Device.findOne({
+      where: { id, userId: currentUser.id },
+    });
+    if (!device) {
+      throw new NotFoundError("设备不存在");
+    }
+    await device.destroy();
+    success(res, "设备删除成功");
+  } catch (error) {
+    failure(res, error);
+  }
+});
 
 module.exports = router;

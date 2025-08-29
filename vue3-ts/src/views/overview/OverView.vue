@@ -472,10 +472,15 @@ const deleteOldImage = async (imageUrl: string) => {
   }
 };
 
-const handleSuccess = (response: any) => {
-  imageUrl.value = `${apiUrl}/image/${response.data.image}`;
+const handleSuccess = async (response: any) => {
+  const fullPath = response.data.image;
+  const filename = fullPath.split("/").pop();
+  const signedUrlResponse = await axiosConfig.get(
+    `${apiUrl}/admin/upload/image/sign?filename=${filename}`
+  );
+  imageUrl.value = signedUrlResponse.data.data.url;
   content.value.image = imageUrl.value;
-  ElMessage.success("图片上传成功");
+  ElMessage.success(signedUrlResponse.data.message);
   essayUploadRef.value?.clearFiles();
   photoUploadRef.value?.clearFiles();
   notesUploadRef.value?.clearFiles();

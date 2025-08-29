@@ -139,16 +139,20 @@ export default function useHome(uploadRef: any) {
     return isAllowedType && isLt5M;
   };
 
-  const handleSuccess = (response: any, file: File) => {
-    imageUrl.value = `${apiUrl}/image/${response.data.image}`;
+  const handleSuccess = async (response: any, file: File) => {
+    const fullPath = response.data.image;
+    const filename = fullPath.split("/").pop();
+    const signedUrlResponse = await axiosConfig.get(
+      `${apiUrl}/admin/upload/image/sign?filename=${filename}`
+    );
+    imageUrl.value = signedUrlResponse.data.data.url;
     formData.value.image = imageUrl.value;
-    ElMessage.success("图片上传成功");
+    ElMessage.success(signedUrlResponse.data.message);
     // 清空文件列表
     uploadRef.value.clearFiles();
     // 隐藏上传按钮
     showUploadButton.value = false;
   };
-
   // 假设用户已经上传了图片 再次上传一张新图片 把旧图片删除
   const deleteNewImage = async (isReupload: boolean = false) => {
     try {

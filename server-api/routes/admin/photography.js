@@ -129,6 +129,20 @@ router.delete("/:id", userAuth, async (req, res) => {
     if (!photography) {
       throw new Error("摄影作品不存在");
     }
+
+    // 删除关联的图片文件（如果存在）
+    if (photography.image) {
+      const imageName = photography.image.split("/").pop();
+      if (imageName) {
+        const filePath = path.join(uploadDir, imageName);
+        if (fs.existsSync(filePath)) {
+          await promisify(fs.unlink)(filePath).catch((err) => {
+            console.warn(`删除摄影作品图片文件失败: ${err.message}`);
+          });
+        }
+      }
+    }
+
     await photography.destroy();
     success(res, "删除摄影作品成功", {
       image: photography.image,

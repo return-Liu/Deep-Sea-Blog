@@ -467,20 +467,24 @@ const handleCropped = async (blob: Blob) => {
 
     const response = await axiosConfig.post(
       `${apiUrl}/admin/uploadavatar/cropAvatar`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      formData
     );
+
     // 删除旧头像
     if (avatar.value) {
       await deleteOldAvatar(true);
     }
-    // 更新头像URL
-    avatar.value = `${apiUrl}/avatar/${response.data.data.avatar}`;
+    // 获取新头像的签名 URL
+    const newAvatarFilename = response.data.data.avatar;
+    const signedUrlResponse = await axiosConfig.get(
+      `${apiUrl}/admin/uploadavatar/avatar/sign?filename=${newAvatarFilename}`
+    );
+    console.log(signedUrlResponse);
+
+    // 使用签名 URL 更新头像
+    avatar.value = signedUrlResponse.data.data.url;
     ElMessage.success(response.data.message);
+
     // 更新用户存储
     userStore.user.avatar = avatar.value;
     getAllUsers();
@@ -656,8 +660,7 @@ const deleteOldAvatar = async (isReupload: boolean) => {
     ElMessage.error(errorMessage);
   }
 };
-const handleSuccess = (response: any, file: File) => {
-  avatar.value = `${apiUrl}/avatar/${response.data.avatar}`;
+const handleSuccess = () => {
   ElMessage.success("头像上传成功");
   uploadRef.value.clearFiles();
   showUploadButton.value = false;
@@ -744,9 +747,6 @@ const deleteAccount = async () => {
     });
     // 删除用户所有图片
     await userStore.deleteAllUserImages();
-    // 直接删除用户评论，
-    await axiosConfig.delete(`/admin/comment/user/${userStore.user.id}`);
-    await axiosConfig.delete(`/auth/devices/${userStore.user.id}`);
     // 删除账户
     const response = await axiosConfig.delete("/users/delete");
     // 删除主题
@@ -763,7 +763,6 @@ const deleteAccount = async () => {
     // 清除 cookie 和缓存
     Cookies.remove("ds-token");
     themeStore.clearUserTheme();
-    localStorage.removeItem("reportedMessages");
     ElMessage.success(response.data.message);
     router.push({ name: "login/index" });
   } catch (error: any) {

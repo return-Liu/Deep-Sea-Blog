@@ -15,7 +15,7 @@
       <p class="page-description">
         尊贵的用户，您的账号目前{{
           currentDeviceStatus
-        }}，请继续保持。请妥善保管账号，建议移除不常用，非自用设备。 。<br />
+        }}，请继续保持。请妥善保管账号，建议移除不常用，非自用设备。<br />
         <el-text type="warning" size="small">
           *
           登录参考地可能因网络环境、代理服务器等原因存在定位误差，请以实际为准。
@@ -48,7 +48,7 @@
             plain
           >
             <el-icon><Refresh /></el-icon>
-            刷新当前设备
+            重新获取设备信息
           </el-button>
         </div>
       </template>
