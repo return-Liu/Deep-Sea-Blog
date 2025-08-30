@@ -9,8 +9,8 @@ const {
   LikesWall,
   Like,
   Wall,
-  Commont,
-  Deivce,
+  Comment,
+  Device,
 } = require("../models");
 const { success, failure } = require("../utils/responses");
 const { NotFoundError } = require("../utils/errors");
@@ -74,6 +74,18 @@ router.delete("/delete", userAuth, async (req, res) => {
     await Like.destroy({
       where: { userId: user.id },
     });
+
+    // 2.2 删除用户评论的点赞记录
+    const userComments = await Comment.findAll({
+      where: { userId: user.id },
+    });
+
+    for (const comment of userComments) {
+      await LikesComment.destroy({
+        where: { commentId: comment.id },
+      });
+    }
+
     const userWalls = await Wall.findAll({
       where: { userId: user.id },
       include: [{ model: LikesWall }],
@@ -86,7 +98,7 @@ router.delete("/delete", userAuth, async (req, res) => {
       });
     }
 
-    // 3.1 处理用户发布的文章
+    // 3. 处理用户发布的文章
     const userArticles = await Article.findAll({
       where: { userId: user.id },
       include: [{ model: Like }],
@@ -98,12 +110,29 @@ router.delete("/delete", userAuth, async (req, res) => {
       });
     }
 
+    // 3.1 处理用户相关的反馈和举报
+    await Report.destroy({
+      where: { userId: user.id },
+    });
+
+    await Feedback.destroy({
+      where: { userId: user.id },
+    });
+
     // 删除用户的所有留言
     await Wall.destroy({
       where: { userId: user.id },
     });
 
     // 4. 删除用户其他内容
+    // 获取用户的所有文章、摄影和笔记，以便后续删除OSS上的图片
+    const [userAllArticles, userAllPhotographies, userAllNotes] =
+      await Promise.all([
+        Article.findAll({ where: { userId: user.id } }),
+        Photography.findAll({ where: { userId: user.id } }),
+        Note.findAll({ where: { userId: user.id } }),
+      ]);
+
     await Article.destroy({
       where: { userId: user.id },
     });
@@ -115,14 +144,54 @@ router.delete("/delete", userAuth, async (req, res) => {
     await Note.destroy({
       where: { userId: user.id },
     });
-    await Commont.destroy({
+
+    // 删除OSS上的相关图片文件
+    const { deleteFromOSS } = require("../utils/oss");
+
+    // 删除文章中的图片
+    for (const article of userAllArticles) {
+      if (article.image) {
+        try {
+          await deleteFromOSS(article.image);
+        } catch (error) {
+          console.error(`删除文章图片失败: ${article.image}`, error);
+        }
+      }
+    }
+
+    // 删除摄影中的图片
+    for (const photography of userAllPhotographies) {
+      if (photography.image) {
+        try {
+          await deleteFromOSS(photography.image);
+        } catch (error) {
+          console.error(`删除摄影图片失败: ${photography.image}`, error);
+        }
+      }
+    }
+
+    // 删除笔记中的图片
+    for (const note of userAllNotes) {
+      if (note.image) {
+        try {
+          await deleteFromOSS(note.image);
+        } catch (error) {
+          console.error(`删除笔记图片失败: ${note.image}`, error);
+        }
+      }
+    }
+
+    // 删除用户的所有评论
+    await Comment.destroy({
       where: { userId: user.id },
     });
+
     await Comment.update(
       { replyToUserId: null },
       { where: { replyToUserId: user.id } }
     );
-    await Deivce.destroy({
+
+    await Device.destroy({
       where: { userId: user.id },
     });
 

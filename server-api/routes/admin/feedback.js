@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { Feedback } = require("../../models");
+const { Feedback, Report } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const userAuth = require("../../middlewares/user-auth");
+const { Op } = require("sequelize");
+
 // 提交反馈
 router.post("/:id", userAuth, async (req, res) => {
   const userId = req.params.id; // 从URL参数获取userId
@@ -21,6 +23,7 @@ router.post("/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
+
 // 获取所有反馈
 router.get("/", userAuth, async (req, res) => {
   try {
@@ -68,6 +71,7 @@ router.get("/", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
+
 // 删除反馈
 router.delete("/:id", userAuth, async (req, res) => {
   try {
@@ -82,35 +86,38 @@ router.delete("/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-// 示例：在 report 路由文件中添加类似的处理逻辑
+
+// 处理反馈
 router.put("/:id/process", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
-    const report = await Report.findByPk(id);
-    if (!report) {
-      return failure(res, "举报不存在");
+    const feedback = await Feedback.findByPk(id);
+    if (!feedback) {
+      return failure(res, "反馈不存在");
     }
 
     // 更新处理信息
-    await report.update({
+    await feedback.update({
       status: true,
       resultType: req.body.resultType,
       resultDetail: req.body.resultDetail,
       processTime: req.body.processTime,
     });
 
-    success(res, "处理举报成功");
+    success(res, "处理反馈成功");
   } catch (error) {
     failure(res, error);
   }
 });
+
 // 公共方法 白名单过滤
 function filterWhiteList(req) {
   return {
     name: req.body.name,
     email: req.body.email,
     feedback: req.body.feedback,
-    userId: req.params.id, // 从URL参数获取userId
+    userId: req.params.id,
   };
 }
+
 module.exports = router;

@@ -13,6 +13,9 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "userId",
         as: "user",
       });
+      Feedback.hasOne(models.Report, {
+        foreignKey: "userId",
+      });
     }
   }
   Feedback.init(

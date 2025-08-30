@@ -4,14 +4,8 @@
       <div class="profile-info">
         <div class="avatar" @click="openAuthorProfile">
           <img
-            v-if="
-              user?.avatar ||
-              'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-            "
-            v-lazy="
-              user?.avatar ||
-              'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-            "
+            v-if="user?.avatar || DEFAULT_AVATAR"
+            v-lazy="user?.avatar || DEFAULT_AVATAR"
             alt="头像"
             :title="`用户${user?.nickname || '默认用户'}的头像`"
           />
@@ -59,7 +53,6 @@
         :class="{ active: activeTab === tab.id }"
         @click="changeTab(tab.id)"
       >
-        <!-- 动态渲染图标组件   -->
         <component :is="tab.icon" class="icon"></component>
         <span class="text">{{ tab.text }}</span>
       </div>
@@ -83,13 +76,7 @@
             </div>
           </div>
           <div class="card-content">
-            <template
-              v-if="
-                item.type === 'photography' ||
-                item.type === 'notes' ||
-                item.type === 'essay'
-              "
-            >
+            <template v-if="isSupportedContentType(item.type)">
               <h3 class="title">{{ getTitle(item) }}</h3>
               <p class="excerpt">{{ getContent(item) }}</p>
             </template>
@@ -128,19 +115,7 @@
           type="secondary"
         />
       </div>
-      <div
-        v-if="
-          currentContent.length <
-          (activeTab === 'essays'
-            ? articleTotal
-            : activeTab === 'photographys'
-            ? photographyTotal
-            : activeTab === 'notes'
-            ? noteTotal
-            : 0)
-        "
-        class="load-more"
-      >
+      <div v-if="hasMoreContent" class="load-more">
         <p type="primary" @click="loadMore" :disabled="isLoading">加载更多</p>
       </div>
       <div v-else-if="currentContent.length > 0" class="load-more">
@@ -173,59 +148,162 @@ import PhotographyIcon from "../../components/icon/Photography.vue";
 import NoteIcon from "../../components/icon/Note.vue";
 import { ElMessage } from "element-plus";
 import { type Article, type Photography, type Note } from "../../types/share";
-defineExpose({
-  fetchData,
-});
-const tabs = [
+import { useGeneral } from "../../hooks/usegeneral";
+import { useUserStore } from "../../store/userStore";
+
+// 常量定义
+const DEFAULT_AVATAR =
+  "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
+const SUPPORTED_CONTENT_TYPES = ["essay", "photography", "notes"];
+const CONTENT_TYPE_MAP = {
+  notes: "随笔随记",
+  photography: "摄影图库",
+  essay: "博客文章",
+};
+const TABS = [
   { id: "essays", text: "博客文章", icon: BlogIcon },
   { id: "photographys", text: "摄影图库", icon: PhotographyIcon },
   { id: "notes", text: "随笔随记", icon: NoteIcon },
 ];
-import { useGeneral } from "../../hooks/usegeneral";
-import { useUserStore } from "../../store/userStore";
+const LIMIT_PER_PAGE = 6;
+
+// 组合式 API
 const { isLoading, contentSection, loadMore, currentPage } = useGeneral();
 const userStore = useUserStore();
 const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
-const selectedContent = ref<Article | Photography | Note | null>(null);
 
-let essay = ref<Article[]>([]);
-let photography = ref<Photography[]>([]);
-let notes = ref<Note[]>([]);
+// 引用定义
+const selectedContent = ref<Article | Photography | Note | null>(null);
+const essay = ref<Article[]>([]);
+const photography = ref<Photography[]>([]);
+const notes = ref<Note[]>([]);
 const articleTotal = ref(0);
 const photographyTotal = ref(0);
 const noteTotal = ref(0);
-let userId = ref<number | null>(null);
-userId.value = user.value?.id || null;
+const userId = ref<number | null>(user.value?.id || null);
+const activeTab = ref<string>(
+  Array.isArray(route.params.tab)
+    ? route.params.tab[0]
+    : route.params.tab || "essays"
+);
+const contentTypeMap = ref<any>(CONTENT_TYPE_MAP);
+const tabs = TABS;
 
-// 获取文章、摄影、随记数据
-async function fetchData(currentPage: number = 1) {
+// 计算属性
+const currentContent = computed(() => {
+  let content: any[] = [];
+  if (activeTab.value === "essays") {
+    content = [...essay.value];
+  } else if (activeTab.value === "photographys") {
+    content = [...photography.value];
+  } else if (activeTab.value === "notes") {
+    content = [...notes.value];
+  }
+  return content.slice(0, currentPage.value * LIMIT_PER_PAGE);
+});
+
+const hasMoreContent = computed(() => {
+  const totals = {
+    essays: articleTotal.value,
+    photographys: photographyTotal.value,
+    notes: noteTotal.value,
+  };
+  return (
+    currentContent.value.length <
+    (totals[activeTab.value as keyof typeof totals] || 0)
+  );
+});
+
+// 暴露方法
+defineExpose({
+  fetchData,
+});
+
+// 工具函数
+const isSupportedContentType = (type: string) => {
+  return SUPPORTED_CONTENT_TYPES.includes(type);
+};
+
+const getTabName = (tab: string) => {
+  return tabs.find((t) => t.id === tab)?.text || "";
+};
+
+const formatDate = (date: string) => {
+  return formatDistanceToNow(new Date(date), { addSuffix: true, locale: zhCN });
+};
+
+// 内容处理函数
+const getTitle = (item: any) => {
+  return activeTab.value === "essays"
+    ? (item as Article).title
+    : (item as Note).title;
+};
+
+const getContent = (item: any): string => {
+  let content = "";
+  if (activeTab.value === "essays") {
+    content = (item as Article).content;
+  } else if (activeTab.value === "photographys") {
+    content = (item as Photography).content;
+  } else if (activeTab.value === "notes") {
+    content = (item as Note).content;
+  }
+  return content || "";
+};
+
+const getLabel = (item: any) => {
+  return (item as Article).label;
+};
+
+const getLikedStatus = (item: any) => {
+  return (item as Article).isLiked;
+};
+
+const getLikesCount = (item: any) => {
+  return (item as Article).likesCount;
+};
+
+// 数据获取
+async function fetchData(currentPageNum: number = 1) {
   try {
-    const limit = 6; // 每次加载6条数据
     const [responseArticles, responsePhotography, responseNotes] =
       await Promise.all([
         axiosConfig.get("/admin/article", {
-          params: { userId: userId.value, limit, currentPage },
+          params: {
+            userId: userId.value,
+            limit: LIMIT_PER_PAGE,
+            currentPage: currentPageNum,
+          },
         }),
         axiosConfig.get("/admin/photography", {
-          params: { userId: userId.value, limit, currentPage },
+          params: {
+            userId: userId.value,
+            limit: LIMIT_PER_PAGE,
+            currentPage: currentPageNum,
+          },
         }),
         axiosConfig.get("/admin/note", {
-          params: { userId: userId.value, limit, currentPage },
+          params: {
+            userId: userId.value,
+            limit: LIMIT_PER_PAGE,
+            currentPage: currentPageNum,
+          },
         }),
       ]);
+
     // 更新数据
-    if (currentPage === 1) {
+    if (currentPageNum === 1) {
       essay.value = responseArticles.data.data.articles.map(
         (item: Article) => ({
           ...item,
           type: "essay",
           views: item.views || 0,
           isViewed: false,
-          isLiked: item.isLiked ?? false, // 初始化点赞状态
-          likesCount: item.likesCount ?? 0, // 初始化点赞数
+          isLiked: item.isLiked ?? false,
+          likesCount: item.likesCount ?? 0,
         })
       );
 
@@ -235,6 +313,7 @@ async function fetchData(currentPage: number = 1) {
           type: "photography",
         })
       );
+
       notes.value = responseNotes.data.data.notes.map((item: Note) => ({
         ...item,
         type: "notes",
@@ -246,40 +325,36 @@ async function fetchData(currentPage: number = 1) {
     photographyTotal.value = responsePhotography.data.data.pagination.total;
     noteTotal.value = responseNotes.data.data.pagination.total;
   } catch (error: any) {
-    // 兼容 message 字段
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
   }
 }
+
+// 事件处理
 const handleMouseEnter = async (item: any) => {
-  // 只处理文章类型且未被浏览过的情况
   if (item.type === "essay" && !item.isViewed) {
     try {
-      // 更新后端浏览量
       await axiosConfig.post(`/admin/article/views/${item.id}`);
-      // 更新前端显示
       const index = essay.value.findIndex((article) => article.id === item.id);
       if (index !== -1) {
         essay.value[index].views += 1;
         essay.value[index].isViewed = true;
       }
     } catch (error: any) {
-      // 兼容 message 字段
       const errorMessage =
         error?.response?.data?.message || error?.message || "未知错误";
       ElMessage.error(errorMessage);
     }
   }
 };
+
 const editContent = (content: Article | Photography | Note) => {
-  const validTypes = ["essay", "photography", "notes"];
-  if (!validTypes.includes(content.type)) {
+  if (!isSupportedContentType(content.type)) {
     ElMessage.error("不支持的内容类型");
     return;
   }
 
-  // 使用 router.resolve 获取完整 URL
   const routeData = router.resolve({
     name: "overview",
     query: {
@@ -288,17 +363,48 @@ const editContent = (content: Article | Photography | Note) => {
     },
   });
 
-  // 在新窗口中打开 URL，使用 content.id 作为窗口名称
-  // 如果窗口已存在，则重用；否则创建新窗口
   window.open(routeData.href, `content_${content.type}`);
 };
+
+const changeTab = (tabId: string) => {
+  activeTab.value = tabId;
+  const query = route.query.id ? { id: route.query.id } : {};
+  router.push({
+    name: "share",
+    params: { tab: tabId },
+    query,
+  });
+};
+
+// 点赞处理
+async function handleLike(id: number, isLiked: boolean) {
+  try {
+    const response = await axiosConfig.post(`/admin/likes/like`, {
+      articleId: id,
+      userId: userId.value,
+    });
+
+    const index = essay.value.findIndex((article: any) => article.id === id);
+    if (index !== -1) {
+      essay.value[index].isLiked = !isLiked;
+      essay.value[index].likesCount = response.data.likeCount;
+    }
+
+    fetchData();
+    ElMessage.success(response.data.message);
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "未知错误";
+    ElMessage.error(errorMessage);
+  }
+}
+
+// 生命周期钩子
 onMounted(async () => {
   await fetchData();
 
-  // 检查 URL 查询参数中是否包含 id
   const contentId = route.query.id;
   if (contentId) {
-    // 根据 id 查找对应内容
     let content;
     if (activeTab.value === "essays") {
       content = essay.value.find((item) => item.id.toString() === contentId);
@@ -309,118 +415,24 @@ onMounted(async () => {
     } else if (activeTab.value === "notes") {
       content = notes.value.find((item) => item.id.toString() === contentId);
     }
-    // 如果找到内容,打开编辑抽屉
+
     if (content) {
       editContent(content);
     }
   }
 });
-const contentTypeMap = ref<any>({
-  notes: "随笔随记",
-  photography: "摄影图库",
-  essay: "博客文章",
-});
-// 计算当前页内容
-const currentContent = computed(() => {
-  let content: any[] = [];
-  if (activeTab.value === "essays") {
-    content = [...essay.value];
-  } else if (activeTab.value === "photographys") {
-    content = [...photography.value];
-  } else if (activeTab.value === "notes") {
-    content = [...notes.value];
-  }
-  return content.slice(0, currentPage.value * 6); // 每次显示6条数据
-});
-// 处理标签切换对应的路由
-const changeTab = (tabId: string) => {
-  activeTab.value = tabId;
-  const query = route.query.id ? { id: route.query.id } : {};
-  router.push({
-    name: "share",
-    params: { tab: tabId },
-    query,
-  });
-};
-// 处理标签切换默认为essay
-const activeTab = ref<string>(
-  Array.isArray(route.params.tab)
-    ? route.params.tab[0]
-    : route.params.tab || "essays"
-);
 
-// 监听标签切换 并重新加载数据
+// 监听器
 watch(activeTab, () => {
   fetchData();
 });
-// 监听路由变化
+
 watch(
   () => route.params.tab,
   (newTab) => {
     activeTab.value = Array.isArray(newTab) ? newTab[0] : newTab || "essays";
   }
 );
-// 格式化日期
-const formatDate = (date: string) => {
-  return formatDistanceToNow(new Date(date), { addSuffix: true, locale: zhCN });
-};
-// 点赞处理函数
-async function handleLike(id: number, isLiked: boolean) {
-  try {
-    const response = await axiosConfig.post(`/admin/likes/like`, {
-      articleId: id,
-      userId: userId.value,
-    });
-
-    // 更新点赞状态
-    const index = essay.value.findIndex((article: any) => article.id === id);
-    if (index !== -1) {
-      essay.value[index].isLiked = !isLiked;
-      essay.value[index].likesCount = response.data.likeCount;
-    }
-    // 刷新
-    fetchData();
-    ElMessage.success(response.data.message);
-  } catch (error: any) {
-    // 兼容 message 字段
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-  }
-}
-// 获取标签名
-const getTabName = (tab: string) => {
-  return tabs.find((t) => t.id === tab)?.text || "";
-};
-// 获取标题 内容 标签
-const getTitle = (item: any) => {
-  return activeTab.value === "essay"
-    ? (item as Article).title
-    : (item as Note).title;
-};
-const getContent = (item: any): string => {
-  let content = "";
-  if (activeTab.value === "essays") {
-    content = (item as Article).content;
-  } else if (activeTab.value === "photographys") {
-    content = (item as Photography).content;
-  } else if (activeTab.value === "notes") {
-    content = (item as Note).content;
-  }
-
-  return content || "";
-};
-const getLabel = (item: any) => {
-  return (item as Article).label;
-};
-// 获取点赞状态
-const getLikedStatus = (item: any) => {
-  return (item as Article).isLiked;
-};
-// 获取点赞数量
-const getLikesCount = (item: any) => {
-  return (item as Article).likesCount;
-};
 </script>
 
 <style scoped lang="less">

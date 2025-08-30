@@ -804,10 +804,6 @@ const deleteAccount = async () => {
     });
     // 删除账户
     const response = await axiosConfig.delete("/users/delete");
-    // 删除照片
-    const image = await axiosConfig.delete(
-      `admin/upload/user/${userStore.user.id}`
-    );
     // 删除主题
     localStorage.removeItem(`theme-${uuid.value}`);
     // 删除头像
@@ -823,7 +819,6 @@ const deleteAccount = async () => {
     Cookies.remove("ds-token");
     themeStore.clearUserTheme();
     ElMessage.success(response.data.message);
-    ElMessage.info(image.data.message);
     router.push({ name: "login/index" });
   } catch (error: any) {
     const errorMessage =

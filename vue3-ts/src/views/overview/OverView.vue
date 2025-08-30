@@ -11,10 +11,7 @@
       <div v-if="contentType === 'essay'" class="essay-content">
         <div class="meta-header">
           <span class="category-tag">{{ content.label }}</span>
-          <!-- 删除 -->
-          <span class="delete-tag" @click="deleteContent(content.id)"
-            >删除</span
-          >
+          <span class="delete-tag" @click="handleDelete(content.id)">删除</span>
           <span class="essay-date">{{ formatDate(content.createdAt) }}</span>
         </div>
         <h1 class="title">{{ content.title }}</h1>
@@ -53,20 +50,14 @@
           <div class="author-info">
             <img
               @click="openAuthorProfile()"
-              v-if="
-                user.avatar ||
-                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-              "
-              v-lazy="
-                user.avatar ||
-                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
-              "
+              v-if="user.avatar || defaultAvatar"
+              v-lazy="user.avatar || defaultAvatar"
               :title="'博主头像'"
               class="avatar"
             />
-            <span :style="{ color: user.nicknameColor }"
-              >博主: {{ user.nickname || "匿名" }}</span
-            >
+            <span :style="{ color: user.nicknameColor }">
+              博主: {{ user.nickname || "匿名" }}
+            </span>
           </div>
           <div class="action-buttons">
             <button v-if="contentType === 'essay'" class="like-btn">
@@ -113,10 +104,9 @@
 
               <span class="date">{{ formatDate(content.createdAt) }}</span>
               <h2 class="photo-title">{{ content.title || "摄影作品" }}</h2>
-              <!-- 删除 -->
               <span
                 class="photo-delete-tag"
-                @click.stop="deleteContent(content.id)"
+                @click.stop="handleDelete(content.id)"
                 >删除</span
               >
               <p class="photo-desc">{{ content.content }}</p>
@@ -144,8 +134,7 @@
         <div class="note-header">
           <h2 class="note-title">{{ content.title }}</h2>
           <span class="note-date">{{ formatDate(content.createdAt) }}</span>
-          <!-- 删除 -->
-          <span class="note-delete-tag" @click="deleteContent(content.id)"
+          <span class="note-delete-tag" @click="handleDelete(content.id)"
             >删除</span
           >
         </div>
@@ -207,17 +196,37 @@ import axiosConfig from "../../utils/request";
 import { format } from "date-fns";
 import { apiUrl } from "../../config";
 import { useUserStore } from "../../store/userStore";
+const { openAuthorProfile } = useUserStore();
+// 常量定义
+const DEFAULT_AVATAR =
+  "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
+const TYPE_NAME_MAP = {
+  essay: "博客文章",
+  photography: "摄影作品",
+  notes: "随笔随记",
+};
+const ENDPOINTS = {
+  essay: "/admin/article",
+  photography: "/admin/photography",
+  notes: "/admin/note",
+};
+const CONTENT_KEYS = {
+  essay: "article",
+  photography: "photography",
+  notes: "note",
+};
+
+// 组合式 API
 const router = useRouter();
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
-const { openAuthorProfile } = useUserStore();
 const route = useRoute();
 
-// 定义上传组件的引用
+// 引用定义
 const essayUploadRef = ref<InstanceType<typeof ElUpload>>();
 const photoUploadRef = ref<InstanceType<typeof ElUpload>>();
 const notesUploadRef = ref<InstanceType<typeof ElUpload>>();
-// 存储原始内容用于比较
+
 const originalContent = ref<any>(null);
 const showUploadButton = ref<boolean>(false);
 const contentType = ref<string>("");
@@ -225,6 +234,16 @@ const content = ref<any>(null);
 const imageUrl = ref<string>("");
 const userId = ref<number | null>(userStore.user?.id || null);
 
+// 计算属性
+const defaultAvatar = computed(() => DEFAULT_AVATAR);
+const currentTypeText = computed(
+  () => TYPE_NAME_MAP[contentType.value as keyof typeof TYPE_NAME_MAP] || "内容"
+);
+const uploadTip = computed(
+  () => `点击上传新封面 - 当前为${currentTypeText.value}封面`
+);
+
+// 格式化函数
 const formatDate = (dateString: string) => {
   if (!dateString) return "";
   try {
@@ -233,19 +252,14 @@ const formatDate = (dateString: string) => {
     return dateString;
   }
 };
-// 根据不同内容类型返回统一提示语。
-const uploadTip = computed(() => {
-  const baseTip = "点击上传新封面";
-  const currentType = currentTypeText.value;
-  return `${baseTip} - 当前为${currentType}封面`;
-});
 
 const formatContent = (text: string) => {
   return text || "";
 };
-const deleteContent = async (contentId: number) => {
+
+// 删除处理
+const handleDelete = async (contentId: number) => {
   try {
-    // 弹出确认对话框
     await ElMessageBox.confirm(
       "确定要删除这项内容吗？此操作无法撤销。",
       "提示",
@@ -256,67 +270,46 @@ const deleteContent = async (contentId: number) => {
       }
     );
 
-    const endpointMap = {
-      essay: `/admin/article`,
-      photography: `/admin/photography`,
-      notes: `/admin/note`,
-    };
-
-    const endpoint = endpointMap[contentType.value as keyof typeof endpointMap];
-
+    const endpoint = ENDPOINTS[contentType.value as keyof typeof ENDPOINTS];
     if (!endpoint) {
       ElMessage.error("不支持的内容类型");
       return;
     }
 
     const response = await axiosConfig.delete(`${endpoint}/${contentId}`);
-    // 删除图片
+
     if (content.value?.image) {
       deleteOldImage(content.value.image);
     }
-    ElMessage.success(response.data.message);
 
-    // 可选：跳转到列表页或刷新页面
-    router.push({ path: "/share/essay" }); // 跳转到内容管理页
+    ElMessage.success(response.data.message);
+    router.push({ path: "/share/essay" });
   } catch (error: any) {
-    // 兼容 message 字段
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
   }
 };
 
+// 上传处理
 const handleChange = (uploadFile?: UploadFile) => {
   const file = uploadFile?.raw;
   if (!file) return;
-
   showUploadButton.value = true;
 };
 
 const submitUpload = (type: string) => {
-  switch (type) {
-    case "essay":
-      essayUploadRef.value?.submit();
-      break;
-    case "photography":
-      photoUploadRef.value?.submit();
-      break;
-    case "notes":
-      notesUploadRef.value?.submit();
-      break;
-  }
-  // 更换按钮
+  const uploadRefs = {
+    essay: essayUploadRef,
+    photography: photoUploadRef,
+    notes: notesUploadRef,
+  };
+
+  const ref = uploadRefs[type as keyof typeof uploadRefs];
+  ref.value?.submit();
   showUploadButton.value = false;
 };
-const typeNameMap = {
-  essay: "博客文章",
-  photography: "摄影作品",
-  notes: "随笔随记",
-};
 
-const currentTypeText = computed(() => {
-  return typeNameMap[contentType.value as keyof typeof typeNameMap] || "内容";
-});
 const beforeUpload = async (file: File) => {
   try {
     await ElMessageBox.confirm(
@@ -346,10 +339,12 @@ const beforeUpload = async (file: File) => {
     ElMessage.error("上传图片只能是 JPG/PNG/WEBP/GIF 格式!");
     return false;
   }
+
   if (!isLt5M) {
     ElMessage.error("上传图片大小不能超过 5MB!");
     return false;
   }
+
   if (!userStore.user.uuid) {
     ElMessage.error("ID未找到，请重新登录");
     return false;
@@ -391,39 +386,37 @@ const handleSuccess = async (response: any) => {
   const signedUrlResponse = await axiosConfig.get(
     `${apiUrl}/admin/upload/image/sign?filename=${filename}`
   );
+
   imageUrl.value = signedUrlResponse.data.data.url;
   content.value.image = imageUrl.value;
   ElMessage.success(signedUrlResponse.data.message);
-  essayUploadRef.value?.clearFiles();
-  photoUploadRef.value?.clearFiles();
-  notesUploadRef.value?.clearFiles();
+
+  [essayUploadRef, photoUploadRef, notesUploadRef].forEach((ref) => {
+    ref.value?.clearFiles();
+  });
+
   showUploadButton.value = false;
 
-  // 更新原始内容的图片地址
   if (originalContent.value) {
     originalContent.value.image = imageUrl.value;
   }
 
-  // 自动保存更新
   await autoSaveContent();
 };
 
-// 新增自动保存函数
+// 自动保存
 const autoSaveContent = async () => {
   try {
-    // 检查用户是否登录
     if (!userId.value) {
       ElMessage.error("请先登录");
       return;
     }
 
-    // 检查图片是否存在
     if (!content.value?.image) {
       ElMessage.error("图片上传失败");
       return;
     }
 
-    // 根据不同类型验证必要字段
     if (contentType.value === "essay") {
       if (!content.value.title?.trim()) {
         ElMessage.error("文章标题不能为空");
@@ -440,13 +433,11 @@ const autoSaveContent = async () => {
       }
     }
 
-    // 所有类型都必须有内容
     if (!content.value.content?.trim()) {
       ElMessage.error("内容不能为空");
       return;
     }
 
-    // 构造请求体
     const payload = {
       image: content.value.image,
       userId: userId.value,
@@ -457,27 +448,16 @@ const autoSaveContent = async () => {
       content: content.value.content,
     };
 
-    // 获取当前路由中的内容 ID
     const id = route.query.id;
+    const endpoint = ENDPOINTS[contentType.value as keyof typeof ENDPOINTS];
 
-    // 发送更新请求（PUT）
-    const endpoints = {
-      essay: "/admin/article",
-      photography: "/admin/photography",
-      notes: "/admin/note",
-    };
-
-    if (!(contentType.value in endpoints)) {
+    if (!endpoint) {
       ElMessage.error("不支持的内容类型");
       return;
     }
 
-    const endpoint = endpoints[contentType.value as keyof typeof endpoints];
     const response = await axiosConfig.put(`${endpoint}/${id}`, payload);
-
     ElMessage.success(response.data.message);
-
-    // 更新原始内容以避免重复提示"已修改"
     originalContent.value = JSON.parse(JSON.stringify(content.value));
   } catch (error: any) {
     const errorMessage =
@@ -486,6 +466,7 @@ const autoSaveContent = async () => {
   }
 };
 
+// 生命周期钩子
 onMounted(async () => {
   const id = route.query.id;
   const type = route.query.type;
@@ -498,40 +479,29 @@ onMounted(async () => {
   contentType.value = type as string;
 
   try {
-    let response;
-    const endpoints = {
-      essay: `/admin/article/${id}`,
-      photography: `/admin/photography/${id}`,
-      notes: `/admin/note/${id}`,
-    };
+    const endpoint = `${ENDPOINTS[type as keyof typeof ENDPOINTS]}/${id}`;
+    const contentKey = CONTENT_KEYS[type as keyof typeof CONTENT_KEYS];
 
-    const contentKey: Record<string, string> = {
-      essay: "article",
-      photography: "photography",
-      notes: "note",
-    };
-
-    response = await axiosConfig.get(endpoints[type as keyof typeof endpoints]);
+    const response = await axiosConfig.get(endpoint);
     ElMessage.success(response.data.message);
+
     if (response?.data?.data) {
-      const fetchedContent = response.data.data[contentKey[type]];
+      const fetchedContent = response.data.data[contentKey];
       content.value = { ...fetchedContent };
-      originalContent.value = JSON.parse(JSON.stringify(fetchedContent)); // 深拷贝
+      originalContent.value = JSON.parse(JSON.stringify(fetchedContent));
     }
   } catch (error: any) {
-    // 兼容 message 字段
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";
     ElMessage.error(errorMessage);
   }
 });
-// 新增一个函数：检查是否有更改
+
+// 内容变更检查
 function hasContentChanged(): boolean {
   if (!originalContent.value || !content.value) return false;
 
   const current = content.value;
-
-  // 检查基本字段
   if (
     current.title !== originalContent.value.title ||
     current.content !== originalContent.value.content ||
@@ -541,7 +511,6 @@ function hasContentChanged(): boolean {
     return true;
   }
 
-  // 可选：检查 tags/exif 等数组字段
   if (
     contentType.value === "notes" &&
     !arraysEqual(current.tags, originalContent.value.tags)
@@ -558,6 +527,7 @@ function arraysEqual(a: any[], b: any[]): boolean {
   return JSON.stringify(a.sort()) === JSON.stringify(b.sort());
 }
 </script>
+
 <style scoped lang="less">
 @import "../../base-ui/overview.less";
 </style>
