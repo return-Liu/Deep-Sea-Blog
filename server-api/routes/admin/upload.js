@@ -53,7 +53,6 @@ router.get("/image/sign", async (req, res) => {
     // 确保只使用文件名，而不是完整路径
     const url = await client.signatureUrl(`images/${filename}`, {
       method: "GET",
-      expires: 32400,
     });
     success(res, "获取签名URL成功", { url });
   } catch (error) {

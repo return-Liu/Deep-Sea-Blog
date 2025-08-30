@@ -71,7 +71,6 @@ router.get("/avatar/sign", async (req, res) => {
   const { filename } = req.query;
   const url = await client.signatureUrl(`avatar/${filename}`, {
     method: "GET",
-    expires: 32400,
   });
   success(res, "获取签名URL成功", { url });
 });
