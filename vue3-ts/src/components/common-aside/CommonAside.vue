@@ -76,7 +76,7 @@
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.suggestionsList')"
+        :content="$t('commonaside.home.reportresultscenter')"
         placement="right"
       >
         <el-menu-item index="/reportresultscenter">

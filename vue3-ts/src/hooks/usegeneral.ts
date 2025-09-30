@@ -7,7 +7,16 @@ export function useGeneral() {
   const contentSection = ref<HTMLElement | null>(null);
   const reports = ref<any[]>([]);
   const feedbacks = ref<any[]>([]);
-  const pageSize = 6; // 每页显示的数量
+  const feedbackPagination = ref({
+    total: 0,
+    currentPage: 1,
+    pageSize: 6,
+  });
+  const reportPagination = ref({
+    total: 0,
+    currentPage: 1,
+    pageSize: 6,
+  });
 
   const handleScroll = () => {
     if (!contentSection.value) return;
@@ -24,10 +33,17 @@ export function useGeneral() {
       const response = await axiosConfig.get("/admin/wall/report", {
         params: {
           currentPage: page,
-          pageSize: pageSize,
+          pageSize: reportPagination.value.pageSize,
         },
       });
+
       const reportList = response.data.data.reports;
+      const pagination = response.data.data.pagination;
+
+      // 更新分页信息
+      reportPagination.value.total = pagination.total;
+      reportPagination.value.currentPage = page;
+
       const formattedReports = reportList.map((report: any) => ({
         ...report,
         formattedCreatedAt: new Date(report.createdAt).toLocaleString("zh-CN", {
@@ -51,7 +67,6 @@ export function useGeneral() {
             })
           : "",
       }));
-      console.log(reportList);
 
       // 如果是第一页，替换数据；否则追加数据
       if (page === 1) {
@@ -69,9 +84,17 @@ export function useGeneral() {
       const response = await axiosConfig.get("/admin/feedback", {
         params: {
           currentPage: page,
-          pageSize: pageSize,
+          pageSize: feedbackPagination.value.pageSize, // 使用前端定义的分页大小
         },
       });
+
+      // 更新分页信息
+      feedbackPagination.value.total = response.data.data.pagination.total;
+      feedbackPagination.value.currentPage =
+        response.data.data.pagination.currentPage;
+      feedbackPagination.value.pageSize =
+        response.data.data.pagination.pageSize; // 同步后端返回的分页大小
+
       const feedbackList = response.data.data.feedbacks;
       const formattedFeedbacks = feedbackList.map((feedback: any) => ({
         ...feedback,
@@ -88,7 +111,6 @@ export function useGeneral() {
           }
         ),
       }));
-      console.log(feedbackList);
 
       // 如果是第一页，替换数据；否则追加数据
       if (page === 1) {

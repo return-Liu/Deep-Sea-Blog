@@ -406,21 +406,25 @@ router.get("/devices", userAuth, async (req, res) => {
 
 // 修改定时任务，清理未登录设备
 cron.schedule("0 0 * * *", async () => {
-  // 每天凌晨执行
-  try {
-    const result = await Device.destroy({
-      where: {
-        status: "未登录",
-        // 可选：只删除超过一定时间的未登录设备
-        updatedAt: {
-          [Op.lt]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前的未登录设备
+  console.log("定时任务已注册：清理未登录设备");
+  cron.schedule("0 0 * * *", async () => {
+    // 每天凌晨执行
+    console.log("开始执行清理未登录设备任务");
+    try {
+      const result = await Device.destroy({
+        where: {
+          status: "未登录",
+          // 可选：只删除超过一定时间的未登录设备
+          updatedAt: {
+            [Op.lt]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前的未登录设备
+          },
         },
-      },
-    });
-    console.log(`清理了 ${result} 个未登录设备`);
-  } catch (error) {
-    console.error("清理未登录设备时出错:", error);
-  }
+      });
+      console.log(`清理了 ${result} 个未登录设备`);
+    } catch (error) {
+      console.error("清理未登录设备时出错:", error);
+    }
+  });
 });
 // 删除登录设备
 router.delete("/devices/:id", userAuth, async (req, res) => {

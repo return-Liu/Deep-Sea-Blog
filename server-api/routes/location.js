@@ -8,6 +8,8 @@ router.get("/ip-location", async (req, res) => {
     const response = await axios.get(
       `https://restapi.amap.com/v3/ip?key=${key}`
     );
+    console.log(response.data);
+
     success(res, response.data, "获取位置信息成功");
   } catch (error) {
     console.error("获取位置信息失败:", error);

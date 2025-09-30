@@ -5,9 +5,10 @@
         <div class="avatar" @click="openAuthorProfile">
           <img
             v-if="user?.avatar || DEFAULT_AVATAR"
-            v-lazy="user?.avatar || DEFAULT_AVATAR"
+            v-lazy="userAvatarUrl"
             alt="头像"
             :title="`用户${user?.nickname || '默认用户'}的头像`"
+            @error="handleAvatarError"
           />
         </div>
         <div class="user-info">
@@ -70,7 +71,7 @@
           }`"
         >
           <div class="card-media">
-            <img v-lazy="item.image" />
+            <img v-lazy="getItemImageUrl(item)" @error="handleImageError" />
             <div class="card-overlay">
               <span class="date">{{ formatDate(item.createdAt) }}</span>
             </div>
@@ -217,6 +218,18 @@ const hasMoreContent = computed(() => {
   );
 });
 
+const userAvatarUrl = computed(() => {
+  if (!user.value?.avatar) return DEFAULT_AVATAR;
+
+  // 如果已经是完整URL，直接返回
+  if (user.value.avatar.startsWith("http")) {
+    return user.value.avatar;
+  }
+
+  // 否则构造OSS URL（假设OSS允许公开读）
+  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${user.value.avatar}`;
+});
+
 // 暴露方法
 defineExpose({
   fetchData,
@@ -233,6 +246,29 @@ const getTabName = (tab: string) => {
 
 const formatDate = (date: string) => {
   return formatDistanceToNow(new Date(date), { addSuffix: true, locale: zhCN });
+};
+
+// 图片处理函数
+const getItemImageUrl = (item: any): string => {
+  if (!item.image) return DEFAULT_AVATAR;
+
+  // 如果已经是完整URL，直接返回
+  if (item.image.startsWith("http")) {
+    return item.image;
+  }
+
+  // 否则构造OSS URL（假设OSS允许公开读）
+  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${item.image}`;
+};
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = DEFAULT_AVATAR;
+};
+
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = DEFAULT_AVATAR;
 };
 
 // 内容处理函数

@@ -11,6 +11,7 @@ const { client } = require("../../utils/oss");
 const headers = {
   "x-oss-storage-class": "Standard",
   "x-oss-forbid-overwrite": "false",
+  "x-oss-object-acl": "public-read", // 添加这行
 };
 
 // 配置 Multer 使用内存存储
@@ -71,6 +72,7 @@ router.get("/avatar/sign", async (req, res) => {
   const { filename } = req.query;
   const url = await client.signatureUrl(`avatar/${filename}`, {
     method: "GET",
+    expires: 315360000,
   });
   success(res, "获取签名URL成功", { url });
 });

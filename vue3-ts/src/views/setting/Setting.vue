@@ -465,33 +465,26 @@ const isDefaultAvatar = (filename: string) => {
   return filename.includes("defaultAvatar");
 };
 const setupAvatarRefresh = () => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer);
-  }
-
+  // 现在由axios拦截器自动处理签名刷新，这里可以保留为空或移除
+  // 或者只保留一个较长时间的基础检查
   refreshTimer = window.setInterval(async () => {
-    if (userStore.user.avatar) {
-      try {
-        const url = new URL(userStore.user.avatar);
-        const pathname = url.pathname;
-        const filename = pathname.split("/").pop();
-
-        if (filename && !isDefaultAvatar(filename)) {
-          const newSignedUrl = await refreshAvatarSignature(filename);
-          if (newSignedUrl) {
-            avatar.value = newSignedUrl;
-            userStore.user.avatar = newSignedUrl;
-          } else {
-            // 如果刷新失败，下次继续尝试
-            console.warn("签名刷新失败，将在下次重试");
-          }
-        }
-      } catch (error) {
-        console.error("定时刷新签名失败:", error);
-        // 可以考虑增加重试次数限制
+    // 可选：偶尔检查一下头像URL是否需要更新
+    await checkAndUpdateAvatarIfNeeded();
+  }, 60 * 60 * 1000); // 1小时检查一次
+};
+const checkAndUpdateAvatarIfNeeded = async () => {
+  if (userStore.user.avatar && !isDefaultAvatar(userStore.user.avatar)) {
+    try {
+      const url = new URL(userStore.user.avatar);
+      const filename = url.pathname.split("/").pop();
+      if (filename) {
+        // 只是预刷新，不强制更新
+        await refreshAvatarSignature(filename);
       }
+    } catch (error) {
+      console.error("预刷新头像签名失败:", error);
     }
-  }, (32400 - 7200) * 1000); // 提前2小时刷新
+  }
 };
 onUnmounted(() => {
   if (refreshTimer) {

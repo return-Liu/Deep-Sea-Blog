@@ -1,11 +1,13 @@
 <template>
   <div class="feedback-container">
-    <div class="feedback-header">
-      <h1 class="page-title">意见反馈</h1>
-      <p class="page-subtitle">您的建议将帮助我们不断改进</p>
-    </div>
+    <el-card class="feedback-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">意见反馈</span>
+          <p class="card-subtitle">您的建议将帮助我们不断改进产品和服务</p>
+        </div>
+      </template>
 
-    <el-card class="feedback-card" shadow="hover">
       <div class="card-content">
         <el-form
           ref="feedbackFormRef"
@@ -15,13 +17,14 @@
           @submit.prevent="submitFeedback"
           class="feedback-form"
         >
-          <el-row :gutter="20">
+          <el-row :gutter="24">
             <el-col :span="24" :md="12">
               <el-form-item label="姓名" prop="name">
                 <el-input
                   v-model="formData.name"
                   placeholder="请输入您的姓名"
                   clearable
+                  size="large"
                 />
               </el-form-item>
             </el-col>
@@ -33,6 +36,7 @@
                   type="email"
                   placeholder="请输入您的邮箱"
                   clearable
+                  size="large"
                 />
               </el-form-item>
             </el-col>
@@ -46,63 +50,76 @@
               placeholder="请详细描述您的建议或遇到的问题"
               maxlength="1000"
               show-word-limit
+              resize="none"
             />
           </el-form-item>
 
-          <el-form-item>
-            <div class="form-actions">
-              <el-button
-                type="primary"
-                native-type="submit"
-                :loading="isSubmitting"
-                size="large"
-                class="submit-btn"
-              >
-                {{ isSubmitting ? "提交中..." : "提交反馈" }}
-              </el-button>
-              <el-button @click="resetForm" size="large">重置</el-button>
-            </div>
+          <el-form-item class="form-actions">
+            <el-button
+              type="primary"
+              native-type="submit"
+              :loading="isSubmitting"
+              size="default"
+            >
+              {{ isSubmitting ? "提交中..." : "提交反馈" }}
+            </el-button>
+            <el-button @click="resetForm" size="default">重置</el-button>
           </el-form-item>
         </el-form>
 
-        <div v-if="successMessage" class="status-message success">
-          <el-result
-            icon="success"
-            title="提交成功"
-            :sub-title="successMessage"
-          />
-        </div>
+        <transition name="fade">
+          <div v-if="successMessage" class="status-message success">
+            <el-result
+              icon="success"
+              title="提交成功"
+              :sub-title="successMessage"
+            />
+          </div>
+        </transition>
 
-        <div v-if="errorMessage" class="status-message error">
-          <el-result icon="error" title="提交失败" :sub-title="errorMessage" />
-        </div>
+        <transition name="fade">
+          <div v-if="errorMessage" class="status-message error">
+            <el-result
+              icon="error"
+              title="提交失败"
+              :sub-title="errorMessage"
+            />
+          </div>
+        </transition>
       </div>
     </el-card>
 
-    <div class="feedback-info">
-      <h3 class="info-title">反馈须知</h3>
-      <ul class="info-list">
-        <li class="info-item">
-          <el-icon><InfoFilled /></el-icon>
-          <span>我们会认真阅读每一条反馈，并在处理后通过邮件回复您</span>
-        </li>
-        <li class="info-item">
-          <el-icon><InfoFilled /></el-icon>
-          <span>请确保填写的邮箱地址正确，以便我们与您联系</span>
-        </li>
-        <li class="info-item">
-          <el-icon><InfoFilled /></el-icon>
-          <span>反馈内容请尽量详细，有助于我们更好地理解您的需求</span>
-        </li>
-      </ul>
-    </div>
+    <el-card class="info-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">反馈须知</span>
+        </div>
+      </template>
+
+      <div class="info-content">
+        <ul class="info-list">
+          <li class="info-item">
+            <el-icon class="info-icon"><CircleCheck /></el-icon>
+            <span>我们会认真阅读每一条反馈，并在处理后通过邮件回复您</span>
+          </li>
+          <li class="info-item">
+            <el-icon class="info-icon"><CircleCheck /></el-icon>
+            <span>请确保填写的邮箱地址正确，以便我们与您联系</span>
+          </li>
+          <li class="info-item">
+            <el-icon class="info-icon"><CircleCheck /></el-icon>
+            <span>反馈内容请尽量详细，有助于我们更好地理解您的需求</span>
+          </li>
+        </ul>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { InfoFilled } from "@element-plus/icons-vue";
+import { CircleCheck } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import axiosConfig from "../../utils/request";
 import { useUserStore } from "../../store/userStore";
@@ -215,82 +232,77 @@ const submitFeedback = async () => {
 
 <style scoped lang="scss">
 .feedback-container {
-  margin: 0 auto;
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-  .feedback-header {
-    text-align: center;
-    margin-bottom: 30px;
+:deep(.el-card) {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
 
-    .page-title {
-      font-size: 28px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 10px;
-    }
+:deep(.el-card__header) {
+  padding: 20px 24px;
+  border-bottom: 1px solid #ebeef5;
+}
 
-    .page-subtitle {
-      font-size: 16px;
-      color: #606266;
-      margin: 0;
-    }
+.card-header {
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
   }
 
-  .feedback-card {
-    border-radius: 8px;
-    border: 1px solid #ebeef5;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  .card-subtitle {
+    font-size: 14px;
+    color: #909399;
+    margin: 6px 0 0;
+  }
+}
 
-    :deep(.el-card__body) {
-      padding: 30px;
-    }
+.feedback-card {
+  .card-content {
+    padding: 24px;
 
-    .card-content {
-      .feedback-form {
-        .form-actions {
-          display: flex;
-          justify-content: center;
-          gap: 20px;
-          margin-top: 20px;
+    .feedback-form {
+      .form-actions {
+        display: flex;
+        justify-content: flex-start;
+        gap: 12px;
+        margin-top: 24px;
 
-          .submit-btn {
-            min-width: 120px;
-          }
-        }
-      }
-
-      .status-message {
-        margin-top: 20px;
-
-        :deep(.el-result) {
-          padding: 20px 0;
-
-          .el-result__title {
-            font-size: 20px;
-            margin-top: 15px;
-          }
-
-          .el-result__subtitle {
-            font-size: 14px;
-            margin-top: 10px;
-          }
+        :deep(.el-button) {
+          min-width: 100px;
         }
       }
     }
-  }
 
-  .feedback-info {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #f5f7fa;
-    border-radius: 8px;
+    .status-message {
+      margin-top: 24px;
 
-    .info-title {
-      font-size: 18px;
-      font-weight: 500;
-      color: #303133;
-      margin: 0 0 15px;
+      :deep(.el-result) {
+        padding: 20px 0;
+
+        .el-result__title {
+          font-size: 18px;
+          margin-top: 12px;
+        }
+
+        .el-result__subtitle {
+          font-size: 14px;
+          margin-top: 8px;
+        }
+      }
     }
+  }
+}
+
+.info-card {
+  .info-content {
+    padding: 8px 24px 24px;
 
     .info-list {
       list-style: none;
@@ -300,8 +312,8 @@ const submitFeedback = async () => {
       .info-item {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 12px;
+        gap: 12px;
+        margin-bottom: 16px;
         font-size: 14px;
         color: #606266;
 
@@ -309,34 +321,45 @@ const submitFeedback = async () => {
           margin-bottom: 0;
         }
 
-        .el-icon {
-          color: #409eff;
+        .info-icon {
+          color: #67c23a;
           font-size: 16px;
           margin-top: 2px;
+          flex-shrink: 0;
         }
       }
     }
   }
 }
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 @media (max-width: 768px) {
   .feedback-container {
     padding: 15px;
+  }
 
-    .feedback-header {
-      .page-title {
-        font-size: 24px;
-      }
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+  }
+
+  .feedback-card {
+    .card-content {
+      padding: 20px;
     }
+  }
 
-    .feedback-card {
-      :deep(.el-card__body) {
-        padding: 20px;
-      }
-    }
-
-    .feedback-info {
-      padding: 15px;
+  .el-col {
+    &:nth-child(2n) {
+      margin-top: 16px;
     }
   }
 }

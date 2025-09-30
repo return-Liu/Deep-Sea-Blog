@@ -11,6 +11,7 @@ const { client } = require("../../utils/oss");
 const headers = {
   "x-oss-storage-class": "Standard",
   "x-oss-forbid-overwrite": "false",
+  "x-oss-object-acl": "public-read", // 添加这行
 };
 
 // 上传文件到OSS的函数 - 修改为直接使用buffer
@@ -53,6 +54,7 @@ router.get("/image/sign", async (req, res) => {
     // 确保只使用文件名，而不是完整路径
     const url = await client.signatureUrl(`images/${filename}`, {
       method: "GET",
+      expires: 315360000, // 设置过期时间为10年（单位为秒）
     });
     success(res, "获取签名URL成功", { url });
   } catch (error) {
