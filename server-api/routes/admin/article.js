@@ -4,6 +4,7 @@ const { Article, User, Like, sequelize } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
 const userAuth = require("../../middlewares/user-auth");
+const { client } = require("../../utils/oss");
 
 // 查询文章列表
 router.get("/", userAuth, async (req, res) => {
@@ -153,14 +154,13 @@ router.delete("/:id", userAuth, async (req, res) => {
 
     // 删除关联的图片文件（如果存在）
     if (article.image) {
-      const imageName = article.image.split("/").pop();
-      if (imageName) {
-        const filePath = path.join(uploadDir, imageName);
-        if (fs.existsSync(filePath)) {
-          await promisify(fs.unlink)(filePath).catch((err) => {
-            console.warn(`删除文章图片文件失败: ${err.message}`);
-          });
-        }
+      try {
+        // 使用 OSS 客户端删除图片
+        await client.delete(article.image);
+        console.log(`成功删除OSS上的图片: ${article.image}`);
+      } catch (ossError) {
+        console.error(`删除OSS图片失败: ${ossError.message}`);
+        // 不中断主流程，继续删除文章
       }
     }
 

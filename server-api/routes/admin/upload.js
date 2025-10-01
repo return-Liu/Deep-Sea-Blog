@@ -103,12 +103,16 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-router.delete("/image/:filename", userAuth, async (req, res) => {
+// 删除图片 - 修复版本
+router.delete("/image/*", userAuth, async (req, res) => {
   try {
-    const { filename } = req.params;
+    // 获取完整的路径参数
+    let filename = req.params[0]; // 使用 [0] 获取通配符匹配的所有部分
+
+    console.log("删除文件:", filename); // 调试日志
 
     // 从OSS删除文件
-    await client.delete(`images/${filename}`);
+    await client.delete(filename);
 
     success(res, "删除图片成功");
   } catch (error) {

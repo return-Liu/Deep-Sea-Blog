@@ -17,7 +17,7 @@
             comment.username
           }}</span>
           <span class="area">来自{{ comment.area || "未知" }}</span>
-          <span v-if="userStore.user.role === '0'" style="color: red"></span>
+          <span style="color: red"></span>
           <span
             v-if="userStore.user.id === Number(comment.userId)"
             @click="deleteComment(comment.id)"
@@ -322,7 +322,6 @@ const showReportModal = ref(false);
 const reportReason = ref("");
 const reportDescription = ref("");
 const submitting = ref(false);
-const user = ref(null);
 const emit = defineEmits(["refreshComments", "reportComment"]);
 
 const defaultAvatar =
@@ -461,7 +460,7 @@ const likeComment = async (commentId: number) => {
 };
 
 // 控制显示回复的数量
-const visibleReplyCount = 5;
+const visibleReplyCount = 2;
 const showAllReplies = ref(false);
 
 // 计算可见的回复

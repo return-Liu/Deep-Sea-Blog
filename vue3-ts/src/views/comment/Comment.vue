@@ -298,10 +298,6 @@ const handleReportSubmit = async (reason: string, description: string) => {
   }
 };
 
-const cancelReport = () => {
-  showReportModal.value = false;
-};
-
 // 键盘事件处理
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === "Enter" && !event.shiftKey) {

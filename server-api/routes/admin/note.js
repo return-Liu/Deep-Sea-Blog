@@ -3,6 +3,13 @@ const router = express.Router();
 const { Note, User } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const userAuth = require("../../middlewares/user-auth");
+const fs = require("fs");
+const path = require("path");
+const { promisify } = require("util");
+
+// 定义上传目录
+const uploadDir = path.join(__dirname, "../../public/uploads");
+
 // 查询所有笔记
 router.get("/", userAuth, async (req, res) => {
   // 通过分页

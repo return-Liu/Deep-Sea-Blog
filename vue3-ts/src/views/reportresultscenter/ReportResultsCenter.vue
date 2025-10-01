@@ -213,7 +213,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="isAdmin"
+                        v-if="isAdmin && !row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'feedback')"
@@ -364,7 +364,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="isAdmin"
+                        v-if="isAdmin && !row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'report')"

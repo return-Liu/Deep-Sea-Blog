@@ -32,9 +32,9 @@
             <img
               :title="uploadTip"
               class="photo"
-              :src="contentImageUrl"
+              :src="content.image"
+              v-lazy="content.image"
               alt="博客文章"
-              @error="handleImageError"
             />
           </el-upload>
           <div class="upload-overlay" v-if="showUploadButton">
@@ -51,10 +51,9 @@
             <img
               @click="openAuthorProfile()"
               v-if="user.avatar || defaultAvatar"
-              :src="userAvatarUrl"
+              v-lazy="user.avatar || defaultAvatar"
               :title="'博主头像'"
               class="avatar"
-              @error="handleAvatarError"
             />
             <span :style="{ color: user.nicknameColor }">
               博主: {{ user.nickname || "匿名" }}
@@ -96,10 +95,10 @@
               <el-tooltip content="点击上传新封面" placement="top">
                 <img
                   :title="uploadTip"
-                  :src="contentImageUrl"
+                  :src="content.image"
+                  v-lazy="content.image"
                   class="photo"
-                  alt="摄影图库"
-                  @error="handleImageError"
+                  alt="博客文章"
                 />
               </el-tooltip>
 
@@ -156,10 +155,10 @@
             <el-tooltip content="点击上传新封面" placement="top">
               <img
                 :title="uploadTip"
-                :src="contentImageUrl"
+                :src="content.image"
+                v-lazy="content.image"
                 class="photo"
-                alt="随笔随记"
-                @error="handleImageError"
+                alt="博客文章"
               />
             </el-tooltip>
           </el-upload>
@@ -198,7 +197,6 @@ import { format } from "date-fns";
 import { apiUrl } from "../../config";
 import { useUserStore } from "../../store/userStore";
 const { openAuthorProfile } = useUserStore();
-
 // 常量定义
 const DEFAULT_AVATAR =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
@@ -244,42 +242,6 @@ const currentTypeText = computed(
 const uploadTip = computed(
   () => `点击上传新封面 - 当前为${currentTypeText.value}封面`
 );
-
-// 图片URL计算属性
-const contentImageUrl = computed(() => {
-  if (!content.value?.image) return defaultAvatar.value;
-
-  // 如果已经是完整URL，直接返回
-  if (content.value.image.startsWith("http")) {
-    return content.value.image;
-  }
-
-  // 否则构造OSS URL（假设OSS允许公开读）
-  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${content.value.image}`;
-});
-
-const userAvatarUrl = computed(() => {
-  if (!user.value?.avatar) return defaultAvatar.value;
-
-  // 如果已经是完整URL，直接返回
-  if (user.value.avatar.startsWith("http")) {
-    return user.value.avatar;
-  }
-
-  // 否则构造OSS URL（假设OSS允许公开读）
-  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${user.value.avatar}`;
-});
-
-// 图片错误处理
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.src = defaultAvatar.value;
-};
-
-const handleAvatarError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.src = defaultAvatar.value;
-};
 
 // 格式化函数
 const formatDate = (dateString: string) => {
@@ -399,14 +361,8 @@ const deleteOldImage = async (imageUrl: string) => {
   try {
     if (!imageUrl) return;
 
-    // 从URL中提取文件名
-    let imageName = "";
-    if (imageUrl.startsWith("http")) {
-      const url = new URL(imageUrl);
-      imageName = url.pathname.substring(1); // 去掉开头的斜杠
-    } else {
-      imageName = imageUrl;
-    }
+    const url = new URL(imageUrl);
+    const imageName = url.pathname.split("/").pop();
 
     if (!imageName) {
       console.warn("无法从 imageUrl 提取图片名称:", imageUrl);
@@ -422,6 +378,30 @@ const deleteOldImage = async (imageUrl: string) => {
       error?.response?.data?.message || error?.message || "删除旧图片失败";
     ElMessage.error(errorMessage);
   }
+};
+
+const handleSuccess = async (response: any) => {
+  const fullPath = response.data.image;
+  const filename = fullPath.split("/").pop();
+  const signedUrlResponse = await axiosConfig.get(
+    `${apiUrl}/admin/upload/image/sign?filename=${filename}`
+  );
+
+  imageUrl.value = signedUrlResponse.data.data.url;
+  content.value.image = imageUrl.value;
+  ElMessage.success(signedUrlResponse.data.message);
+
+  [essayUploadRef, photoUploadRef, notesUploadRef].forEach((ref) => {
+    ref.value?.clearFiles();
+  });
+
+  showUploadButton.value = false;
+
+  if (originalContent.value) {
+    originalContent.value.image = imageUrl.value;
+  }
+
+  await autoSaveContent();
 };
 
 // 自动保存
@@ -517,24 +497,29 @@ onMounted(async () => {
   }
 });
 
-const handleSuccess = async (response: any) => {
-  const fullPath = response.data.image;
-  // 直接使用完整路径
-  content.value.image = fullPath;
-  ElMessage.success("图片上传成功");
+// 内容变更检查
+function hasContentChanged(): boolean {
+  if (!originalContent.value || !content.value) return false;
 
-  [essayUploadRef, photoUploadRef, notesUploadRef].forEach((ref) => {
-    ref.value?.clearFiles();
-  });
-
-  showUploadButton.value = false;
-
-  if (originalContent.value) {
-    originalContent.value.image = fullPath;
+  const current = content.value;
+  if (
+    current.title !== originalContent.value.title ||
+    current.content !== originalContent.value.content ||
+    current.label !== originalContent.value.label ||
+    current.image !== originalContent.value.image
+  ) {
+    return true;
   }
 
-  await autoSaveContent();
-};
+  if (
+    contentType.value === "notes" &&
+    !arraysEqual(current.tags, originalContent.value.tags)
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 function arraysEqual(a: any[], b: any[]): boolean {
   if (!a && !b) return true;
