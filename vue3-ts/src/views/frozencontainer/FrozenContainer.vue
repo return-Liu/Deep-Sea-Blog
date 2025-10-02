@@ -138,9 +138,7 @@
                   <h4>等待自动解冻</h4>
                   <p v-if="freezeInfo.unfreezeAt">
                     系统将在
-                    {{
-                      formatFreezeTime(freezeInfo.unfreezeAt)
-                    }}
+                    {{ formatFreezeTime(freezeInfo.unfreezeAt) }}
                     自动解冻您的账户
                   </p>
                   <p v-else>请耐心等待管理员处理</p>
@@ -218,7 +216,7 @@ import {
 import { ElMessage } from "element-plus";
 import Cookies from "js-cookie";
 import { useRouter } from "vue-router";
-
+import axiosConfig from "../../utils/request";
 const router = useRouter();
 const countdownText = ref("");
 const countdownTimer = ref(null);
@@ -331,28 +329,9 @@ const formatFreezeTime = (timeString) => {
   const date = new Date(timeString);
   return date.toLocaleString("zh-CN");
 };
+const updateUserStatus = async () => {};
 
-// 获取冻结类型文本
-const getFreezeTypeText = (freezeType) => {
-  const typeMap = {
-    temporary: "临时冻结",
-    permanent: "永久冻结",
-  };
-  return typeMap[freezeType] || "未知类型";
-};
-
-// 获取帮助文本
-const getHelpText = () => {
-  if (freezeInfo.value.freezeType === "permanent") {
-    return "永久冻结账户需要联系客服进行申诉解冻";
-  } else if (freezeInfo.value.unfreezeAt) {
-    return `账户将在 ${formatFreezeTime(freezeInfo.value.unfreezeAt)} 自动解冻`;
-  } else {
-    return "临时冻结账户请等待管理员处理或联系客服";
-  }
-};
-
-// 计算倒计时
+// 修改倒计时结束逻辑
 const updateCountdown = () => {
   if (
     !freezeInfo.value.unfreezeAt ||
@@ -371,10 +350,10 @@ const updateCountdown = () => {
     if (countdownTimer.value) {
       clearInterval(countdownTimer.value);
     }
-    // 可以在这里添加自动跳转逻辑
+
+    // 检查后端状态
     setTimeout(() => {
-      ElMessage.success("账户已解冻，请重新登录");
-      logout();
+      updateUserStatus();
     }, 2000);
     return;
   }
@@ -385,6 +364,25 @@ const updateCountdown = () => {
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
   countdownText.value = `${days}天 ${hours}小时 ${minutes}分钟 ${seconds}秒`;
+};
+// 获取冻结类型文本
+const getFreezeTypeText = (freezeType) => {
+  const typeMap = {
+    temporary: "临时冻结",
+    permanent: "永久冻结",
+  };
+  return typeMap[freezeType] || "未知类型";
+};
+
+// 获取帮助文本
+const getHelpText = () => {
+  if (freezeInfo.value.freezeType === "permanent") {
+    return "永久冻结账户需要联系客服进行申诉解冻";
+  } else if (freezeInfo.value.unfreezeAt) {
+    return `账户将在 ${formatFreezeTime(freezeInfo.value.unfreezeAt)} 自动解冻`;
+  } else {
+    return "临时冻结账户请等待管理员处理或联系客服";
+  }
 };
 
 // 联系客服
@@ -409,7 +407,7 @@ const refreshStatus = () => {
 // 退出登录
 const logout = () => {
   Cookies.remove("ds-token");
-  router.push("/login");
+  router.push("/login/index");
 };
 
 // 粒子动画循环
@@ -457,6 +455,7 @@ onUnmounted(() => {
   if (animationId.value) {
     cancelAnimationFrame(animationId.value);
   }
+  updateUserStatus();
 });
 </script>
 

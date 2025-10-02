@@ -1,7 +1,5 @@
 import { ref, computed } from "vue";
 import axiosConfig from "../utils/request";
-import { ElMessage } from "element-plus";
-import { apiUrl } from "../config";
 import { defineStore } from "pinia";
 import { useRouter } from "vue-router";
 
@@ -23,6 +21,7 @@ interface User {
   username?: string; // 添加 username 字段
   phone?: string; // 添加 phone 字段
   theme?: string; // 添加 theme 字段
+  role?: string; // 添加 role 字段
 }
 
 export const useUserStore = defineStore("user", () => {

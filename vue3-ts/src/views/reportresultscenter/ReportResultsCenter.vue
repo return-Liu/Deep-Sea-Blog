@@ -230,7 +230,7 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="user.id === row.userId || isAdmin"
+                        v-if="user.id === row.role || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteFeedback(row.id)"
@@ -380,7 +380,7 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="user.id === row.userId || isAdmin"
+                        v-if="user.id === row.role || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteReport(row.id)"
@@ -624,7 +624,7 @@ import {
 // 组合式 API
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
-const isAdmin = computed(() => user.value?.id === 4);
+const isAdmin = computed(() => user.value?.role === "admin");
 
 const {
   reports,

@@ -33,11 +33,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-          // is: {
-          //   args: [/^1[3-9]\d{9}$/], // 简单的中国大陆手机号格式校验
-          //   msg: "手机号格式不正确",
-          // },
-          // 添加自定义验证，允许空值
           isValidPhone(value) {
             if (value && !/^1[3-9]\d{9}$/.test(value)) {
               throw new Error("手机号格式不正确");
@@ -73,9 +68,7 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: {
             msg: "邮箱不能为空",
           },
-
           async isUnique(value) {
-            // 只在创建时或邮箱变更时检查唯一性
             if (this.isNewRecord || this.changed("email")) {
               const user = await User.findOne({ where: { email: value } });
               if (user && user.id !== this.id) {
@@ -92,9 +85,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notEmpty: { msg: "密码不能为空" }, // 只有当有值时才验证长度
+          notEmpty: { msg: "密码不能为空" },
           set(value) {
-            if (!value) return; // ✅ 如果为空，直接返回，不处理
+            if (!value) return;
             if (value.length >= 6 && value.length <= 45) {
               this.setDataValue("password", bcrypt.hashSync(value, 10));
             }
@@ -134,7 +127,7 @@ module.exports = (sequelize, DataTypes) => {
       nicknameColor: {
         type: DataTypes.STRING,
         allowNull: true,
-        defaultValue: "#000000", // 默认颜色
+        defaultValue: "#000000",
       },
       // 主要用于重置密码或者邮箱验证码
       code: {
@@ -149,10 +142,22 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: null,
       },
       area: {
-        // 新增的 area 字段
         type: DataTypes.STRING,
         allowNull: true,
         defaultValue: null,
+      },
+
+      // 用户角色
+      role: {
+        type: DataTypes.ENUM("user", "admin"),
+        allowNull: false,
+        defaultValue: "user", // 默认是普通用户
+        validate: {
+          isIn: {
+            args: [["user", "admin"]],
+            msg: "角色必须是 user 或 admin",
+          },
+        },
       },
 
       createdAt: {
@@ -167,7 +172,7 @@ module.exports = (sequelize, DataTypes) => {
       isFrozen: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 0, // 0 表示未冻结，1 表示已冻结
+        defaultValue: 0,
         validate: {
           isIn: {
             args: [[0, 1]],
@@ -188,12 +193,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: null,
       },
       unfreezeAt: {
-        // 新增：解冻时间
         type: DataTypes.DATE,
         allowNull: true,
       },
       freezeType: {
-        // 新增：冻结类型 temporary-临时 permanent-永久
         type: DataTypes.ENUM("temporary", "permanent"),
         defaultValue: "temporary",
       },

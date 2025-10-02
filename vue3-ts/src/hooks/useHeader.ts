@@ -22,7 +22,7 @@ export default function useHeader() {
   const newUpdate = ref({
     title: "",
     content: "",
-    userId: user.value?.id || 4,
+    role: user.value?.role || "admin",
   });
 
   // 接口定义
@@ -165,7 +165,7 @@ export default function useHeader() {
     newUpdate.value = {
       title: "",
       content: "",
-      userId: user.value?.id || 4,
+      role: user.value?.role || "admin",
     };
   };
 

@@ -4,7 +4,14 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors"); // 引入 cors 中间件
 const userAuth = require("./middlewares/user-auth");
+const AutoUnfreezeService = require("./utils/autoUnfreeze");
+const deviceTrackerMiddleware = require("./middlewares/deviceTrackerMiddleware");
+const DeviceCleanupScheduler = require("./utils/deviceCleanupScheduler");
 
+// 启动定时任务
+DeviceCleanupScheduler.start(); // 清理未登录设备
+AutoUnfreezeService.start();
+const autoUnfreezeMiddleware = require("./middlewares/autoUnfreezeMiddleware");
 require("dotenv").config();
 // 前台路由
 const indexRouter = require("./routes/index");
@@ -14,7 +21,6 @@ const authRouter = require("./routes/auth");
 const emailRouter = require("./routes/email");
 const themeRouter = require("./routes/theme");
 const locationRouter = require("./routes/location");
-const freezeUserRouter = require("./routes/freezeuser");
 // 后台路由
 // const adminAuthRouter = require("./routes/admin/auth");
 const adminArticleRouter = require("./routes/admin/article");
@@ -37,6 +43,8 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(autoUnfreezeMiddleware);
+app.use(deviceTrackerMiddleware);
 // 全局配置 CORS
 app.use(
   cors({
@@ -58,7 +66,6 @@ app.use("/auth", authRouter);
 app.use("/email", emailRouter);
 app.use("/theme", themeRouter);
 app.use("/location", locationRouter);
-app.use("/freezeuser", freezeUserRouter);
 // 后台路由配置
 // app.use("/admin/auth", adminAuthRouter);
 app.use("/admin/article", adminArticleRouter);
@@ -73,5 +80,4 @@ app.use("/admin/wall", adminWallRouter);
 app.use("/admin/likeswall", adminLikesWallRouter);
 app.use("/admin/comment", adminCommentRouter);
 app.use("/admin/likescomment", adminLikesCommentRouter);
-// 用户冻结与解冻
 module.exports = app;

@@ -125,29 +125,6 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  // 检查用户是否被冻结
-  if (!isFrozenPath) {
-    try {
-      const freezeInfo = await checkUserFrozen(token);
-      if (freezeInfo.isFrozen) {
-        next({
-          path: "/frozencontainer",
-          query: {
-            frozenReason: freezeInfo.reason,
-            unfreezeAt: freezeInfo.unfreezeAt,
-            freezeType: freezeInfo.freezeType,
-            message: freezeInfo.message,
-            frozenAt: freezeInfo.frozenAt,
-          },
-          replace: true,
-        });
-        return;
-      }
-    } catch (error) {
-      console.error("检查冻结状态失败:", error);
-    }
-  }
-
   next();
 });
 
@@ -162,36 +139,6 @@ async function validateToken(token: string): Promise<boolean> {
     return true;
   } catch (error) {
     return false;
-  }
-}
-
-// 检查用户是否被冻结
-async function checkUserFrozen(token: string): Promise<{
-  isFrozen: boolean;
-  reason?: string;
-  unfreezeAt?: string;
-  freezeType?: string;
-  message?: string;
-  frozenAt?: string;
-}> {
-  try {
-    const response = await axiosConfig.get(`auth/freeze/status`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = response.data.data;
-    return {
-      isFrozen: data.isFrozen === 1,
-      reason: data.frozenReason,
-      unfreezeAt: data.unfreezeAt,
-      freezeType: data.freezeType,
-      message: data.frozenMessage,
-      frozenAt: data.frozenAt,
-    };
-  } catch (error) {
-    return { isFrozen: false };
   }
 }
 
