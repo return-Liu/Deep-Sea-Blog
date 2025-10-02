@@ -57,12 +57,13 @@
         </div>
 
         <!-- 评论卡背景 -->
-        <div class="bg-trigger" :title="comment">
+        <div class="bg-trigger" title="评论背景卡">
           <el-popover
             placement="top"
             :width="400"
             trigger="click"
             v-model="showBg"
+            popper-class="bg-popover-custom"
           >
             <template #reference>
               <LinkOutlined
@@ -82,6 +83,7 @@
                   :style="{ background: bg.gradient ? bg.gradient : '#ccc' }"
                   :title="bg.name"
                 ></div>
+                <div class="bg-name">{{ bg.name }}</div>
               </div>
             </div>
           </el-popover>

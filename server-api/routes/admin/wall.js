@@ -333,18 +333,27 @@ router.put("/:id", userAuth, async (req, res) => {
 router.delete("/report/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   try {
-    await Report.findOne({ where: { id } });
+    const report = await Report.findByPk(id);
+    if (!report) {
+      return failure(res, "未找到对应的举报记录");
+    }
+
+    // 验证权限：只有举报提交者或管理员可以删除
+    if (req.user.id !== report.userId && req.user.id !== 4) {
+      return failure(res, "无权限删除此举报");
+    }
+
     // 执行删除
     const result = await Report.destroy({
       where: {
         id,
       },
     });
-    await Report.findOne({ where: { id } });
+
     if (result) {
       success(res, "删除举报留言墙成功");
     } else {
-      failure(res, "未找到对应的举报记录");
+      failure(res, "删除举报留言墙失败");
     }
   } catch (error) {
     failure(res, error);

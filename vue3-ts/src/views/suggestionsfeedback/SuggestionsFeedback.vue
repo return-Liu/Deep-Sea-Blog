@@ -253,17 +253,19 @@ const submitFeedback = async () => {
   .card-title {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--color-bg4);
   }
 
   .card-subtitle {
     font-size: 14px;
-    color: #909399;
+    color: var(--color-bg4);
     margin: 6px 0 0;
   }
 }
 
 .feedback-card {
+  color: var(--color-bg4);
+  background: var(--bgColor1);
   .card-content {
     padding: 24px;
 
@@ -301,6 +303,8 @@ const submitFeedback = async () => {
 }
 
 .info-card {
+  background: var(--bgColor1);
+
   .info-content {
     padding: 8px 24px 24px;
 
@@ -308,6 +312,7 @@ const submitFeedback = async () => {
       list-style: none;
       padding: 0;
       margin: 0;
+      color: var(--color-bg4);
 
       .info-item {
         display: flex;
@@ -315,7 +320,7 @@ const submitFeedback = async () => {
         gap: 12px;
         margin-bottom: 16px;
         font-size: 14px;
-        color: #606266;
+        color: var(--color-bg4);
 
         &:last-child {
           margin-bottom: 0;

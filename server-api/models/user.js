@@ -163,6 +163,44 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.DATE,
       },
+      // 新增冻结状态字段
+      isFrozen: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0, // 0 表示未冻结，1 表示已冻结
+        validate: {
+          isIn: {
+            args: [[0, 1]],
+            msg: "冻结状态必须是 0 或 1",
+          },
+        },
+      },
+
+      frozenReason: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
+
+      frozenAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
+      unfreezeAt: {
+        // 新增：解冻时间
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      freezeType: {
+        // 新增：冻结类型 temporary-临时 permanent-永久
+        type: DataTypes.ENUM("temporary", "permanent"),
+        defaultValue: "temporary",
+      },
+      frozenMessage: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       sequelize,

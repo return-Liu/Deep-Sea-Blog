@@ -80,7 +80,6 @@
     align-items: center;
     gap: 0.5rem;
 
-
     &.active {
       color: var(--color-bg4);
     }
@@ -97,7 +96,6 @@
       font-size: 18px;
       vertical-align: middle;
       margin-left: 6px;
-
     }
   }
 }
@@ -180,7 +178,7 @@
       .excerpt {
         margin: 0.5rem 0;
         line-height: 1.4;
-        color: var(--color-bg5);
+        color: var(--color-bg3);
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 5;
@@ -191,7 +189,7 @@
       .card-actions {
         display: flex;
         align-items: center;
-        justify-content: space-between; // 左右对齐
+        justify-content: space-between;
         margin-top: 0.5rem;
 
         .left-actions {
@@ -202,55 +200,119 @@
         .right-actions {
           display: flex;
           align-items: center;
-          gap: 10px; // 控制元素之间的间距
+          gap: 8px;
         }
 
+        // 统一的标签样式
         .tag {
-          font-size: 14px;
-          color: #409eff;
-          background-color: #e8f4ff;
-          padding: 2px 8px;
-          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          padding: 4px 12px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 32px; // 统一高度
+          height: 28px;
+          transition: all 0.3s ease;
+
+          // 统一使用蓝色系
+          color: #1890ff;
+          background: linear-gradient(135deg, #e6f7ff, #bae7ff);
+          border: 1px solid #91d5ff;
+
+          &:hover {
+            background: linear-gradient(135deg, #bae7ff, #91d5ff);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+          }
         }
 
-        .like-btn,
+        // 点赞按钮优化 - 使用蓝色系
+        .like-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border: 1px solid #e8e8e8;
+          background: linear-gradient(135deg, #fafafa, #f5f5f5);
+          border-radius: 20px;
+          transition: all 0.3s ease;
+          height: 32px;
+          cursor: pointer;
+          color: #666;
+
+          &:hover {
+            background: linear-gradient(135deg, #f5f5f5, #f0f0f0);
+            border-color: #d9d9d9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+
+          // 点赞状态 - 使用红色突出显示
+          &.liked {
+            background: linear-gradient(135deg, #fff2f0, #ffccc7);
+            border-color: #ffa39e;
+            color: #f5222d;
+
+            .like-count {
+              color: #f5222d;
+              font-weight: 600;
+            }
+          }
+
+          .anticon {
+            font-size: 16px;
+            transition: all 0.3s ease;
+
+            &.liked-icon {
+              color: #f5222d;
+              animation: heartBeat 0.5s ease-in-out;
+            }
+          }
+
+          .like-count {
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+          }
+        }
+
+        // 浏览按钮优化 - 使用中性色
         .views-btn {
           display: flex;
           align-items: center;
           gap: 6px;
           padding: 6px 12px;
-          border: none;
-          background: #f5f5f5;
+          border: 1px solid #e8e8e8;
+          background: linear-gradient(135deg, #fafafa, #f5f5f5);
           border-radius: 20px;
           transition: all 0.3s ease;
-          height: 32px; // 统一高度
+          height: 32px;
+          cursor: default;
+          color: #666;
 
           &:hover {
-            background: #f0f0f0;
-            transform: scale(1.05);
+            background: linear-gradient(135deg, #f5f5f5, #f0f0f0);
+            border-color: #d9d9d9;
           }
 
           .anticon {
             font-size: 16px;
-            color: var(--color-bg6);
-            transition: all 0.3s ease;
-
-            &.liked {
-              color: #ff4d4f;
-              animation: heartBeat 0.3s ease-in-out;
-            }
+            color: #8c8c8c;
           }
 
-          .like-count,
           .views-count {
             font-size: 14px;
-            color: var(--color-bg6);
+            font-weight: 500;
             min-width: 20px;
-            text-align: left;
+            text-align: center;
+            color: #595959;
           }
         }
       }
@@ -378,66 +440,222 @@
 .action-buttons {
   display: flex;
   align-items: center;
-  gap: 50px; // 调整按钮之间的间距
+  gap: 50px;
   margin-top: 20px;
-}
-
-.like-btn,
-.views-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
-  background: #f5f5f5;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #f0f0f0;
-    transform: scale(1.05);
-  }
-
-  .anticon {
-    font-size: 16px;
-    color: var(--color-bg6);
-    transition: all 0.3s ease;
-
-    &.liked {
-      color: #ff4d4f;
-      animation: heartBeat 0.3s ease-in-out;
-    }
-  }
-
-  .like-count,
-  .views-count {
-    font-size: 14px;
-    color: var(--color-bg6);
-    min-width: 20px;
-    text-align: left;
-  }
 }
 
 .load-more {
   text-align: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  color: var(--color-bg4);
-  cursor: pointer;
-  font-size: 14px;
+  margin: 40px 0;
+  padding: 12px;
 
-  &:hover {
-    color: var(--color-bg4);
+  .load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 32px;
+    border: 1px solid #409eff;
+    background: linear-gradient(135deg, #ecf5ff, #ffffff);
+    color: #409eff;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-width: 120px;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(64, 158, 255, 0.3);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      border-color: #c0c4cc;
+      background: #f5f7fa;
+      color: #c0c4cc;
+    }
+
+    .loading-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .loading-dots {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: currentColor;
+      animation: loadingDots 1.4s ease-in-out infinite both;
+
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: currentColor;
+        animation: loadingDots 1.4s ease-in-out infinite both;
+      }
+
+      &::before {
+        left: -8px;
+        animation-delay: -0.32s;
+      }
+
+      &::after {
+        left: 8px;
+        animation-delay: -0.16s;
+      }
+    }
   }
 }
 
+// 加载到底部提示
+.load-end {
+  text-align: center;
+  margin: 50px 0;
+  padding: 20px;
+
+  .end-line {
+    position: relative;
+    display: inline-block;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -60px;
+      right: -60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+      transform: translateY(-50%);
+    }
+  }
+
+  .end-text {
+    display: inline-block;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    color: #909399;
+    font-size: 14px;
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+    position: relative;
+    z-index: 1;
+
+    &::before {
+      content: '✨';
+      margin-right: 6px;
+    }
+
+    &::after {
+      content: '✨';
+      margin-left: 6px;
+    }
+  }
+}
+
+// 没有内容提示
+.no-content {
+  text-align: center;
+  margin: 60px 0;
+  padding: 40px;
+
+  .no-content-text {
+    color: #c0c4cc;
+    font-size: 16px;
+    padding: 20px;
+
+    &::before {
+      content: '📝';
+      margin-right: 8px;
+    }
+  }
+}
+
+// 加载动画
+@keyframes loadingDots {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .load-more {
+    margin: 30px 0;
+
+    .load-more-btn {
+      padding: 10px 24px;
+      font-size: 13px;
+    }
+  }
+
+  .load-end {
+    margin: 40px 0;
+
+    .end-line::before {
+      left: -40px;
+      right: -40px;
+    }
+
+    .end-text {
+      font-size: 13px;
+      padding: 6px 16px;
+    }
+  }
+
+  .no-content {
+    margin: 40px 0;
+    padding: 30px;
+
+    .no-content-text {
+      font-size: 14px;
+    }
+  }
+}
+
+// 心跳动画优化
 @keyframes heartBeat {
   0% {
     transform: scale(1);
   }
 
-  50% {
+  15% {
     transform: scale(1.3);
+  }
+
+  30% {
+    transform: scale(1.1);
+  }
+
+  45% {
+    transform: scale(1.3);
+  }
+
+  60% {
+    transform: scale(1);
   }
 
   100% {
@@ -459,4 +677,18 @@
   height: 100px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .card-actions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+
+    .right-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
 }

@@ -149,7 +149,7 @@ onMounted(() => {
     .notification-title {
       font-size: 28px;
       font-weight: 600;
-      color: var(--color-bg6);
+      color: var(--color-bg3);
       margin-bottom: 16px;
     }
 
@@ -195,13 +195,13 @@ onMounted(() => {
         .sender-title {
           font-size: 22px;
           font-weight: 600;
-          color: var(--color-bg6);
+          color: var(--color-bg3);
           margin: 0 0 4px 0;
         }
 
         .sender-subtitle {
           font-size: 14px;
-          color: var(--color-bg6);
+          color: var(--color-bg3);
           margin: 0;
         }
       }
@@ -248,13 +248,13 @@ onMounted(() => {
             h3 {
               font-size: 18px;
               font-weight: 600;
-              color: var(--color-bg6);
+              color: var(--color-bg3);
               margin: 0 0 8px 0;
             }
 
             p {
               font-size: 14px;
-              color: var(--color-bg6);
+              color: var(--color-bg3);
               margin: 0;
               line-height: 1.6;
             }
@@ -265,7 +265,7 @@ onMounted(() => {
       .update-content {
         line-height: 1.8;
         font-size: 16px;
-        color: var(--color-bg6);
+        color: var(--color-bg3);
 
         :deep(.formatted-text) {
           white-space: pre-line;

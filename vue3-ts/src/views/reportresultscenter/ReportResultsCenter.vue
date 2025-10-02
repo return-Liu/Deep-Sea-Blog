@@ -222,7 +222,6 @@
                         处理
                       </el-button>
                       <el-button
-                        v-if="!isAdmin"
                         type="primary"
                         size="small"
                         @click="viewFeedbackDetails(row)"
@@ -231,7 +230,7 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="!isAdmin"
+                        v-if="user.id === row.userId || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteFeedback(row.id)"
@@ -373,7 +372,6 @@
                         处理
                       </el-button>
                       <el-button
-                        v-if="!isAdmin"
                         type="primary"
                         size="small"
                         @click="viewReportDetails(row)"
@@ -382,7 +380,7 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="!isAdmin"
+                        v-if="user.id === row.userId || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteReport(row.id)"
@@ -1024,10 +1022,11 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .admin-report-center-container {
+  :deep(.el-card__body) {
+    background: var(--bgColor1);
+  }
   padding: 24px;
-  background-color: #f5f7fa;
   min-height: calc(100vh - 80px);
-
   .header-section {
     margin-bottom: 24px;
 
@@ -1042,7 +1041,7 @@ onMounted(() => {
         align-items: center;
         font-size: 24px;
         font-weight: 600;
-        color: #303133;
+        color: var(--color-bg3);
         margin: 0;
 
         .title-icon {
@@ -1062,7 +1061,7 @@ onMounted(() => {
 
     .header-subtitle {
       font-size: 14px;
-      color: #909399;
+      color: var(--color-bg3);
     }
   }
 
@@ -1070,7 +1069,7 @@ onMounted(() => {
     margin-bottom: 24px;
     border-radius: 8px;
     border: none;
-
+    background: var(--bgColor1);
     .stat-item {
       display: flex;
       align-items: center;
@@ -1108,6 +1107,8 @@ onMounted(() => {
           font-weight: 700;
           line-height: 1.2;
           margin-bottom: 4px;
+          color: var(--color-bg4);
+          margin-left: 20px;
         }
 
         .stat-label {

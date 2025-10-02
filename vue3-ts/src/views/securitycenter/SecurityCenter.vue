@@ -2,38 +2,46 @@
   <div class="security-center">
     <!-- 安全中心头部 -->
     <header class="security-header">
-      <div class="header-content">
-        <div class="header-info">
-          <div class="header-icon" @click="openAuthorProfile">
+      <div class="header-container">
+        <div class="user-profile-section">
+          <div class="avatar-container" @click="openAuthorProfile">
             <el-avatar
               v-if="user?.avatar"
-              :size="70"
+              :size="80"
               :src="user.avatar"
               :alt="`用户${user?.nickname || '默认用户'}的头像`"
+              class="user-avatar"
             />
-            <el-avatar v-else :size="70" class="avatar-placeholder">
+            <el-avatar v-else :size="80" class="user-avatar avatar-placeholder">
               {{ user?.nickname?.charAt(0) || "U" }}
             </el-avatar>
+            <div class="avatar-overlay">
+              <a-icon type="camera" class="camera-icon" />
+            </div>
           </div>
-          <div class="header-text">
-            <h1 :style="{ color: user?.nicknameColor || '#fff' }">
-              <a-icon type="user" class="title-icon" />
+          <div class="user-info">
+            <h1
+              class="user-name"
+              :style="{ color: user?.nicknameColor || '#fff' }"
+            >
               {{ user?.nickname }}
             </h1>
-            <p class="description">
-              <a-icon type="safety-certificate" />
+            <p class="user-description">
+              <a-icon type="safety-certificate" class="desc-icon" />
               立即提升账号安全等级，快速掌握安全设置
             </p>
           </div>
         </div>
-        <div class="security-score">
-          <div class="score-circle">
+
+        <div class="security-score-section">
+          <div class="score-display">
             <el-progress
               type="circle"
               :percentage="securityScore"
-              :width="100"
-              :stroke-width="8"
+              :width="120"
+              :stroke-width="10"
               :color="scoreColor"
+              class="score-progress"
             >
               <template #default>
                 <div class="score-content">
@@ -42,6 +50,15 @@
                 </div>
               </template>
             </el-progress>
+            <div class="score-status">
+              <el-tag
+                :type="securityStatusType"
+                effect="dark"
+                class="status-tag"
+              >
+                {{ securityText }}
+              </el-tag>
+            </div>
           </div>
         </div>
       </div>
@@ -49,112 +66,111 @@
 
     <!-- 安全中心主要内容 -->
     <main class="security-main">
-      <div class="container">
-        <!-- 账号安全等级 -->
-        <el-card class="security-level" shadow="hover">
-          <template #header>
-            <div class="section-header">
-              <a-icon type="safety" class="section-icon" />
-              <span class="section-title">账号安全等级</span>
-              <el-tag
-                :type="securityStatusType"
-                effect="light"
-                class="security-status"
-              >
-                {{ securityText }}
-              </el-tag>
-            </div>
-          </template>
+      <div class="main-container">
+        <!-- 账号安全等级卡片 -->
+        <section class="security-section">
+          <el-card class="security-card level-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <div class="header-left">
+                  <a-icon type="safety" class="header-icon" />
+                  <span class="header-title">账号安全等级</span>
+                </div>
+                <el-tag
+                  :type="securityStatusType"
+                  effect="light"
+                  class="security-status"
+                >
+                  {{ securityText }}
+                </el-tag>
+              </div>
+            </template>
 
-          <div class="level-content">
-            <div class="level-progress-section">
-              <div class="level-indicator">
-                <el-progress
-                  :percentage="securityLevel"
-                  :stroke-width="12"
-                  :color="progressColor"
-                  :show-text="false"
-                />
-                <div class="level-marks">
-                  <span
-                    v-for="(mark, index) in levelMarks"
-                    :key="index"
-                    class="level-mark"
-                    :class="{ active: securityLevel >= mark.threshold }"
+            <div class="level-content">
+              <div class="progress-section">
+                <div class="progress-container">
+                  <el-progress
+                    :percentage="securityLevel"
+                    :stroke-width="16"
+                    :color="progressColor"
+                    :show-text="false"
+                    class="level-progress"
+                  />
+                  <div class="level-indicators">
+                    <div
+                      v-for="(mark, index) in levelMarks"
+                      :key="index"
+                      class="level-indicator"
+                      :class="{ active: securityLevel >= mark.threshold }"
+                    >
+                      <div class="indicator-dot"></div>
+                      <span class="indicator-text">
+                        <a-icon :type="mark.icon" class="indicator-icon" />
+                        {{ mark.label }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <el-divider direction="vertical" class="section-divider" />
+
+              <div class="tips-section">
+                <div class="tips-header">
+                  <a-icon type="bulb" class="tips-icon" />
+                  <span class="tips-title">安全建议</span>
+                </div>
+                <div class="tips-list">
+                  <div
+                    v-for="tip in securityTips"
+                    :key="tip.id"
+                    class="tip-item"
+                    :class="{ completed: tip.completed }"
                   >
-                    <a-icon :type="mark.icon" />
-                    {{ mark.label }}
-                  </span>
+                    <div class="tip-check">
+                      <a-icon
+                        :type="
+                          tip.completed ? 'check-circle' : 'exclamation-circle'
+                        "
+                        class="check-icon"
+                      />
+                    </div>
+                    <span class="tip-text">{{ tip.text }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <el-divider direction="vertical" class="divider" />
-
-            <div class="level-tips">
-              <div class="tip-header">
-                <a-icon type="bulb" class="tip-icon" />
-                <span>安全建议</span>
-              </div>
-              <ul class="tip-list">
-                <li v-for="tip in securityTips" :key="tip.id" class="tip-item">
-                  <el-tag
-                    :type="tip.completed ? 'success' : 'warning'"
-                    size="small"
-                    class="tip-check"
-                  >
-                    <a-icon
-                      :type="
-                        tip.completed ? 'check-circle' : 'exclamation-circle'
-                      "
-                    />
-                  </el-tag>
-                  <span class="tip-text">{{ tip.text }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </el-card>
+          </el-card>
+        </section>
 
         <!-- 安全功能模块 -->
-        <el-card class="security-features" shadow="hover">
-          <template #header>
-            <div class="section-header">
-              <a-icon type="lock" class="section-icon" />
-              <span class="section-title">安全功能</span>
-            </div>
-          </template>
+        <section class="security-section">
+          <el-card class="security-card features-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <div class="header-left">
+                  <a-icon type="lock" class="header-icon" />
+                  <span class="header-title">安全功能</span>
+                </div>
+              </div>
+            </template>
 
-          <el-row :gutter="20">
-            <el-col
-              v-for="feature in securityFeatures"
-              :key="feature.id"
-              :xs="24"
-              :sm="12"
-              :lg="8"
-            >
+            <div class="features-grid">
               <div
-                class="feature-card"
+                v-for="feature in securityFeatures"
+                :key="feature.id"
+                class="feature-item"
                 :class="{ completed: feature.completed }"
                 @click="feature.handler"
               >
-                <div class="feature-header">
-                  <div class="feature-icon-wrapper">
+                <div class="feature-icon-container">
+                  <div class="icon-wrapper">
                     <component :is="feature.icon" class="feature-icon" />
-                  </div>
-                  <div class="feature-info">
-                    <h3 class="feature-title">{{ feature.title }}</h3>
-                    <el-tag
-                      :type="feature.completed ? 'success' : 'warning'"
-                      size="small"
-                      class="feature-status"
-                    >
-                      {{ feature.completed ? "已设置" : "未设置" }}
-                    </el-tag>
                   </div>
                 </div>
 
                 <div class="feature-content">
+                  <h3 class="feature-title">{{ feature.title }}</h3>
                   <p class="feature-description">
                     {{
                       typeof feature.description === "function"
@@ -166,53 +182,62 @@
 
                 <div class="feature-action">
                   <span class="action-text">{{ feature.actionText }}</span>
-                  <a-icon type="right" class="icon-arrow-right" />
+                  <a-icon type="arrow-right" class="action-icon" />
                 </div>
               </div>
-            </el-col>
-          </el-row>
-        </el-card>
+            </div>
+          </el-card>
+        </section>
 
         <!-- 安全风险提示 -->
-        <el-card
-          v-if="securityRisks.length > 0"
-          class="security-risks"
-          shadow="hover"
-        >
-          <template #header>
-            <div class="section-header">
-              <a-icon type="warning" class="section-icon" />
-              <span class="section-title">安全风险提示</span>
-            </div>
-          </template>
-
-          <el-alert
-            v-for="risk in securityRisks"
-            :key="risk.id"
-            :title="risk.title"
-            :description="risk.description"
-            type="warning"
-            :closable="false"
-            show-icon
-            class="risk-alert"
-          >
-            <template #action>
-              <el-button
-                type="warning"
-                size="small"
-                @click="handleRiskAction(risk)"
-              >
-                {{ risk.action }}
-              </el-button>
+        <section v-if="securityRisks.length > 0" class="security-section">
+          <el-card class="security-card risks-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <div class="header-left">
+                  <a-icon type="warning" class="header-icon" />
+                  <span class="header-title">安全风险提示</span>
+                </div>
+                <el-badge
+                  :value="securityRisks.length"
+                  type="danger"
+                  class="risks-count"
+                />
+              </div>
             </template>
-          </el-alert>
-        </el-card>
+
+            <div class="risks-list">
+              <div
+                v-for="risk in securityRisks"
+                :key="risk.id"
+                class="risk-item"
+              >
+                <div class="risk-icon">
+                  <a-icon type="exclamation-circle" />
+                </div>
+                <div class="risk-content">
+                  <h4 class="risk-title">{{ risk.title }}</h4>
+                  <p class="risk-description">{{ risk.description }}</p>
+                </div>
+                <el-button
+                  type="warning"
+                  size="small"
+                  class="risk-action"
+                  @click="handleRiskAction(risk)"
+                >
+                  {{ risk.action }}
+                </el-button>
+              </div>
+            </div>
+          </el-card>
+        </section>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
+// 保持原有的 script 逻辑完全不变
 import { ref, computed, onMounted } from "vue";
 import { useUserStore } from "../../store/userStore";
 import { useRouter } from "vue-router";
@@ -231,6 +256,10 @@ import {
   CrownOutlined,
   RocketOutlined,
   ThunderboltOutlined,
+  CameraOutlined,
+  CheckOutlined,
+  ExclamationOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons-vue";
 
 // 导入原有图标组件
@@ -464,196 +493,355 @@ const securityFeatures = [
 </script>
 
 <style lang="scss" scoped>
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-// 颜色变量
-$primary-color: #4361ee;
-$primary-light: #eef2ff;
-$success-color: #52c41a;
-$warning-color: #faad14;
-$danger-color: #ff4d4f;
-$light-color: #f8f9fa;
-$dark-color: #212529;
-$gray-color: #6c757d;
-$gray-light: #e9ecef;
-$border-radius: 12px;
-$box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-$transition: all 0.3s ease;
-
-.security-center {
-  font-family: "Noto Sans SC", sans-serif;
-  min-height: 100vh;
-  color: $dark-color;
-  background-color: #f5f7fa;
+// 设计系统变量
+:root {
+  --primary-color: #4361ee;
+  --primary-light: #eef2ff;
+  --success-color: #10b981;
+  --warning-color: #4361ee;
+  --danger-color: #ef4444;
+  --info-color: #3b82f6;
+  --light-color: #f8fafc;
+  --dark-color: #1e293b;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --border-radius: 16px;
+  --border-radius-sm: 8px;
+  --border-radius-lg: 24px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(10, 192, 242, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.security-header {
-  background: linear-gradient(135deg, #4361ee, #3a0ca3);
-  color: white;
-  padding: 30px 0;
-  margin-bottom: 30px;
-  box-shadow: $box-shadow;
+.security-center {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+  // background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
 
-  .header-content {
+// 头部区域
+.security-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #3a0ca3 100%);
+  color: white;
+  padding: 40px 0;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .header-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
+    z-index: 1;
   }
 
-  .header-info {
+  .user-profile-section {
     display: flex;
     align-items: center;
+    gap: 24px;
   }
 
-  .header-icon {
-    margin-right: 20px;
+  .avatar-container {
+    position: relative;
     cursor: pointer;
+    transition: var(--transition);
 
-    :deep(.el-avatar) {
-      border: 3px solid rgba(255, 255, 255, 0.3);
+    &:hover {
+      transform: scale(1.05);
+
+      .avatar-overlay {
+        opacity: 1;
+      }
+    }
+
+    .user-avatar {
+      border: 4px solid rgba(255, 255, 255, 0.3);
       background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-lg);
     }
-  }
 
-  h1 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
+    .avatar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: var(--transition);
 
-    .title-icon {
-      margin-right: 8px;
-      font-size: 24px;
-    }
-  }
-
-  .description {
-    font-size: 16px;
-    opacity: 0.9;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-
-    .anticon {
-      margin-right: 6px;
-    }
-  }
-
-  .security-score {
-    .score-circle {
-      :deep(.el-progress-circle) {
-        .el-progress-circle__track {
-          stroke: rgba(255, 255, 255, 0.2);
-        }
-      }
-
-      .score-content {
-        text-align: center;
+      .camera-icon {
+        font-size: 20px;
         color: white;
-
-        .score-value {
-          font-size: 24px;
-          font-weight: bold;
-          line-height: 1;
-        }
-
-        .score-label {
-          font-size: 12px;
-          opacity: 0.8;
-          margin-top: 4px;
-        }
       }
+    }
+  }
+
+  .user-info {
+    .user-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-description {
+      color: var(--color-bg3);
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .desc-icon {
+        font-size: 18px;
+      }
+    }
+  }
+
+  .security-score-section {
+    .score-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .score-progress {
+      :deep(.el-progress-circle__track) {
+        stroke: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .score-content {
+      text-align: center;
+      color: var(--color-bg3);
+
+      .score-value {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .score-label {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-top: 4px;
+        font-weight: 500;
+      }
+    }
+
+    .status-tag {
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 20px;
     }
   }
 }
 
+// 主要内容区域
 .security-main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px 30px;
+  padding: 0 24px 40px;
 
-  .container {
+  .main-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
   }
 }
 
-:deep(.el-card) {
-  border-radius: $border-radius;
-  border: none;
+.security-section {
+  width: 100%;
+}
 
-  .el-card__header {
-    border-bottom: 1px solid $gray-light;
-    padding: 20px 24px;
+.security-card {
+  border-radius: var(--border-radius);
+  border: none;
+  background: var(--bgColor1);
+  transition: var(--transition);
+  color: var(--color-bg3);
+
+  &:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-2px);
+  }
+
+  :deep(.el-card__header) {
+    border-bottom: 1px solid var(--gray-200);
+    padding: 24px;
     background: transparent;
   }
-}
 
-.section-header {
-  display: flex;
-  align-items: center;
-
-  .section-icon {
-    font-size: 20px;
-    margin-right: 12px;
-    color: $primary-color;
-  }
-
-  .section-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: $dark-color;
-    flex: 1;
-  }
-}
-
-.security-level {
-  .level-content {
+  .card-header {
     display: flex;
-    gap: 30px;
     align-items: center;
+    justify-content: space-between;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      font-size: 24px;
+      color: var(--primary-color);
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--dark-color);
+    }
+
+    .security-status {
+      font-weight: 600;
+      border-radius: 12px;
+    }
+
+    .risks-count {
+      :deep(.el-badge__content) {
+        border: 2px solid white;
+      }
+    }
+  }
+}
+
+// 安全等级卡片
+.level-card {
+  .level-content {
+    display: grid;
+    grid-template-columns: 2fr 1px 1fr;
+    gap: 32px;
+    align-items: center;
+    padding: 8px;
 
     @media (max-width: 768px) {
-      flex-direction: column;
+      grid-template-columns: 1fr;
+      gap: 24px;
     }
   }
 
-  .level-progress-section {
-    flex: 2;
+  .section-divider {
+    height: 160px;
+    background: var(--gray-200);
 
-    .level-indicator {
-      .level-marks {
+    @media (max-width: 768px) {
+      height: 1px;
+      width: 100%;
+    }
+  }
+
+  .progress-section {
+    .progress-container {
+      .level-progress {
+        margin-bottom: 24px;
+        :deep(.el-progress-bar) {
+          border-radius: 8px;
+          background: linear-gradient(90deg, #f59e0b, #fbbf24);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        :deep(.el-progress-inner) {
+          border-radius: 8px;
+          transition: width 0.5s ease-out;
+        }
+      }
+
+      .level-indicators {
         display: flex;
         justify-content: space-between;
-        margin-top: 15px;
+        align-items: flex-end;
+        position: relative;
+        padding: 0 8px;
 
-        .level-mark {
+        &::before {
+          content: "";
+          position: absolute;
+          top: 8px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--gray-200);
+          z-index: 1;
+          border-radius: 1px;
+        }
+
+        .level-indicator {
           display: flex;
           flex-direction: column;
           align-items: center;
-          font-size: 12px;
-          color: $gray-color;
-          transition: $transition;
+          gap: 8px;
+          position: relative;
+          z-index: 2;
 
-          .anticon {
-            font-size: 16px;
-            margin-bottom: 4px;
+          .indicator-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--gray-300);
+            border: 3px solid white;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          }
+
+          .indicator-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s ease;
+
+            .indicator-icon {
+              font-size: 14px;
+            }
           }
 
           &.active {
-            color: $primary-color;
-            font-weight: 500;
+            .indicator-dot {
+              background: var(--primary-color);
+              transform: scale(1.2);
+              box-shadow: 0 4px 8px rgba(67, 97, 238, 0.3);
+            }
 
-            .anticon {
-              color: inherit;
+            .indicator-text {
+              color: var(--primary-color);
+              font-weight: 600;
             }
           }
         }
@@ -661,178 +849,195 @@ $transition: all 0.3s ease;
     }
   }
 
-  .divider {
-    height: 120px;
-
-    @media (max-width: 768px) {
-      height: auto;
-      width: 100%;
-    }
-  }
-
-  .level-tips {
-    flex: 1;
-    min-width: 200px;
-
-    .tip-header {
+  .tips-section {
+    .tips-header {
       display: flex;
       align-items: center;
-      margin-bottom: 15px;
-      font-weight: 500;
-      color: $dark-color;
+      gap: 8px;
+      margin-bottom: 20px;
 
-      .tip-icon {
-        margin-right: 8px;
-        color: $warning-color;
+      .tips-icon {
+        font-size: 20px;
+        color: var(--warning-color);
+      }
+
+      .tips-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark-color);
       }
     }
 
-    .tip-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .tips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-      .tip-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-        padding: 8px 0;
+    .tip-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
 
-        .tip-check {
-          margin-right: 12px;
-          border: none;
+      &:hover {
+        background: var(--gray-900);
+      }
 
-          .anticon {
-            font-size: 14px;
-          }
+      &.completed {
+        .tip-check .check-icon {
+          color: var(--success-color);
         }
 
         .tip-text {
-          font-size: 14px;
-          color: $dark-color;
+          color: var(--success-color);
+          text-decoration: line-through;
         }
+      }
+
+      .tip-check {
+        .check-icon {
+          font-size: 18px;
+          color: var(--warning-color);
+        }
+      }
+
+      .tip-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-600);
       }
     }
   }
 }
 
-.security-features {
-  :deep(.el-row) {
-    margin: -10px;
+// 安全功能卡片
+.features-card {
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
   }
 
-  :deep(.el-col) {
-    padding: 10px;
-  }
-}
-
-.feature-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  border-radius: $border-radius;
-  background: white;
-  cursor: pointer;
-  transition: $transition;
-  border: 2px solid transparent;
-  position: relative;
-  overflow: hidden;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: $box-shadow;
-    border-color: $primary-color;
-
-    .feature-action .icon-arrow-right {
-      transform: translateX(3px);
-    }
-  }
-
-  &.completed {
-    border-left: 4px solid $success-color;
-  }
-
-  .feature-header {
+  .feature-item {
     display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-  }
+    flex-direction: column;
+    padding: 24px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    background: var(--bgColor1);
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
 
-  .feature-icon-wrapper {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-    background: $primary-light;
-    border-radius: 10px;
-    color: $primary-color;
-    font-size: 24px;
-  }
-
-  .feature-info {
-    flex: 1;
-
-    .feature-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: $dark-color;
+    &.completed {
+      border-left: 4px solid var(--success-color);
     }
 
-    .feature-status {
-      border: none;
-      font-weight: 500;
-    }
-  }
+    .feature-icon-container {
+      position: relative;
+      margin-bottom: 16px;
 
-  .feature-content {
-    margin-bottom: 15px;
-    flex: 1;
-
-    .feature-description {
-      font-size: 14px;
-      color: $gray-color;
-      margin: 0;
-      line-height: 1.5;
-    }
-  }
-
-  .feature-action {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: auto;
-    padding-top: 15px;
-    border-top: 1px solid $gray-light;
-
-    .action-text {
-      font-size: 14px;
-      color: $primary-color;
-      font-weight: 500;
+      .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-light);
+        border-radius: 16px;
+        color: var(--primary-color);
+        font-size: 28px;
+      }
     }
 
-    .icon-arrow-right {
-      color: $primary-color;
-      transition: $transition;
-      font-size: 12px;
+    .feature-content {
+      flex: 1;
+      margin-bottom: 20px;
+
+      .feature-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 8px;
+      }
+
+      .feature-description {
+        font-size: 14px;
+        color: var(--gray-500);
+        line-height: 1.5;
+        margin: 0;
+      }
+    }
+
+    .feature-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--gray-200);
+
+      .action-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      .action-icon {
+        color: var(--primary-color);
+        font-size: 14px;
+        transition: var(--transition);
+      }
     }
   }
 }
 
-.security-risks {
-  .risk-alert {
-    margin-bottom: 15px;
-    border-radius: 8px;
+// 安全风险卡片
+.risks-card {
+  .risks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-    &:last-child {
-      margin-bottom: 0;
+  .risk-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--bgColor1);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+
+    .risk-icon {
+      font-size: 24px;
+      color: var(--warning-color);
     }
 
-    :deep(.el-alert__title) {
+    .risk-content {
+      flex: 1;
+
+      .risk-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 4px;
+      }
+
+      .risk-description {
+        font-size: 14px;
+        color: var(--gray-600);
+        margin: 0;
+      }
+    }
+
+    .risk-action {
       font-weight: 600;
+      border-radius: 8px;
     }
   }
 }
@@ -840,32 +1045,84 @@ $transition: all 0.3s ease;
 // 响应式设计
 @media (max-width: 768px) {
   .security-header {
-    .header-content {
+    padding: 30px 0;
+
+    .header-container {
       flex-direction: column;
+      gap: 24px;
       text-align: center;
     }
 
-    .header-info {
+    .user-profile-section {
       flex-direction: column;
-      margin-bottom: 20px;
+      gap: 16px;
+    }
 
-      .header-icon {
-        margin-right: 0;
-        margin-bottom: 15px;
-      }
+    .user-info .user-name {
+      font-size: 24px;
     }
   }
 
-  .feature-grid {
+  .security-main {
+    padding: 0 16px 30px;
+  }
+
+  .features-card .features-grid {
     grid-template-columns: 1fr;
   }
 
-  .level-content {
-    flex-direction: column;
+  .level-card .level-content {
+    grid-template-columns: 1fr;
   }
 
-  .divider {
-    display: none;
+  .risk-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
   }
+}
+
+@media (max-width: 480px) {
+  .security-header {
+    padding: 24px 0;
+
+    .header-container {
+      padding: 0 16px;
+    }
+  }
+
+  .security-card :deep(.el-card__header) {
+    padding: 20px;
+  }
+
+  .feature-item {
+    padding: 20px;
+  }
+}
+
+// 动画效果
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.security-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.security-section:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.security-section:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.security-section:nth-child(3) {
+  animation-delay: 0.3s;
 }
 </style>

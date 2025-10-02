@@ -7,6 +7,7 @@ import {
 import routerConfig from "./config";
 import Cookies from "js-cookie";
 import NProgress from "nprogress";
+import axiosConfig from "../utils/request";
 
 // 公共页面路径
 const PUBLIC_PATHS = [
@@ -14,6 +15,7 @@ const PUBLIC_PATHS = [
   "/resetpassword",
   "/userprotocol",
   "/privacy",
+  "/frozencontainer",
 ];
 
 const router = createRouter({
@@ -30,7 +32,7 @@ const router = createRouter({
     },
     {
       path: "/login/index",
-      name: "login/index",
+      name: "login", // 使用更简洁的name
       component: () => import("../views/login/Login.vue"),
     },
     {
@@ -48,54 +50,150 @@ const router = createRouter({
       name: "Privacy",
       component: () => import("../views/privacy/Privacy.vue"),
     },
+    {
+      path: "/frozencontainer",
+      name: "frozencontainer",
+      component: () => import("../views/frozencontainer/FrozenContainer.vue"),
+    },
   ],
 });
 
-// 异步添加动态路由
-routerConfig.forEach((route) => {
-  router.addRoute("layout", route);
-});
+// 修复：确保动态路由不会重复添加
+let isDynamicRoutesAdded = false;
 
-// 前置守卫：登录校验 + 路由跳转控制
-router.beforeEach(
-  async (
-    to: RouteLocationNormalized,
-    from: RouteLocationNormalized,
-    next: NavigationGuardNext
-  ) => {
-    NProgress.start();
+router.beforeEach(async (to, from, next) => {
+  NProgress.start();
 
-    const token = Cookies.get("ds-token");
-    const isPublicPath = PUBLIC_PATHS.includes(to.path);
-    const isLoginPath = to.path === "/login/index";
-    const isFromResetPass = from.path === "/resetpassword";
+  const token = Cookies.get("ds-token");
 
-    if (isPublicPath) {
-      // 从修改密码页进入登录页，清除 token 并放行
-      if (isFromResetPass && isLoginPath) {
-        Cookies.remove("ds-token");
-        next();
+  // 只在用户登录后且动态路由未添加时添加动态路由
+  if (token && !isDynamicRoutesAdded && to.path !== "/login/index") {
+    try {
+      const isTokenValid = await validateToken(token);
+      if (isTokenValid) {
+        routerConfig.forEach((route) => {
+          router.addRoute("layout", route);
+        });
+        isDynamicRoutesAdded = true;
+
+        // 重新导航到当前路径以确保路由生效
+        next({ ...to, replace: true });
         return;
       }
+    } catch (error) {
+      console.error("添加动态路由失败:", error);
+    }
+  }
 
-      // 已登录访问登录页，重定向到首页
-      if (token && isLoginPath) {
-        next({ ...to, replace: true }); // 防止重复跳转
-        return;
-      }
+  // 原有的路由守卫逻辑
+  const isPublicPath = PUBLIC_PATHS.includes(to.path);
+  const isLoginPath = to.path === "/login/index";
+  const isFromResetPass = from.path === "/resetpassword";
+  const isFrozenPath = to.path === "/frozencontainer";
 
+  // 公共路径处理
+  if (isPublicPath) {
+    if (isFromResetPass && isLoginPath) {
+      Cookies.remove("ds-token");
+      isDynamicRoutesAdded = false; // 重置标志
       next();
       return;
     }
 
-    // 非公开路径必须登录
-    if (!token) {
-      next("/login/index");
-    } else {
-      next();
+    if (token && isLoginPath) {
+      next({ path: "/layout", replace: true });
+      return;
+    }
+
+    next();
+    return;
+  }
+
+  // 非公共路径必须登录
+  if (!token) {
+    isDynamicRoutesAdded = false; // 重置标志
+    next("/login/index");
+    return;
+  }
+
+  // 验证 token 是否有效
+  const isTokenValid = await validateToken(token);
+  if (!isTokenValid) {
+    Cookies.remove("ds-token");
+    isDynamicRoutesAdded = false; // 重置标志
+    next("/login/index");
+    return;
+  }
+
+  // 检查用户是否被冻结
+  if (!isFrozenPath) {
+    try {
+      const freezeInfo = await checkUserFrozen(token);
+      if (freezeInfo.isFrozen) {
+        next({
+          path: "/frozencontainer",
+          query: {
+            frozenReason: freezeInfo.reason,
+            unfreezeAt: freezeInfo.unfreezeAt,
+            freezeType: freezeInfo.freezeType,
+            message: freezeInfo.message,
+            frozenAt: freezeInfo.frozenAt,
+          },
+          replace: true,
+        });
+        return;
+      }
+    } catch (error) {
+      console.error("检查冻结状态失败:", error);
     }
   }
-);
+
+  next();
+});
+
+// 验证 token 是否有效
+async function validateToken(token: string): Promise<boolean> {
+  try {
+    await axiosConfig.get("/auth/validate", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+// 检查用户是否被冻结
+async function checkUserFrozen(token: string): Promise<{
+  isFrozen: boolean;
+  reason?: string;
+  unfreezeAt?: string;
+  freezeType?: string;
+  message?: string;
+  frozenAt?: string;
+}> {
+  try {
+    const response = await axiosConfig.get(`auth/freeze/status`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = response.data.data;
+    return {
+      isFrozen: data.isFrozen === 1,
+      reason: data.frozenReason,
+      unfreezeAt: data.unfreezeAt,
+      freezeType: data.freezeType,
+      message: data.frozenMessage,
+      frozenAt: data.frozenAt,
+    };
+  } catch (error) {
+    return { isFrozen: false };
+  }
+}
 
 // 后置钩子：结束进度条
 router.afterEach(() => {

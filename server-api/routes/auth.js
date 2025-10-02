@@ -99,6 +99,9 @@ router.get("/accounts", userAuth, async (req, res) => {
   }
 });
 // 登录方式
+// 修改 handlePostLogin 函数
+// 登录方式
+// 修改 handlePostLogin 函数，在登录时检查冻结状态
 async function handlePostLogin(
   user,
   req,
@@ -106,6 +109,20 @@ async function handlePostLogin(
   loginMethod,
   successMessage = "登录成功"
 ) {
+  // 检查用户是否被冻结
+  if (user.isFrozen === 1) {
+    return success(res, "账户已被冻结", {
+      isFrozen: true,
+      frozenReason: user.frozenReason || "违反社区规定",
+      frozenAt: user.frozenAt,
+      userId: user.id,
+      message: user.frozenMessage || "您的账户已被冻结，如有疑问请联系客服。",
+      unfreezeAt: user.unfreezeAt,
+      freezeType: user.freezeType,
+      frozenMessage: user.frozenMessage,
+    });
+  }
+
   // 生成token
   const token = jwt.sign({ userId: user.id }, process.env.SECRET, {
     expiresIn: "1h",
@@ -133,7 +150,7 @@ async function handlePostLogin(
     userAgent: deviceInfo.userAgent,
     loginMethod: loginMethod,
     status: "已登录",
-    loginExpire: loginExpire, // 添加过期时间
+    loginExpire: loginExpire,
   };
 
   if (!device) {
@@ -146,7 +163,7 @@ async function handlePostLogin(
       browser: deviceInfo.browser,
       loginMethod: loginMethod || device.loginMethod,
       status: "已登录",
-      loginExpire: loginExpire, // 更新过期时间
+      loginExpire: loginExpire,
     });
   }
 
@@ -157,6 +174,12 @@ async function handlePostLogin(
       isTrusted: device.isTrusted,
       os: deviceInfo.os,
       browser: deviceInfo.browser,
+    },
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isFrozen: user.isFrozen,
     },
   });
 }
@@ -185,13 +208,28 @@ router.post("/switch-account", userAuth, async (req, res) => {
     if (targetUser.clientFeatureCode !== currentUser.clientFeatureCode) {
       throw new UnauthorizedError("无权限切换到该账号");
     }
+
+    // 检查目标用户是否被冻结
+    if (targetUser.isFrozen === 1) {
+      return success(res, "账户已被冻结", {
+        isFrozen: true,
+        frozenReason: targetUser.frozenReason || "违反社区规定",
+        frozenAt: targetUser.frozenAt,
+        username: targetUser.username,
+        unfreezeAt: targetUser.unfreezeAt,
+        freezeType: targetUser.freezeType,
+        frozenMessage:
+          targetUser.frozenMessage || "您的账户已被冻结，如有疑问请联系客服。",
+        userId: targetUser.id,
+      });
+    }
+
     // 执行登录处理逻辑，传递"切换账号"作为登录方式和特定成功消息
     await handlePostLogin(targetUser, req, res, "切换账号", "账号切换成功");
   } catch (error) {
     failure(res, error);
   }
 });
-
 /**
  * 用户登录
  * POST auth/sign_in
@@ -203,30 +241,40 @@ router.post("/sign_in", async (req, res) => {
     if (!password) throw new BadRequestError("密码必须填写!");
 
     let condition = { where: {} };
-    let loginMethod = "未知登录方式";
 
+    // 根据输入类型构建查询条件
     if (/^1[3-9]\d{9}$/.test(login)) {
-      // 手机号登录
       condition.where.phone = login;
-      loginMethod = "手机号登录";
-      // 根据输入类型构建查询条件并确定登录方式
     } else if (login.includes("@")) {
-      // 邮箱登录
       condition.where.email = login;
-      loginMethod = "邮箱登录";
     } else {
-      // 用户名登录
       condition.where.username = login;
-      loginMethod = "账号登录";
     }
 
     const user = await User.findOne(condition);
     if (!user) throw new NotFoundError("用户不存在, 请先注册账号!");
 
+    // 检查用户是否被冻结（在验证密码之前）
+    if (user.isFrozen === 1) {
+      // 返回冻结状态信息，而不是直接拒绝登录
+      return success(res, "账户已被冻结", {
+        isFrozen: true,
+        frozenReason: user.frozenReason || "违反社区规定",
+        frozenAt: user.frozenAt,
+        username: user.username,
+        unfreezeAt: user.unfreezeAt,
+        freezeType: user.freezeType,
+        frozenMessage: user.frozenMessage,
+      });
+    }
+
+    // 验证密码
     const isPasswordValid = bcrypt.compareSync(password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedError("密码错误,请输入正确的密码");
-    await handlePostLogin(user, req, res, loginMethod);
+
+    // 登录成功
+    await handlePostLogin(user, req, res, "密码登录");
   } catch (error) {
     failure(res, error);
   }
@@ -237,9 +285,25 @@ router.post("/email", async (req, res) => {
     const { email, code } = req.body;
     const user = await User.findOne({ where: { email } });
     if (!user) throw new NotFoundError("用户不存在");
+
+    // 检查用户是否被冻结
+    if (user.isFrozen === 1) {
+      return success(res, "账户已被冻结", {
+        isFrozen: true,
+        username: user.username,
+        frozenReason: user.frozenReason || "违反社区规定",
+        frozenAt: user.frozenAt,
+        unfreezeAt: user.unfreezeAt,
+        freezeType: user.freezeType,
+        frozenMessage: user.frozenMessage,
+      });
+    }
+
+    // 验证验证码
     if (user.code !== code) throw new BadRequestError("验证码错误");
     if (new Date() > user.codeExpire) throw new BadRequestError("验证码已过期");
 
+    // 登录成功
     await handlePostLogin(user, req, res, "邮箱登录");
   } catch (error) {
     failure(res, error);
@@ -442,6 +506,81 @@ router.delete("/devices/:id", userAuth, async (req, res) => {
     success(res, "设备删除成功");
   } catch (error) {
     failure(res, error);
+  }
+});
+router.get("/validate", userAuth, async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+
+    // 检查用户是否被冻结
+    if (currentUser.isFrozen === 1) {
+      // 清除token，强制退出登录
+      return failure(res, new UnauthorizedError("账户已被冻结"));
+    }
+
+    success(res, "Token 有效", {
+      userId: currentUser.id,
+      username: currentUser.username,
+      email: currentUser.email,
+      isFrozen: currentUser.isFrozen,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 添加专门的冻结状态检查接口
+router.get("/freeze/status", userAuth, async (req, res) => {
+  try {
+    const currentUser = await getCurrentUser(req);
+
+    if (currentUser.isFrozen === 1) {
+      return success(res, "账户已被冻结", {
+        isFrozen: true,
+        frozenReason: currentUser.frozenReason || "违反社区规定",
+        frozenAt: currentUser.frozenAt,
+        username: currentUser.username,
+        unfreezeAt: currentUser.unfreezeAt,
+        freezeType: currentUser.freezeType,
+        frozenMessage:
+          currentUser.frozenMessage || "您的账户已被冻结，如有疑问请联系客服。",
+      });
+    } else {
+      return success(res, "账户正常", {
+        isFrozen: false,
+      });
+    }
+  } catch (error) {
+    failure(res, error);
+  }
+});
+// 每天凌晨检查自动解冻
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const now = new Date();
+    const result = await User.update(
+      {
+        isFrozen: false,
+        frozenReason: null,
+        frozenAt: null,
+        unfreezeAt: null,
+        freezeType: null,
+        frozenMessage: null,
+      },
+      {
+        where: {
+          isFrozen: true,
+          freezeType: "temporary",
+          unfreezeAt: {
+            [Op.lte]: now, // 解冻时间已到
+          },
+        },
+      }
+    );
+
+    console.log(`自动解冻了 ${result[0]} 个用户`);
+  } catch (error) {
+    console.error("自动解冻任务失败:", error);
   }
 });
 

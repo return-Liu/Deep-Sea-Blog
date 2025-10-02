@@ -80,6 +80,12 @@ router.delete("/:id", userAuth, async (req, res) => {
     if (!feedback) {
       return failure(res, "反馈不存在");
     }
+
+    // 验证权限：只有反馈提交者或管理员可以删除
+    if (req.user.id !== feedback.userId && req.user.id !== 4) {
+      return failure(res, "无权限删除此反馈");
+    }
+
     await feedback.destroy();
     success(res, "删除反馈成功");
   } catch (error) {

@@ -171,6 +171,7 @@ import WeChatLoginIcon from "../../components/icon/WeChatLogin.vue";
 import WeBlogIcon from "../../components/icon/WeBlog.vue";
 import { useI18n } from "vue-i18n";
 import Cookies from "js-cookie";
+import { RSAKey } from "jsencrypt/lib/lib/jsbn/rsa";
 const { locale } = useI18n();
 const router = useRouter();
 let isInputFocused = ref(false);
@@ -222,7 +223,6 @@ let registersms = () => {
 let forgetpassword = () => {
   router.push("/resetpassword");
 };
-
 let login = debounce(async () => {
   if (activeTab.value === "password" && !validate()) return;
   if (activeTab.value === "sms" && !validateEmailAndCode()) return;
@@ -231,22 +231,61 @@ let login = debounce(async () => {
   try {
     let response;
     if (activeTab.value === "password") {
-      // 密码登录
       response = await axiosConfig.post("/auth/sign_in", {
         login: loginForm.value.email,
         password: loginForm.value.password,
       });
     } else {
-      // 邮箱验证码登录
       response = await axiosConfig.post("/auth/email", {
         email: smsForm.value.email,
         code: smsForm.value.code,
         clientFeatureCode: accountsclientFeatureCode,
       });
     }
+
+    // 检查是否被冻结
+    if (response.data.data && response.data.data.isFrozen === true) {
+      ElMessage.error(response.data.data.message || "账户已被冻结");
+      // 跳转到冻结页面并传递冻结信息
+      router.push({
+        path: "/frozencontainer",
+        query: {
+          username: response.data.data.username,
+          frozenReason: response.data.data.frozenReason,
+          frozenAt: response.data.data.frozenAt,
+          message: response.data.data.message,
+          unfreezeAt: response.data.data.unfreezeAt,
+          freezeType: response.data.data.freezeType,
+          frozenMessage: response.data.data.frozenMessage,
+        },
+      });
+      console.log(response);
+
+      return;
+    }
+
     // 通用登录后处理
     handlePostLogin(response, locale.value, router);
   } catch (error: any) {
+    // 特殊处理：如果返回的是用户被冻结的错误
+    if (
+      error?.response?.data?.code === "USER_FROZEN" ||
+      error?.response?.data?.message?.includes("冻结")
+    ) {
+      ElMessage.error("账户已被冻结");
+      // 尝试从错误响应中获取冻结信息
+      const freezeInfo = error.response.data.data || {};
+      router.push({
+        path: "/frozencontainer",
+        query: {
+          userId: freezeInfo.userId,
+          frozenReason: freezeInfo.frozenReason,
+          frozenAt: freezeInfo.frozenAt,
+          message: freezeInfo.message,
+        },
+      });
+      return;
+    }
     handleLoginError(error);
   } finally {
     loading.value = false;

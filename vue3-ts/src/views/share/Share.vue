@@ -83,18 +83,21 @@
             </template>
             <div class="card-actions">
               <div class="left-actions">
-                <span v-if="item.type === 'essay'" class="tag">{{
-                  getLabel(item)
-                }}</span>
+                <span v-if="item.type === 'essay'" class="tag">
+                  {{ getLabel(item) }}
+                </span>
               </div>
               <div class="right-actions">
                 <button
                   v-if="item.type === 'essay'"
                   class="like-btn"
-                  :title="getLikedStatus(item) ? '喜欢' : '取消喜欢'"
+                  :class="{ liked: getLikedStatus(item) }"
+                  :title="getLikedStatus(item) ? '取消喜欢' : '喜欢'"
                   @click.stop="handleLike(item.id, getLikedStatus(item))"
                 >
-                  <HeartOutlined :class="{ liked: getLikedStatus(item) }" />
+                  <HeartOutlined
+                    :class="{ 'liked-icon': getLikedStatus(item) }"
+                  />
                   <span class="like-count">{{ getLikesCount(item) }}</span>
                 </button>
                 <button
@@ -103,7 +106,7 @@
                   @click.stop
                 >
                   <EyeOutlined />
-                  <span class="views-count">浏览{{ item.views }}次</span>
+                  <span class="views-count">{{ item.views }}</span>
                 </button>
               </div>
             </div>
@@ -117,20 +120,24 @@
         />
       </div>
       <div v-if="hasMoreContent" class="load-more">
-        <p type="primary" @click="loadMore" :disabled="isLoading">加载更多</p>
+        <button class="load-more-btn" @click="loadMore" :disabled="isLoading">
+          <span v-if="!isLoading">加载更多</span>
+          <span v-else class="loading-text">
+            <span class="loading-dots"></span>
+            加载中
+          </span>
+        </button>
       </div>
-      <div v-else-if="currentContent.length > 0" class="load-more">
-        <p>加载到底了</p>
+
+      <div v-else-if="currentContent.length > 0" class="load-end">
+        <div class="end-line">
+          <span class="end-text">已经到底啦</span>
+        </div>
       </div>
-      <div v-else class="load-more">
-        <p>没有更多内容</p>
+
+      <div v-else class="no-content">
+        <div class="no-content-text">暂无内容</div>
       </div>
-    </div>
-    <div v-if="selectedContent" class="content-detail">
-      <ContentDisplay
-        :content-type="selectedContent.type"
-        :content="selectedContent"
-      />
     </div>
   </div>
 </template>
@@ -175,9 +182,6 @@ const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
-
-// 引用定义
-const selectedContent = ref<Article | Photography | Note | null>(null);
 const essay = ref<Article[]>([]);
 const photography = ref<Photography[]>([]);
 const notes = ref<Note[]>([]);

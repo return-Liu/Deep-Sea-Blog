@@ -13,6 +13,7 @@ interface Account {
   avatar: string;
   nicknameColor: string;
   clientFeatureCode?: string;
+  isFrozen: boolean;
 }
 
 // 全局响应式状态

@@ -14,6 +14,7 @@ const authRouter = require("./routes/auth");
 const emailRouter = require("./routes/email");
 const themeRouter = require("./routes/theme");
 const locationRouter = require("./routes/location");
+const freezeUserRouter = require("./routes/freezeuser");
 // 后台路由
 // const adminAuthRouter = require("./routes/admin/auth");
 const adminArticleRouter = require("./routes/admin/article");
@@ -57,6 +58,7 @@ app.use("/auth", authRouter);
 app.use("/email", emailRouter);
 app.use("/theme", themeRouter);
 app.use("/location", locationRouter);
+app.use("/freezeuser", freezeUserRouter);
 // 后台路由配置
 // app.use("/admin/auth", adminAuthRouter);
 app.use("/admin/article", adminArticleRouter);
@@ -71,4 +73,5 @@ app.use("/admin/wall", adminWallRouter);
 app.use("/admin/likeswall", adminLikesWallRouter);
 app.use("/admin/comment", adminCommentRouter);
 app.use("/admin/likescomment", adminLikesCommentRouter);
+// 用户冻结与解冻
 module.exports = app;

@@ -436,7 +436,17 @@
           box-shadow: 0 6px 12px rgba(76, 210, 146, 0.2);
         }
 
+        &.current-account {
+          background-color: #f0f9ff;
+          border-left: 3px solid #409eff;
+        }
 
+        .current-badge {
+          color: #409eff;
+          font-size: 12px;
+          margin-left: 8px;
+          font-weight: 500;
+        }
 
         .account-avatar {
           width: 50px;
@@ -489,6 +499,401 @@
 }
 
 
+
+/* 冻结弹窗样式 */
+.frozen-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.frozen-dialog {
+  width: 90%;
+  max-width: 520px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+
+  .header-icon {
+    margin-right: 12px;
+    font-size: 20px;
+  }
+
+  .dialog-title {
+    flex: 1;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .close-btn {
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.dialog-content {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* 状态横幅 */
+.status-banner {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fef0f0;
+  border-radius: 8px;
+  border-left: 4px solid #f56c6c;
+  margin-bottom: 20px;
+
+  .status-icon {
+    font-size: 24px;
+    color: #f56c6c;
+    margin-right: 12px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-text {
+    .status-title {
+      margin: 0 0 4px 0;
+      color: #f56c6c;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .status-subtitle {
+      margin: 0;
+      color: #606266;
+      font-size: 14px;
+    }
+  }
+}
+
+/* 基本信息卡片 */
+.basic-info-section {
+  margin-bottom: 20px;
+
+  .info-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-label {
+        width: 100px;
+        color: #606266;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .info-content {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .username {
+          color: #303133;
+          font-weight: 500;
+        }
+
+        .freeze-time {
+          color: #909399;
+          font-size: 12px;
+        }
+      }
+
+      .freeze-type-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        &.temporary {
+          background: #fdf6ec;
+          color: #e6a23c;
+          border: 1px solid #f5dab1;
+        }
+
+        &.permanent {
+          background: #fef0f0;
+          color: #f56c6c;
+          border: 1px solid #fbc4c4;
+          animation: shake 0.5s ease-in-out;
+        }
+
+        .badge-icon {
+          font-size: 12px;
+        }
+      }
+
+      .freeze-reason {
+        color: #f56c6c;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+/* 详情卡片 */
+.detail-section,
+.freeze-status-section,
+.support-section {
+  margin-bottom: 16px;
+
+  .detail-card,
+  .status-card,
+  .support-card {
+    background: #fff0f0;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #bae0ff;
+
+    .detail-header,
+    .status-header,
+    .support-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #409eff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .detail-content,
+    .status-text,
+    .support-text {
+      margin: 0;
+      color: #606266;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .status-content {
+      .time-info {
+        margin: 4px 0;
+        color: #409eff;
+        font-weight: 500;
+      }
+
+      .countdown {
+        margin: 4px 0 0 0;
+        color: #67c23a;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+      }
+    }
+  }
+
+  .temporary-card {
+    background: #f6ffed;
+    border-color: #b7eb8f;
+  }
+
+  .temporary-notice {
+    background: #fdf6ec;
+    border-color: #f5dab1;
+  }
+
+  .permanent-card {
+    background: #fef0f0;
+    border-color: #fbc4c4;
+  }
+}
+
+/* 动画效果 */
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-2px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* 测试阶段徽章 */
+.beta-badge {
+  background: linear-gradient(45deg, #ff6b6b, #ffa726);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 8px;
+  animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 操作按钮 */
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e8e8e8;
+
+  .btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    &.primary-btn {
+      background: #409eff;
+      color: white;
+
+      &:hover {
+        background: #66b1ff;
+      }
+    }
+
+    &.secondary-btn {
+      background: #f4f4f5;
+      color: #606266;
+
+      &:hover {
+        background: #e9e9eb;
+      }
+    }
+
+    &.refresh-btn {
+      background: #67c23a;
+      color: white;
+
+      &:hover {
+        background: #85ce61;
+      }
+    }
+  }
+}
+
+/* 冻结账号标识 */
+.frozen-badge {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-left: 8px;
+  font-weight: 500;
+  background: #fef0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #fbc4c4;
+}
+
+/* 当前账号标识 */
+.current-badge {
+  color: #409eff;
+  font-size: 12px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .frozen-dialog {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+
+    .info-label {
+      width: 100% !important;
+      margin-bottom: 4px;
+    }
+
+    .info-content {
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+  }
+}
 
 
 @media (max-width: 992px) {
