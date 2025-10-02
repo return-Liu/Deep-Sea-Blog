@@ -183,7 +183,6 @@ async function handlePostLogin(
     },
   });
 }
-
 // 切换账号
 router.post("/switch-account", userAuth, async (req, res) => {
   try {
@@ -280,11 +279,33 @@ router.post("/sign_in", async (req, res) => {
   }
 });
 
+// 邮箱验证码登录
 router.post("/email", async (req, res) => {
   try {
-    const { email, code } = req.body;
-    const user = await User.findOne({ where: { email } });
-    if (!user) throw new NotFoundError("用户不存在");
+    const { email, code, clientFeatureCode } = req.body;
+
+    // 查找用户，如果不存在则创建
+    let user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      // 如果用户不存在，创建新用户
+      user = await User.create({
+        email,
+        password: generatePassword(),
+        nickname: generateNickname(),
+        sex: 0,
+        uuid: generateUUID(),
+        clientFeatureCode: clientFeatureCode || generateFeatureCode(),
+        username: `${generateUUID()}`,
+        avatar: null,
+        birthday: null,
+        introduce: "",
+        constellation: null,
+        area: null,
+        nicknameColor: "#000000",
+        phone: "",
+      });
+    }
 
     // 检查用户是否被冻结
     if (user.isFrozen === 1) {
@@ -309,6 +330,7 @@ router.post("/email", async (req, res) => {
     failure(res, error);
   }
 });
+
 // 邮箱验证码登录 - 发送验证码（带频率限制）
 router.post("/email/verify", async (req, res) => {
   try {
@@ -326,25 +348,12 @@ router.post("/email/verify", async (req, res) => {
       }
     }
 
-    let user = await User.findOne({ where: { email } });
+    // 只查找用户，不再创建用户
+    const user = await User.findOne({ where: { email } });
 
+    // 如果用户不存在，直接返回错误
     if (!user) {
-      user = await User.create({
-        email,
-        password: generatePassword(),
-        nickname: generateNickname(),
-        sex: 0,
-        uuid: generateUUID(),
-        clientFeatureCode: clientFeatureCode || generateFeatureCode(),
-        username: `${generateUUID()}`,
-        avatar: null,
-        birthday: null,
-        introduce: "",
-        constellation: null,
-        area: null,
-        nicknameColor: "#000000",
-        phone: "",
-      });
+      throw new NotFoundError("用户不存在，请先注册");
     }
 
     const code = createSixNum();
@@ -360,7 +369,6 @@ router.post("/email/verify", async (req, res) => {
     failure(res, error);
   }
 });
-
 // 登录设备管理
 router.post("/login/device", userAuth, async (req, res) => {
   try {

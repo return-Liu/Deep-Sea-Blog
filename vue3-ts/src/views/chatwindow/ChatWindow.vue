@@ -45,7 +45,7 @@
       <div class="deep-think-toggle">
         <label for="deepThinkToggle"
           >深度思考
-          <p style="font-size: 10px; margin-top: 0px">DeepSeek R1</p>
+          <p style="font-size: 9px; margin-top: 0px">DeepSeek R1</p>
         </label>
       </div>
     </div>

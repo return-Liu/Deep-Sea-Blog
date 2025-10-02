@@ -232,14 +232,7 @@
                       content.likesCount || 0
                     }})
                   </el-button>
-                  <!-- 评论 -->
-                  <el-button
-                    :icon="CommentOutlined"
-                    @Click="handleComment()"
-                    class="comment-btn"
-                  >
-                    评论 ({{ content.commentsCount || 0 }})
-                  </el-button>
+         
                 </div>
               </div>
             </div>
@@ -892,9 +885,7 @@ const goBack = () => {
 const handleShare = () => {
   ElMessage.success("分享功能开发中...");
 };
-const handleComment = () => {
-  ElMessage.success("评论功能开发中...");
-};
+
 // 删除处理
 const handleDelete = async (contentId: number) => {
   try {

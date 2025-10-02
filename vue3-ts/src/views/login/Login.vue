@@ -278,10 +278,13 @@ let login = debounce(async () => {
       router.push({
         path: "/frozencontainer",
         query: {
-          userId: freezeInfo.userId,
-          frozenReason: freezeInfo.frozenReason,
-          frozenAt: freezeInfo.frozenAt,
-          message: freezeInfo.message,
+          username: freezeInfo.data.data.username,
+          frozenReason: freezeInfo.data.data.frozenReason,
+          frozenAt: freezeInfo.data.data.frozenAt,
+          message: freezeInfo.data.data.message,
+          unfreezeAt: freezeInfo.data.data.unfreezeAt,
+          freezeType: freezeInfo.data.data.freezeType,
+          frozenMessage: freezeInfo.data.data.frozenMessage,
         },
       });
       return;

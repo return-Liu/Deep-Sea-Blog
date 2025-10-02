@@ -43,7 +43,7 @@ function canResetPassword(userId) {
 // ========== 路由定义 ==========
 
 // 发送邮件验证码
-router.post("/getemail", userAuth, async (req, res) => {
+router.post("/getemail", async (req, res) => {
   try {
     const email = req.body.email;
 
@@ -80,7 +80,7 @@ router.post("/getemail", userAuth, async (req, res) => {
 });
 
 // 验证邮箱
-router.post("/checkemail", userAuth, async (req, res) => {
+router.post("/checkemail", async (req, res) => {
   try {
     const { email, code } = req.body;
     if (!email) throw new Error("邮箱不能为空");
@@ -102,7 +102,7 @@ router.post("/checkemail", userAuth, async (req, res) => {
 });
 
 // 重置密码
-router.post("/resetpassword", userAuth, async (req, res) => {
+router.post("/resetpassword", async (req, res) => {
   try {
     const { email, code, password } = req.body;
     if (!email) throw new Error("邮箱不能为空");
