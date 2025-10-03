@@ -125,10 +125,12 @@
 }
 
 .bg-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); // 每行 4 个
+  // gap: 10px;
   padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
 
   .bg-item {
     cursor: pointer;
@@ -143,6 +145,10 @@
     &.bg-item-selected .bg-preview {
       border: 2px solid #409eff;
       box-shadow: 0 0 0 2px #409eff;
+    }
+
+    .bg-name {
+      font-size: 12px;
     }
   }
 }
