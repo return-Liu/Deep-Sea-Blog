@@ -59,3 +59,6 @@ html {
   margin: 0;
 }
 </style>
+<style lang="less" scoped>
+@import "./assets/less/el-plus.less";
+</style>

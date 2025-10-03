@@ -79,7 +79,7 @@
         :content="$t('commonaside.home.reportresultscenter')"
         placement="right"
       >
-        <el-menu-item index="/reportresultscenter">
+        <el-menu-item index="/reportresultscenter" v-if="userStore.isAdmin">
           <el-icon><Calendar /></el-icon>
           <router-link to="/reportresultscenter">
             {{ $t("commonaside.home.reportresultscenter") }}
@@ -94,6 +94,17 @@
           <el-icon><Tools /></el-icon>
           <router-link to="/securitycenter">{{
             $t("commonaside.home.securitycenter")
+          }}</router-link>
+        </el-menu-item>
+      </el-tooltip>
+      <el-tooltip
+        :content="$t('commonaside.home.freezemanagement')"
+        placement="right"
+      >
+        <el-menu-item index="/freezemanagement" v-if="userStore.isAdmin">
+          <el-icon><UserFilled /></el-icon>
+          <router-link to="/freezemanagement">{{
+            $t("commonaside.home.freezemanagement")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
@@ -137,6 +148,7 @@ const {
   SetUp,
   route,
   user,
+  userStore,
 } = useAside();
 </script>
 <style lang="less" scoped>

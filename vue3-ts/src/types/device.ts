@@ -12,4 +12,6 @@ export interface Device {
   loginMethod: string;
   status: string;
   userAgent: string;
+  lastActiveAt?: string; // 最后活跃时间
+  loginExpire?: string; // 登录过期时间
 }

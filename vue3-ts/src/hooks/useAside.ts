@@ -61,5 +61,6 @@ export default function useAside() {
     SetUp,
     userId,
     user,
+    userStore,
   };
 }

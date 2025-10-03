@@ -42,19 +42,67 @@ export const useUserStore = defineStore("user", () => {
     username: "",
     phone: "",
     theme: "",
+    role: "user", // 添加默认角色
   });
 
   // 获取当前用户信息
   const currentUser = computed(() => user.value);
   const router = useRouter();
+
+  // 获取用户信息的方法
+  const fetchUserInfo = async () => {
+    try {
+      const response = await axiosConfig.get("/auth/currentuser");
+      user.value = { ...user.value, ...response.data.data };
+    } catch (error) {
+      console.error("获取用户信息失败:", error);
+      throw error;
+    }
+  };
+
+  // 设置用户信息
+  const setUser = (userData: Partial<User>) => {
+    user.value = { ...user.value, ...userData };
+  };
+
+  // 清除用户信息
+  const clearUser = () => {
+    user.value = {
+      id: 0,
+      nickname: "",
+      avatar: "",
+      sex: 0,
+      birthday: "",
+      introduce: "",
+      constellation: "",
+      email: "",
+      account: "",
+      nicknameColor: "",
+      clientFeatureCode: "",
+      area: "",
+      uuid: 0,
+      username: "",
+      phone: "",
+      theme: "",
+      role: "user",
+    };
+  };
+
+  // 检查用户是否为管理员
+  const isAdmin = computed(() => {
+    return user.value.role === "admin";
+  });
+
+  // 检查用户是否已登录
+  const isLoggedIn = computed(() => {
+    return user.value.id > 0;
+  });
+
   const openAuthorProfile = () => {
     router.push({
       name: "users",
       params: { uuid: user.value.uuid },
     });
-  };
-  const setUser = (userData: User) => {
-    user.value = userData;
   };
 
   // 加载用户信息
@@ -75,13 +123,16 @@ export const useUserStore = defineStore("user", () => {
       user.value = { ...user.value, ...updatedFields };
     }
   };
-
   return {
     user,
+    currentUser,
+    fetchUserInfo,
     setUser,
+    clearUser,
+    isAdmin,
+    isLoggedIn,
+    openAuthorProfile,
     loadUser,
     updateUser,
-    currentUser,
-    openAuthorProfile,
   };
 });

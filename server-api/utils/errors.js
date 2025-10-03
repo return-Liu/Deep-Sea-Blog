@@ -20,6 +20,16 @@ class UnauthorizedError extends Error {
   }
 }
 
+// 自定义 403
+class ForbiddenError extends Error {
+  constructor(message, data = null) {
+    super(message);
+    this.name = "ForbiddenError";
+    this.statusCode = 403;
+    this.data = data;
+  }
+}
+
 // 自定义 404
 class NotFoundError extends Error {
   constructor(message, data = null) {
@@ -33,5 +43,6 @@ class NotFoundError extends Error {
 module.exports = {
   BadRequestError,
   UnauthorizedError,
+  ForbiddenError,
   NotFoundError,
 };

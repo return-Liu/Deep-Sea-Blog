@@ -579,7 +579,6 @@
                 <span class="note-text">(请勿刷新页面)</span>
               </span>
             </div>
-           
           </div>
         </div>
 
@@ -1141,4 +1140,31 @@ onMounted(() => {
 
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
+//
+
+:deep(.el-input__wrapper) {
+  background: var(--bgColor1);
+}
+
+:deep(.el-input__wrapper) {
+  background: var(--bgColor1);
+}
+
+:deep(.el-select__wrapper) {
+  background: var(--bgColor1);
+}
+
+:deep(.el-table tr) {
+  background: var(--bgColor1);
+}
+
+:deep(.el-input.is-disabled .el-input__wrapper) {
+  background: var(--bgColor1);
+  color: var(--color-bg3);
+}
+
+:deep(.el-textarea__inner) {
+  background: var(--bgColor1);
+  color: var(--color-bg3);
+}
 </style>

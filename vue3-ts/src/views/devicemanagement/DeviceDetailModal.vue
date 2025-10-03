@@ -109,6 +109,24 @@
               {{ formatDate(device.lastLoginTime) || "未知登录时间" }}
             </div>
           </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <component :is="lastActiveIcon" class="detail-icon" />
+              <span>最后活跃时间</span>
+            </div>
+            <div class="detail-value">
+              {{ formatDate(device.lastActiveAt) || "未知最后活跃时间" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <component :is="LoginExpireIcon" class="detail-icon" />
+              <span>登录过期时间</span>
+            </div>
+            <div class="detail-value">
+              {{ formatDate(device.loginExpire) || "未知登录过期时间" }}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -136,6 +154,8 @@ import LocationIcon from "../../components/icon/Location.vue";
 import LoginTypeIcon from "../../components/icon/LoginType.vue";
 import LoginStautsIcon from "../../components/icon/LoginStauts.vue";
 import DeviceIdIcon from "../../components/icon/DeviceId.vue";
+import LoginExpireIcon from "../../components/icon/LoginExpireIcon.vue";
+import lastActiveIcon from "../../components/icon/LastActive.vue";
 import { useUserStore } from "../../store/userStore";
 const userStore = useUserStore();
 const user = computed(() => userStore.user);

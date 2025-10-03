@@ -93,6 +93,7 @@ export const zh = {
       suggestions: "建议与反馈",
       reportresultscenter: "举报结果中心",
       securitycenter: "账号安全中心",
+      freezemanagement: "账号冻结管理",
       expand: "展开",
       collapse: "收起",
     },

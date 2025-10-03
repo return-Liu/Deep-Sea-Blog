@@ -103,28 +103,40 @@
                 <span>{{ device.loginMethod || "未知登录方式" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">登录系统:</span>
+                <span class="detail-label">登录系统</span>
                 <span>{{ device.os || "未知登录系统" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">登录浏览器:</span>
+                <span class="detail-label">登录浏览器</span>
                 <span>{{ device.browser || "未知登录浏览器" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">参考登录地点:</span>
+                <span class="detail-label">参考登录地点</span>
                 <span
                   >{{ currentprovince }}
                   {{ currentCity || "未知参考登录地点" }}</span
                 >
               </div>
               <div class="detail-row">
-                <span class="detail-label">登录状态:</span>
+                <span class="detail-label">登录状态</span>
                 <span>{{ device.status || "未知设备状态" }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">登录时间:</span>
+                <span class="detail-label">登录时间</span>
                 <span>{{
                   formatDate(device.lastLoginTime) || "未知登录时间"
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">最后活跃时间</span>
+                <span>{{
+                  formatDate(device.lastActiveAt) || "未知最后活跃时间"
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">登录过期时间</span>
+                <span>{{
+                  formatDate(device.loginExpire) || "未知登录过期时间"
                 }}</span>
               </div>
             </div>
@@ -212,6 +224,8 @@ const fetchDevices = async () => {
   try {
     loading.value = true;
     const response = await axiosConfig.get("/auth/devices");
+    console.log(response);
+
     devices.value = response.data.data;
   } catch (error: any) {
     const errorMessage =

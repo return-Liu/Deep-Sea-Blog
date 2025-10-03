@@ -96,6 +96,7 @@ export const en = {
       suggestions: "Suggestions",
       reportresultscenter: "report results center",
       securitycenter: "Security Center",
+      freezemanagement: "Freeze Management",
       expand: "Expand",
       collapse: "Collapse",
     },

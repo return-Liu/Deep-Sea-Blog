@@ -213,7 +213,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="isAdmin && !row.status"
+                        v-if="!row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'feedback')"
@@ -230,7 +230,6 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="user.id === row.role || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteFeedback(row.id)"
@@ -363,7 +362,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="isAdmin && !row.status"
+                        v-if="!row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'report')"
@@ -380,7 +379,6 @@
                         详情
                       </el-button>
                       <el-button
-                        v-if="user.id === row.role || isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteReport(row.id)"
@@ -615,16 +613,10 @@ import {
 } from "@element-plus/icons-vue";
 import { useGeneral } from "../../hooks/usegeneral";
 import axiosConfig from "../../utils/request";
-import { useUserStore } from "../../store/userStore";
 import {
   resultTypeOptions,
   formatResultType,
 } from "../../utils/reportresultscenter";
-
-// 组合式 API
-const userStore = useUserStore();
-const user = computed(() => userStore.user);
-const isAdmin = computed(() => user.value?.role === "admin");
 
 const {
   reports,
@@ -645,7 +637,6 @@ const reportStatusFilter = ref("");
 const processDialogVisible = ref(false);
 const processType = ref<"feedback" | "report">("feedback");
 const currentProcessId = ref<number | string>("");
-const processing = ref(false);
 const isProcessing = ref(false);
 
 // 表单数据
@@ -653,10 +644,6 @@ const processForm = ref({
   resultType: "",
   resultDetail: "",
 });
-
-// 新增：为每个反馈卡片创建独立的展开状态
-const feedbackExpandStates = ref<Record<number, boolean>>({});
-const reportExpandStates = ref<Record<number, boolean>>({});
 
 // 添加过滤器状态
 const feedbackFilters = ref({
@@ -1025,6 +1012,18 @@ onMounted(() => {
   :deep(.el-card__body) {
     background: var(--bgColor1);
   }
+  :deep(.el-input__wrapper) {
+    background: var(--bgColor1);
+  }
+  :deep(.el-select__wrapper) {
+    background: var(--bgColor1);
+  }
+  :deep(.el-range-separator) {
+    color: var(--color-bg3);
+  }
+  :deep(.el-table tr) {
+    background: var(--bgColor1);
+  }
   padding: 24px;
   min-height: calc(100vh - 80px);
   .header-section {
@@ -1165,7 +1164,7 @@ onMounted(() => {
 
           :deep(.el-table__header) {
             th {
-              background-color: #f5f7fa;
+              background: var(--bgColor1);
               color: #606266;
               font-weight: 600;
             }
@@ -1218,7 +1217,7 @@ onMounted(() => {
 
     :deep(.el-dialog__header) {
       padding: 20px 20px 10px;
-      border-bottom: 1px solid #e4e7ed;
+      border-bottom: 1px var(--border);
       margin-right: 0;
 
       .el-dialog__title {

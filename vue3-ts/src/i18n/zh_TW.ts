@@ -89,6 +89,7 @@ export const zh_TW = {
       suggestions: "建議與反饋",
       reportresultscenter: "舉報結果中心",
       securitycenter: "帳號安全中心",
+      freezemanagement: "帳號凍結管理",
       expand: "展開",
       collapse: "收起",
     },

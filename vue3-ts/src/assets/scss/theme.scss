@@ -4,7 +4,7 @@ $light-theme: (
   white: #ffffff,
 
   // 灰色系 - 从深到浅 (标准灰阶)
-  gray-900: #ffffff,
+  gray-900: #111111,
   gray-800: #333333,
   gray-700: #555555,
   gray-600: #777777,
@@ -12,73 +12,73 @@ $light-theme: (
   gray-400: #bbbbbb,
   gray-300: #dddddd,
   gray-200: #eeeeee,
-  gray-100: #f5f5f5,
+  gray-100: #f8f9fa,
 
   // 背景颜色
   bg1: #ffffff,
   // 主背景
-  bg2: #f8f8f8,
+  bg2: #f8f9fa,
   // 次要背景
-  bg3: #f0f0f0,
+  bg3: #f1f3f5,
   // 卡片背景
-  bg4: #e0e0e0,
+  bg4: #e9ecef,
   // 分隔背景
-  bg5: #222222,
+  bg5: #212529,
 
   // 深色背景元素
   // 边框颜色
   border: #e0e0e0,
 
   // 渐变背景
-  gradient-bg: linear-gradient(to bottom, #ffffff, #f8f8f8),
+  gradient-bg: linear-gradient(to bottom, #ffffff, #f8f9fa),
   gradient-bg1: linear-gradient(135deg, #5a7bc5, #3a4e7a),
   gradient-bg2: linear-gradient(135deg, #ffaa7a, #ff6a5a),
   gradient-bg3: linear-gradient(135deg, #8fd68f, #50b850),
   // 兼容性颜色变量
   color-bg2: -webkit-linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05)),
-  color-bg3: #333333,
-  color-bg4: #555555,
-  color-bg5: #777777,
-  color-bg6: #bbbbbb,
-  color-bg7: #dddddd,
-  color-bg8: #222222,
+  color-bg3: #343a40,
+  color-bg4: #495057,
+  color-bg5: #6c757d,
+  color-bg6: #adb5bd,
+  color-bg7: #ced4da,
+  color-bg8: #212529,
   color-bg9: #ffffff,
-  color-bg10: #f8f8f8
+  color-bg10: #f8f9fa
 );
 
 $dark-theme: (
   // 主要黑白颜色 - 深色主题
-  black: #e0e0e0,
-  white: #1a1a1a,
+  black: #f8f9fa,
+  white: #121212,
 
   // 灰色系 - 从浅到深 (深色灰阶)
-  gray-900: #1a1a1a,
+  gray-900: #121212,
   gray-800: #ffffff,
-  gray-700: #444444,
-  gray-600: #666666,
-  gray-500: #888888,
-  gray-400: #aaaaaa,
-  gray-300: #cccccc,
-  gray-200: #eeeeee,
-  gray-100: #f5f5f5,
+  gray-700: #343a40,
+  gray-600: #495057,
+  gray-500: #6c757d,
+  gray-400: #adb5bd,
+  gray-300: #ced4da,
+  gray-200: #dee2e6,
+  gray-100: #f8f9fa,
 
   // 背景颜色
-  bg1: #1a1a1a,
+  bg1: #121212,
   // 主背景
-  bg2: #222222,
+  bg2: #1e1e1e,
   // 次要背景
-  bg3: #2a2a2a,
+  bg3: #252525,
   // 卡片背景
-  bg4: #333333,
+  bg4: #2d2d2d,
   // 分隔背景
-  bg5: #e0e0e0,
+  bg5: #f8f9fa,
 
   // 浅色背景元素
   // 边框颜色
-  border: #333333,
+  border: #343a40,
 
   // 渐变背景
-  gradient-bg: linear-gradient(to bottom, #1a1a1a, #222222),
+  gradient-bg: linear-gradient(to bottom, #121212, #1e1e1e),
   gradient-bg1: linear-gradient(135deg, #5a7bc5, #3a4e7a),
   gradient-bg2: linear-gradient(135deg, #ffaa7a, #ff6a5a),
   gradient-bg3: linear-gradient(135deg, #8fd68f, #50b850),
@@ -87,14 +87,14 @@ $dark-theme: (
       rgba(255, 255, 255, 0.1),
       rgba(255, 255, 255, 0.05)
     ),
-  color-bg3: #dddddd,
-  color-bg4: #bbbbbb,
-  color-bg5: #999999,
-  color-bg6: #666666,
-  color-bg7: #444444,
-  color-bg8: #e0e0e0,
-  color-bg9: #1a1a1a,
-  color-bg10: #222222
+  color-bg3: #e9ecef,
+  color-bg4: #dee2e6,
+  color-bg5: #adb5bd,
+  color-bg6: #6c757d,
+  color-bg7: #495057,
+  color-bg8: #f8f9fa,
+  color-bg9: #121212,
+  color-bg10: #1e1e1e
 );
 
 @mixin theme-vars($theme) {
@@ -111,4 +111,26 @@ $dark-theme: (
 // 应用暗色主题
 html[data-theme="dark"] {
   @include theme-vars($dark-theme);
+}
+
+// 组件主题变量
+// 为除了登录和重置密码外的所有组件提供主题支持
+[data-theme="dark"] {
+  --component-bg-color: var(--bg2);
+  --component-border-color: var(--border);
+  --component-text-color: var(--black);
+  --component-secondary-text-color: var(--gray-400);
+  --component-hover-bg-color: var(--bg3);
+  --component-active-bg-color: var(--bg4);
+  --component-shadow-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] {
+  --component-bg-color: var(--bg2);
+  --component-border-color: var(--border);
+  --component-text-color: var(--black);
+  --component-secondary-text-color: var(--gray-600);
+  --component-hover-bg-color: var(--bg3);
+  --component-active-bg-color: var(--bg4);
+  --component-shadow-color: rgba(0, 0, 0, 0.1);
 }

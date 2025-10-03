@@ -111,5 +111,10 @@ const routers = [
     name: "viewsystememail",
     component: () => import("../views/viewsystememail/Viewsystememail.vue"),
   },
+  {
+    path: "/freezemanagement",
+    name: "freezemanagement",
+    component: () => import("../views/freezemanagement/FreezeManagement.vue"),
+  },
 ];
 export default routers;

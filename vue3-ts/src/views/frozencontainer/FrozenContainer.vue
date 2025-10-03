@@ -213,10 +213,11 @@ import {
   CircleClose,
   QuestionFilled,
 } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import Cookies from "js-cookie";
 import { useRouter } from "vue-router";
 import axiosConfig from "../../utils/request";
+
 const router = useRouter();
 const countdownText = ref("");
 const countdownTimer = ref(null);
@@ -329,7 +330,6 @@ const formatFreezeTime = (timeString) => {
   const date = new Date(timeString);
   return date.toLocaleString("zh-CN");
 };
-const updateUserStatus = async () => {};
 
 // 修改倒计时结束逻辑
 const updateCountdown = () => {
@@ -365,6 +365,7 @@ const updateCountdown = () => {
 
   countdownText.value = `${days}天 ${hours}小时 ${minutes}分钟 ${seconds}秒`;
 };
+
 // 获取冻结类型文本
 const getFreezeTypeText = (freezeType) => {
   const typeMap = {
@@ -418,28 +419,66 @@ const animateParticles = () => {
   animationId.value = requestAnimationFrame(animateParticles);
 };
 
-onMounted(() => {
-  // 从路由参数获取冻结信息
-  const query = router.currentRoute.value.query;
-  freezeInfo.value = {
-    username: query.username || "",
-    frozenReason: query.frozenReason || "违反社区规定",
-    frozenAt: query.frozenAt || new Date().toISOString(),
-    unfreezeAt: query.unfreezeAt || "",
-    freezeType: query.freezeType || "temporary",
-    frozenMessage:
-      query.frozenMessage ||
-      "您的账户因违反平台规定已被冻结，如有疑问请联系客服。",
-  };
+// 检查用户是否真的被冻结
+const checkUserFrozenStatus = async () => {
+  try {
+    const token = Cookies.get("ds-token");
+    if (!token) {
+      // 没有token，重定向到登录页
+      router.push("/login/index");
+      return false;
+    }
+
+    // 获取用户当前状态
+    const response = await axiosConfig.get("/auth/currentuser");
+    const user = response.data.data;
+
+    if (!user.isFrozen) {
+      // 用户未被冻结，显示提示并重定向
+      ElMessageBox.alert("您的账户未被冻结，即将返回主页", "提示", {
+        confirmButtonText: "确定",
+        type: "success",
+        callback: () => {
+          router.push("/layout");
+        },
+      });
+      return false;
+    }
+
+    // 用户确实被冻结，更新冻结信息
+    freezeInfo.value = {
+      username: user.username || "",
+      frozenReason: user.frozenReason || "违反社区规定",
+      frozenAt: user.frozenAt || new Date().toISOString(),
+      unfreezeAt: user.unfreezeAt || "",
+      freezeType: user.freezeType || "temporary",
+      frozenMessage:
+        user.frozenMessage ||
+        "您的账户因违反平台规定已被冻结，如有疑问请联系客服。",
+    };
+
+    return true;
+  } catch (error) {
+    console.error("检查用户冻结状态失败:", error);
+    ElMessage.error("获取用户状态失败，请重新登录");
+    Cookies.remove("ds-token");
+    router.push("/login/index");
+    return false;
+  }
+};
+
+onMounted(async () => {
+  // 首先检查用户是否真的被冻结
+  const isUserFrozen = await checkUserFrozenStatus();
+  if (!isUserFrozen) {
+    return; // 如果用户未被冻结，不继续执行
+  }
 
   // 启动倒计时
   if (freezeInfo.value.freezeType === "temporary") {
     countdownTimer.value = setInterval(updateCountdown, 1000);
     updateCountdown();
   }
-
-  // 强制清除token
-  Cookies.remove("ds-token");
 
   // 初始化粒子系统
   if (particleCanvas.value) {
@@ -455,10 +494,8 @@ onUnmounted(() => {
   if (animationId.value) {
     cancelAnimationFrame(animationId.value);
   }
-  updateUserStatus();
 });
 </script>
-
 <style scoped>
 .frozen-container {
   display: flex;

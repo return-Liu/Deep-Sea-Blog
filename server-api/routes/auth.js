@@ -7,6 +7,7 @@ const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
 const userAuth = require("../middlewares/user-auth");
 const adminAuth = require("../middlewares/admin-auth");
+const { Op } = require("sequelize");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -15,6 +16,7 @@ const {
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const { log } = require("console");
 // 生成设备唯一标识符
 function generateDeviceId(userId, userAgent) {
   const hash = crypto.createHash("md5");
@@ -125,6 +127,7 @@ async function handlePostLogin(
 
   // 获取设备信息
   const deviceId = req.body.deviceId;
+  const userAgent = req.get("User-Agent") || "";
 
   // 记录设备登录信息
   if (deviceId) {
@@ -137,11 +140,47 @@ async function handlePostLogin(
         lastLoginTime: new Date(), // 记录最后登录时间
         status: "已登录",
         loginMethod: loginMethod,
+        loginExpire: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
       {
         where: { deviceId },
       }
     );
+  } else {
+    // 如果没有提供deviceId，则从User-Agent生成设备ID并记录完整设备信息
+    const deviceInfo = await extractDeviceInfo(req);
+    const generatedDeviceId = generateDeviceId(user.id, deviceInfo.userAgent);
+
+    // 查找或创建设备记录
+    let device = await Device.findOne({
+      where: {
+        deviceId: generatedDeviceId,
+      },
+    });
+
+    // 确保所有必需字段都有默认值
+    const deviceData = {
+      userId: user.id,
+      deviceId: generatedDeviceId,
+      deviceName: deviceInfo.deviceName || deviceInfo.deviceType || "未知设备",
+      deviceType: deviceInfo.deviceType || "unknown",
+      os: deviceInfo.os || "unknown",
+      loginExpire: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), //7天后过期
+      browser: deviceInfo.browser || "unknown",
+      lastLoginTime: new Date(),
+      userAgent: deviceInfo.userAgent,
+      status: "已登录",
+      loginMethod: loginMethod,
+      lastActiveAt: new Date(),
+    };
+
+    if (!device) {
+      // 创建设备记录前确保所有必需字段都已设置
+      device = await Device.create(deviceData);
+    } else {
+      // 更新设备信息
+      await device.update(deviceData);
+    }
   }
 
   // 更新用户最后登录时间
@@ -373,6 +412,8 @@ router.post("/login/device", userAuth, async (req, res) => {
       userAgent: deviceInfo.userAgent,
       location: deviceInfo.location || "未知位置",
       province: deviceInfo.province || "未知省",
+      loginExpire: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), //7天后过期
+      lastActiveAt: new Date(),
     };
 
     if (!device) {
@@ -443,6 +484,8 @@ router.get("/devices", userAuth, async (req, res) => {
       isCurrentDevice: device.deviceId === currentDeviceId,
       loginMethod: device.loginMethod || "未知登录方式",
       status: device.status,
+      lastActiveAt: device.lastActiveAt,
+      loginExpire: device.loginExpire,
     }));
 
     success(res, "获取设备列表成功", formattedDevices);
@@ -489,91 +532,15 @@ router.get("/validate", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-
-// 添加专门的冻结状态检查接口
-router.get("/freeze/status", userAuth, async (req, res) => {
-  try {
-    const currentUser = req.user; // 直接从 req.user 获取，不需要再查询数据库
-
-    if (currentUser.isFrozen === 1) {
-      // 检查是否临时冻结且已到解冻时间
-      const now = new Date();
-      if (
-        currentUser.freezeType === "temporary" &&
-        currentUser.unfreezeAt &&
-        now >= currentUser.unfreezeAt
-      ) {
-        // 自动解冻
-        await currentUser.update({
-          isFrozen: 0,
-          frozenReason: null,
-          frozenAt: null,
-          unfreezeAt: null,
-          freezeType: null,
-          frozenMessage: null,
-          frozenBy: null,
-        });
-
-        return success(res, "账户正常", {
-          isFrozen: false,
-        });
-      }
-
-      // 构建冻结信息
-      const freezeInfo = {
-        isFrozen: 1,
-        frozenReason: currentUser.frozenReason || "违反社区规定",
-        frozenAt: currentUser.frozenAt,
-        username: currentUser.username,
-        frozenMessage:
-          currentUser.frozenMessage || "您的账户已被冻结，如有疑问请联系客服。",
-        unfreezeAt: currentUser.unfreezeAt,
-        freezeType: currentUser.freezeType,
-      };
-
-      // 如果是临时冻结，添加剩余时间信息
-      if (currentUser.freezeType === "temporary" && currentUser.unfreezeAt) {
-        const timeLeft = currentUser.unfreezeAt - now;
-        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hours = Math.floor(
-          (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-
-        freezeInfo.timeLeft = {
-          days,
-          hours,
-          totalMs: timeLeft,
-        };
-
-        if (days > 0) {
-          freezeInfo.timeLeftMessage = `剩余 ${days} 天 ${hours} 小时`;
-        } else if (hours > 0) {
-          freezeInfo.timeLeftMessage = `剩余 ${hours} 小时`;
-        } else {
-          freezeInfo.timeLeftMessage = `即将解冻`;
-        }
-      }
-
-      return success(res, "账户已被冻结", freezeInfo);
-    } else {
-      return success(res, "账户正常", {
-        isFrozen: false,
-      });
-    }
-  } catch (error) {
-    failure(res, error);
-  }
-});
-
 // 添加冻结用户的接口（管理员权限）
 router.post("/freeze", userAuth, adminAuth, async (req, res) => {
   try {
-    const { userId, reason, freezeType, durationDays } = req.body;
+    const { username, reason, freezeType, durationDays } = req.body;
 
-    if (!userId || !reason || !freezeType) {
+    if (!username || !reason || !freezeType) {
       return failure(
         res,
-        new BadRequestError("用户ID、冻结原因和冻结类型不能为空")
+        new BadRequestError("用户名、冻结原因和冻结类型不能为空")
       );
     }
 
@@ -591,7 +558,8 @@ router.post("/freeze", userAuth, adminAuth, async (req, res) => {
       );
     }
 
-    const user = await User.findByPk(userId);
+    // 通过用户名查找用户
+    const user = await User.findOne({ where: { username } });
     if (!user) {
       return failure(res, new NotFoundError("用户不存在"));
     }
@@ -671,6 +639,116 @@ router.post("/unfreeze", userAuth, adminAuth, async (req, res) => {
       userId: user.id,
       username: user.username,
       isFrozen: 0,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+// 获取冻结用户列表
+router.get("/freeze/list", userAuth, adminAuth, async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+    const limit = parseInt(pageSize);
+    const offset = (parseInt(page) - 1) * limit;
+    const { count, rows } = await User.findAndCountAll({
+      where: { isFrozen: 1 },
+      limit,
+      offset,
+    });
+    return success(res, "获取冻结用户列表成功", {
+      total: count,
+      page: parseInt(page), // 转换为数字
+      pageSize: parseInt(pageSize), // 转换为数字
+      users: rows,
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+router.get(
+  "/users/username/:username",
+  userAuth,
+  adminAuth,
+  async (req, res) => {
+    try {
+      const { username } = req.params;
+
+      // 添加参数验证
+      if (!username || username.trim().length === 0) {
+        return failure(res, "用户名不能为空", 400);
+      }
+
+      // 限制搜索长度，防止过长的搜索
+      if (username.length > 50) {
+        return failure(res, "搜索关键词过长", 400);
+      }
+
+      const users = await User.findAll({
+        where: {
+          username: {
+            [Op.like]: `%${username.trim()}%`,
+          },
+        },
+        // 添加分页和字段选择
+        attributes: [
+          "id",
+          "username",
+          "email",
+          "createdAt",
+          "isFrozen",
+          "area",
+
+          "birthday",
+          "clientFeatureCode",
+          "constellation",
+          "frozenReason",
+          "frozenAt",
+          "unfreezeAt",
+          "freezeType",
+          "frozenMessage",
+          "introduce",
+          "nickname",
+          "nicknameColor",
+          "phone",
+          "role",
+          "sex",
+          "theme",
+          "updatedAt",
+          "uuid",
+        ], // 返回更多用户信息字段
+        limit: 50, // 限制返回数量
+        order: [["username", "ASC"]], // 按用户名排序
+      });
+
+      return success(res, "搜索用户成功", {
+        users,
+        total: users.length,
+      });
+    } catch (error) {
+      console.error("搜索用户失败:", error);
+      failure(res, "搜索用户失败");
+    }
+  }
+);
+//   // 获取用户信息的方法
+router.get("/currentuser", userAuth, async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    success(res, "获取当前用户信息成功", user);
+  } catch (error) {
+    failure(res, error);
+  }
+});
+// 添加用户状态检查接口
+router.get("/status", userAuth, async (req, res) => {
+  try {
+    const user = await getCurrentUser(req);
+    success(res, "获取用户状态成功", {
+      isFrozen: user.isFrozen === 1,
+      frozenReason: user.frozenReason,
+      frozenAt: user.frozenAt,
+      unfreezeAt: user.unfreezeAt,
+      freezeType: user.freezeType,
     });
   } catch (error) {
     failure(res, error);
