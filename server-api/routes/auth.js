@@ -707,7 +707,6 @@ router.get(
           "createdAt",
           "isFrozen",
           "area",
-
           "birthday",
           "clientFeatureCode",
           "constellation",

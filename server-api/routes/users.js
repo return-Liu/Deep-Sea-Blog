@@ -52,12 +52,37 @@ router.put("/info", userAuth, async (req, res) => {
 // 注销账号
 router.delete("/delete", userAuth, async (req, res) => {
   const sequelize = require("../models").sequelize;
+  const { Op } = require("sequelize");
   const transaction = await sequelize.transaction();
 
   try {
     const user = await getCurrentUser(req);
 
-    // 1. 处理用户点赞过的留言
+    // 1. 检查账号状态
+    if (user.isFrozen) {
+      await transaction.rollback();
+      return failure(res, new Error("账号已被冻结，无法注销"));
+    }
+
+    // 2. 检查是否有未完成的订单或其他重要业务（根据实际业务需求添加）
+
+    // 3. 后端二次验证 - 检查请求中是否包含确认令牌
+    const { confirmToken } = req.body;
+    // 生成预期的确认令牌（基于用户ID和当前时间）
+    const expectedToken = `${user.id}_${Math.floor(Date.now() / 1000 / 60)}`; // 精确到分钟
+
+    // 验证确认令牌
+    if (!confirmToken || confirmToken !== expectedToken) {
+      await transaction.rollback();
+      return failure(res, new Error("注销确认令牌无效或已过期"));
+    }
+
+    // 4. 记录操作日志（模拟实现，实际应有专门的日志表）
+    console.log(
+      `用户 ${user.username} 请求注销账号，时间: ${new Date().toISOString()}`
+    );
+
+    // 5. 处理用户点赞过的留言
     const userLikedWalls = await LikesWall.findAll({
       where: { userId: user.id },
       include: [{ model: Wall }],
@@ -76,19 +101,19 @@ router.delete("/delete", userAuth, async (req, res) => {
       }
     }
 
-    // 2. 删除用户的点赞记录(留言)
+    // 6. 删除用户的点赞记录(留言)
     await LikesWall.destroy({
       where: { userId: user.id },
       transaction,
     });
 
-    // 2.1 删除用户的点赞记录(文章)
+    // 6.1 删除用户的点赞记录(文章)
     await Like.destroy({
       where: { userId: user.id },
       transaction,
     });
 
-    // 2.2 删除用户评论的点赞记录
+    // 6.2 删除用户评论的点赞记录
     const userComments = await Comment.findAll({
       where: { userId: user.id },
       transaction,
@@ -115,7 +140,7 @@ router.delete("/delete", userAuth, async (req, res) => {
       });
     }
 
-    // 3. 处理用户发布的文章
+    // 7. 处理用户发布的文章
     const userArticles = await Article.findAll({
       where: { userId: user.id },
       include: [{ model: Like }],
@@ -129,7 +154,7 @@ router.delete("/delete", userAuth, async (req, res) => {
       });
     }
 
-    // 3.1 处理用户相关的反馈和举报
+    // 7.1 处理用户相关的反馈和举报
     await Report.destroy({
       where: { userId: user.id },
       transaction,
@@ -146,7 +171,7 @@ router.delete("/delete", userAuth, async (req, res) => {
       transaction,
     });
 
-    // 4. 删除用户其他内容
+    // 8. 删除用户其他内容
     // 获取用户的所有文章、摄影和笔记，以便后续删除OSS上的图片
     const [userAllArticles, userAllPhotographies, userAllNotes] =
       await Promise.all([
@@ -180,6 +205,10 @@ router.delete("/delete", userAuth, async (req, res) => {
           await deleteFromOSS(article.image);
         } catch (error) {
           console.error(`删除文章图片失败: ${article.image}`, error);
+          // 记录删除失败的文件信息，便于后续处理
+          console.log(
+            `删除失败记录 - 文件: ${article.image}, 类型: article_image, 用户ID: ${user.id}, 错误: ${error.message}`
+          );
         }
       }
     }
@@ -191,6 +220,10 @@ router.delete("/delete", userAuth, async (req, res) => {
           await deleteFromOSS(photography.image);
         } catch (error) {
           console.error(`删除摄影图片失败: ${photography.image}`, error);
+          // 记录删除失败的文件信息，便于后续处理
+          console.log(
+            `删除失败记录 - 文件: ${photography.image}, 类型: photography_image, 用户ID: ${user.id}, 错误: ${error.message}`
+          );
         }
       }
     }
@@ -202,7 +235,24 @@ router.delete("/delete", userAuth, async (req, res) => {
           await deleteFromOSS(note.image);
         } catch (error) {
           console.error(`删除笔记图片失败: ${note.image}`, error);
+          // 记录删除失败的文件信息，便于后续处理
+          console.log(
+            `删除失败记录 - 文件: ${note.image}, 类型: note_image, 用户ID: ${user.id}, 错误: ${error.message}`
+          );
         }
+      }
+    }
+
+    // 删除用户个人头像（如果非默认头像）
+    if (user.avatar && !user.avatar.includes("defaultAvatar")) {
+      try {
+        await deleteFromOSS(user.avatar);
+      } catch (error) {
+        console.error(`删除用户头像失败: ${user.avatar}`, error);
+        // 记录删除失败的文件信息，便于后续处理
+        console.log(
+          `删除失败记录 - 文件: ${user.avatar}, 类型: user_avatar, 用户ID: ${user.id}, 错误: ${error.message}`
+        );
       }
     }
 
@@ -222,16 +272,25 @@ router.delete("/delete", userAuth, async (req, res) => {
       transaction,
     });
 
-    // 5. 最后删除用户账号
+    // 9. 最后删除用户账号
     await user.destroy({ transaction });
 
-    // 提交事务
+    // 10. 提交事务
     await transaction.commit();
+
+    // 11. 记录成功注销日志
+    console.log(
+      `用户 ${user.id} 成功注销账号，时间: ${new Date().toISOString()}`
+    );
 
     success(res, "注销账号成功");
   } catch (error) {
     // 回滚事务
     await transaction.rollback();
+    // 记录错误日志
+    console.error(
+      `用户注销账号失败，用户ID: ${req.userId}, 错误: ${error.message}`
+    );
     failure(res, error);
   }
 });
