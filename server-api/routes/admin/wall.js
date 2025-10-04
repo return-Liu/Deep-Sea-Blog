@@ -3,7 +3,6 @@ const router = express.Router();
 const { Wall, User, Report, LikesWall } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
-const { sendEmail } = require("../../utils/email");
 const { notifyWallOwner } = require("../../utils/email");
 const userAuth = require("../../middlewares/user-auth");
 // 查询留言墙列表
@@ -124,7 +123,14 @@ router.get("/report", userAuth, async (req, res) => {
     include: [
       {
         model: User,
-        attributes: ["id", "email", "username", "nickname", "avatar"],
+        attributes: [
+          "id",
+          "email",
+          "username",
+          "nickname",
+          "avatar",
+          "createdAt",
+        ],
       },
       {
         model: Wall,
@@ -180,10 +186,8 @@ router.get("/report", userAuth, async (req, res) => {
   }
 });
 // 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
-// 通知墙主删掉留言墙 主要采用QQ邮箱的发送方式
 router.post("/delete/:id", userAuth, async (req, res) => {
   const { id } = req.params;
-  const { email } = req.body; // 可选：用于验证或额外通知
   try {
     // 1. 查询留言墙信息
     const wall = await Wall.findOne({
@@ -220,54 +224,7 @@ router.post("/delete/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-// 查询举报留言墙详情
-router.get("/report/:id", userAuth, async (req, res) => {
-  const id = req.params.id;
-  try {
-    const report = await Report.findOne({
-      where: {
-        id,
-      },
-      include: [
-        {
-          model: User,
-          attributes: ["id", "email", "username", "nickname", "avatar"],
-        },
-        {
-          model: User,
-          attributes: [
-            "id",
-            "email",
-            "username",
-            "nickname",
-            "avatar",
-            "createdAt",
-          ],
-        },
-        {
-          model: Wall,
-          attributes: ["id", "name", "content", "category", "likesCount"],
-        },
-      ],
-    });
-    if (!report) {
-      failure(res, "举报留言墙不存在");
-    }
-    success(res, "查询举报留言墙详情成功", {
-      report: {
-        id: report.id,
-        userId: report.userId,
-        wallId: report.wallId,
-        user: report.User,
-        wall: report.Wall,
-        createdAt: report.createdAt,
-        updatedAt: report.updatedAt,
-      },
-    });
-  } catch (error) {
-    failure(res, error);
-  }
-});
+
 // 举报留言墙
 router.post("/report/:id", userAuth, async (req, res) => {
   const id = req.params.id;

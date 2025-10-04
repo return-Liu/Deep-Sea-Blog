@@ -2,6 +2,7 @@
   <div class="settings-page">
     <div class="settings-wrapper">
       <h1 class="page-title">
+        <!-- 动态值 根据导航来决定 标题 -->
         {{ t("settings.title." + activeTab) }}
       </h1>
       <div class="settings-layout">
@@ -327,6 +328,7 @@
               </div>
             </div>
           </div>
+          <!-- 切换账号 -->
           <div v-if="activeTab === 'toggleaccount'" class="toggle-account">
             <h2 class="toggle-account-title">
               {{ t("settings.toggleaccount.title") }}
@@ -349,9 +351,14 @@
                   >
                     <img
                       style="width: 50px; height: 50px; border-radius: 50%"
-                      v-if="account.avatar || defaultAvatar"
-                      v-lazy="account.avatar || defaultAvatar"
-                      class="account-avatar"
+                      v-if="
+                        account.avatar ||
+                        'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+                      "
+                      v-lazy="
+                        account.avatar ||
+                        'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+                      "
                     />
                     <div class="account-details">
                       <div
@@ -359,15 +366,6 @@
                         class="account-nickname"
                       >
                         {{ account.nickname }}
-                        <span
-                          v-if="userStore.user.id === Number(account.id)"
-                          class="current-badge"
-                          >(当前)</span
-                        >
-                        <!-- 冻结账号 -->
-                        <span v-if="account.isFrozen" class="frozen-badge"
-                          >(冻结)</span
-                        >
                       </div>
                       <div class="account-id">
                         账号ID: {{ account.username }}
@@ -408,201 +406,6 @@
       :user-id="userStore.user.id.toString()"
       @cropped="handleCropped"
     />
-    <!-- 自定义冻结弹窗 -->
-    <div
-      v-if="showFrozenDialogs"
-      class="frozen-dialog-overlay"
-      @click.self="closeFrozenDialog"
-    >
-      <div class="frozen-dialog">
-        <!-- 头部 -->
-        <div class="dialog-header">
-          <div class="header-icon">
-            <LockOutlined />
-          </div>
-          <h2 class="dialog-title">账户冻结提示</h2>
-          <CloseOutlined class="close-btn" @click="closeFrozenDialog" />
-        </div>
-
-        <!-- 主要内容 -->
-        <div class="dialog-content">
-          <!-- 状态标识 -->
-          <div class="status-banner">
-            <div class="status-icon">
-              <StopOutlined />
-            </div>
-            <div class="status-text">
-              <h3 class="status-title">账户已被冻结</h3>
-              <p class="status-subtitle">您的账户因违反平台规定已被限制使用</p>
-            </div>
-          </div>
-
-          <!-- 账户基本信息 -->
-          <div class="basic-info-section">
-            <div class="info-card">
-              <div class="info-item">
-                <span class="info-label">
-                  <UserOutlined />
-                  用户名
-                </span>
-                <div class="info-content">
-                  <span class="username">{{ currentFrozenData.username }}</span>
-                  <span class="freeze-time">{{
-                    formatTime(currentFrozenData.frozenAt)
-                  }}</span>
-                </div>
-              </div>
-              <div class="info-item">
-                <span class="info-label">
-                  <SafetyCertificateOutlined />
-                  冻结类型
-                </span>
-                <span
-                  class="freeze-type-badge"
-                  :class="currentFrozenData.freezeType"
-                >
-                  <span class="badge-icon">
-                    <MinusCircleOutlined
-                      v-if="currentFrozenData.freezeType === 'permanent'"
-                    />
-                    <ClockCircleOutlined v-else />
-                  </span>
-                  {{ getFreezeTypeText(currentFrozenData.freezeType) }}
-                </span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">
-                  <ExclamationCircleOutlined />
-                  冻结原因
-                </span>
-                <span class="freeze-reason">{{
-                  currentFrozenData.frozenReason
-                }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 冻结详情 -->
-          <div class="detail-section">
-            <div class="detail-card">
-              <div class="detail-header">
-                <FileTextOutlined />
-                <span class="detail-title">冻结说明</span>
-              </div>
-              <p class="detail-content">
-                {{ currentFrozenData.frozenMessage }}
-              </p>
-            </div>
-          </div>
-
-          <!-- 冻结状态信息 -->
-          <div class="freeze-status-section">
-            <!-- 临时冻结信息 -->
-            <div
-              v-if="
-                currentFrozenData.freezeType === 'temporary' &&
-                currentFrozenData.unfreezeAt
-              "
-              class="status-card temporary-card"
-            >
-              <div class="status-header">
-                <ClockCircleOutlined />
-                <span class="status-title">解冻时间</span>
-              </div>
-              <div class="status-content">
-                <p class="time-info">
-                  {{ formatTime(currentFrozenData.unfreezeAt) }}
-                </p>
-                <p class="countdown" v-if="countdownText">
-                  <FieldTimeOutlined />
-                  剩余时间：{{ countdownText }}
-                </p>
-              </div>
-            </div>
-
-            <!-- 临时冻结无时间 -->
-            <div
-              v-if="
-                currentFrozenData.freezeType === 'temporary' &&
-                !currentFrozenData.unfreezeAt
-              "
-              class="status-card temporary-notice"
-            >
-              <div class="status-header">
-                <HourglassOutlined />
-                <span class="status-title">临时冻结</span>
-              </div>
-              <p class="status-text">
-                此账户为临时冻结，具体解冻时间请等待管理员通知
-              </p>
-            </div>
-
-            <!-- 永久冻结信息 -->
-            <div
-              v-if="currentFrozenData.freezeType === 'permanent'"
-              class="status-card permanent-card"
-            >
-              <div class="status-header">
-                <MinusCircleOutlined />
-                <span class="status-title">永久冻结</span>
-              </div>
-              <p class="status-text">
-                此账户因严重违规已被永久限制使用，如需申诉请及时联系客服
-              </p>
-            </div>
-          </div>
-
-          <!-- 客服支持 -->
-          <div class="support-section">
-            <div class="support-card">
-              <div class="support-header">
-                <CustomerServiceOutlined />
-                <p class="support-title">
-                  客服支持
-                  <span class="beta-badge">测试阶段</span>
-                </p>
-              </div>
-              <p class="support-text">如需申诉或了解详情，请及时联系客服团队</p>
-            </div>
-            <!-- 系统将自动解除冻结 -->
-            <div
-              class="auto-unfreeze-note"
-              style="color: #ff0202; text-align: center; margin-top: 10px"
-              v-if="
-                currentFrozenData.freezeType === 'temporary' &&
-                currentFrozenData.unfreezeAt
-              "
-            >
-              <span class="note-text">
-                账户将在
-                {{ formatTime(currentFrozenData.unfreezeAt) }}自动解除冻结
-                <span class="note-text">(请勿刷新页面)</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <div class="dialog-actions">
-          <button class="btn primary-btn" @click="contactSupport">
-            <CustomerServiceOutlined />
-            联系客服
-          </button>
-          <button class="btn secondary-btn" @click="closeFrozenDialog">
-            <CloseOutlined />
-            关闭
-          </button>
-          <button
-            v-if="currentFrozenData.freezeType === 'temporary'"
-            class="btn refresh-btn"
-            @click="refreshCountdown"
-          >
-            <ReloadOutlined />
-            刷新状态
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -619,29 +422,13 @@ import {
   constellationes,
   areaes,
 } from "../../utils/setting";
-import {
-  LockOutlined,
-  CloseOutlined,
-  StopOutlined,
-  UserOutlined,
-  SafetyCertificateOutlined,
-  WarningOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  FileTextOutlined,
-  FieldTimeOutlined,
-  HourglassOutlined,
-  CustomerServiceOutlined,
-  ReloadOutlined,
-  MinusCircleOutlined,
-  InfoCircleOutlined,
-} from "@ant-design/icons-vue";
 import { useUserStore } from "../../store/userStore";
 import { useThemeStore } from "../../store/themeStore";
 import { apiUrl } from "../../config";
 import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
+import { useAvatarManager } from "../../utils/avatarManager";
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
   return locale.value;
@@ -672,40 +459,47 @@ const editImage = () => {
   if (!avatar.value) return;
   avatarCropper.value.openCropper(avatar.value);
 };
-//  增加默认头像判断函数
-const isDefaultAvatar = (filename: string) => {
-  return filename.includes("defaultAvatar");
+const avatarManager = useAvatarManager();
+
+// 定时刷新签名
+let refreshTimer: number | null = null;
+// 用于存储待保存的头像blob
+const pendingAvatarBlob = ref<Blob | null>(null);
+
+const setupAvatarRefresh = () => {
+  refreshTimer = avatarManager.setupAvatarRefresh(async () => {
+    await avatarManager.checkAndUpdateAvatarIfNeeded(
+      userStore.user.avatar || "",
+      avatarManager.refreshAvatarSignature
+    );
+  });
 };
-// 添加处理裁剪结果的方法
+onUnmounted(() => {
+  avatarManager.cleanupAvatarRefresh();
+  // 清理临时创建的URL
+  if (pendingAvatarBlob.value && avatar.value.startsWith("blob:")) {
+    URL.revokeObjectURL(avatar.value);
+  }
+});
+// 处理裁剪后的头像
 const handleCropped = async (blob: Blob) => {
   try {
-    // 在上传新头像之前，先删除旧头像
-    if (userStore.user.avatar && !isDefaultAvatar(userStore.user.avatar)) {
-      await deleteOldAvatar(true); // 传入true表示是重新上传
-    }
+    // 创建临时URL用于预览，不立即删除旧头像
+    const newAvatarUrl = URL.createObjectURL(blob);
+    avatar.value = newAvatarUrl;
 
-    const formData = new FormData();
-    formData.append("avatar", blob, "avatar.png");
-    formData.append("userId", userStore.user.id.toString());
+    // 保存blob用于后续保存操作
+    pendingAvatarBlob.value = blob;
 
-    const response = await axiosConfig.post(
-      `${apiUrl}/admin/uploadavatar/cropAvatar`,
-      formData
-    );
-
-    // 获取新头像的签名 URL
-    const newAvatarFilename = response.data.data.avatar;
-    avatar.value = `${apiUrl}/admin/uploadavatar/avatar/${newAvatarFilename}`;
-    userStore.user.avatar = avatar.value;
-    ElMessage.success(response.data.message);
+    ElMessage.success("头像裁剪完成，请点击保存以应用更改");
     getAllUsers();
     userStore.loadUser();
   } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "添加失败";
+    const errorMessage = error?.message || "头像处理失败";
     ElMessage.error(errorMessage);
   }
 };
+
 ///   添加图片上传功能
 const handleChange = (uploadFile: { raw: File }) => {
   const reader = new FileReader();
@@ -714,7 +508,6 @@ const handleChange = (uploadFile: { raw: File }) => {
   };
   reader.readAsDataURL(uploadFile.raw);
 };
-// 保留原有变量声明
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
 const sex = ref<string>("0");
@@ -736,132 +529,31 @@ const activeTab = ref<string>(
 );
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
-const showFrozenDialogs = ref(false);
-const currentFrozenData = ref<any>({});
-const countdownText = ref("");
-const countdownTimer = ref<number | null>(null);
-
-// 显示冻结账号弹窗
-const showFrozenDialog = (frozenData: any) => {
-  currentFrozenData.value = frozenData;
-  showFrozenDialogs.value = true;
-
-  // 如果是临时冻结且有解冻时间，启动倒计时
-  if (frozenData.freezeType === "temporary" && frozenData.unfreezeAt) {
-    startCountdown();
-  }
-};
-// 关闭冻结弹窗
-const closeFrozenDialog = () => {
-  showFrozenDialogs.value = false;
-  if (countdownTimer.value) {
-    clearInterval(countdownTimer.value);
-    countdownTimer.value = null;
-  }
-};
-
-// 格式化时间
-const formatTime = (timeString: string) => {
-  if (!timeString) return "";
-  const date = new Date(timeString);
-  return date.toLocaleString("zh-CN");
-};
-
-// 冻结类型文本映射（根据枚举类型修改）
-const getFreezeTypeText = (freezeType: string) => {
-  const types: Record<string, string> = {
-    temporary: "临时冻结",
-    permanent: "永久冻结",
-  };
-  return types[freezeType] || "未知类型";
-};
-
-// 启动倒计时
-const startCountdown = () => {
-  if (countdownTimer.value) {
-    clearInterval(countdownTimer.value);
-  }
-
-  updateCountdown(); // 立即执行一次
-
-  countdownTimer.value = window.setInterval(() => {
-    updateCountdown();
-  }, 1000);
-};
-// 更新倒计时
-const updateCountdown = () => {
-  if (
-    !currentFrozenData.value.unfreezeAt ||
-    currentFrozenData.value.freezeType !== "temporary"
-  ) {
-    countdownText.value = "";
-    return;
-  }
-
-  const now = new Date().getTime();
-  const unfreezeTime = new Date(currentFrozenData.value.unfreezeAt).getTime();
-  const diff = unfreezeTime - now;
-
-  if (diff <= 0) {
-    countdownText.value = "已解冻";
-    if (countdownTimer.value) {
-      clearInterval(countdownTimer.value);
-    }
-    // 可以添加自动关闭弹窗逻辑
-    setTimeout(() => {
-      closeFrozenDialog();
-      ElMessage.success("账户已解冻，请重新登录");
-    }, 2000);
-    return;
-  }
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-  countdownText.value = `${days}天 ${hours}小时 ${minutes}分钟 ${seconds}秒`;
-};
-
-// 刷新倒计时
-const refreshCountdown = () => {
-  if (currentFrozenData.value.freezeType === "temporary") {
-    updateCountdown();
-    ElMessage.info("状态已刷新");
-  }
-};
-
-// 联系客服
-const contactSupport = () => {
-  ElMessage.info("该功能处于测试阶段，请耐心等待");
+const addNewAccount = () => {
+  logout();
 };
 const switchAccount = async (id: string) => {
   try {
-    // 先在前端检查是否是当前账号 - 确保类型一致
-    if (userStore.user.id === Number(id)) {
-      ElMessage.info("你已经在该账号下登录啦~");
-      return;
-    }
-
     const response = await axiosConfig.post("/auth/switch-account", {
       userId: id,
     });
-
-    // 检查账号是否被冻结
-    if (response.data.data?.isFrozen) {
-      const frozenData = response.data.data;
-      showFrozenDialog(frozenData);
+    if (userStore.user.id === Number(id)) {
+      ElMessage.info(response.data.message);
       return;
     }
-
     const userData = response.data.data;
+    // 更新 token 和 uuid 到本地存储
     Cookies.set("ds-token", userData.token);
     ElMessage.success(response.data.message);
+    // 刷新用户信息，确保 UI 数据同步
     fetchUserInfo();
-    getAllUsers();
+    getAllUsers(); // 重新获取账号列表
     userStore.loadUser();
+
+    // 跳转到首页或其他页面
     router.push("/home");
   } catch (error: any) {
+    // 错误提示
     const errorMessage =
       error?.response?.data?.message ||
       error?.message ||
@@ -869,16 +561,6 @@ const switchAccount = async (id: string) => {
     ElMessage.error(errorMessage);
   }
 };
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  if (countdownTimer.value) {
-    clearInterval(countdownTimer.value);
-  }
-});
-const addNewAccount = () => {
-  logout();
-};
-
 const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
@@ -990,27 +672,45 @@ const handleSuccess = () => {
 // 更新信息
 const updateUserInfo = async () => {
   // 检查信息是否发生更改
-  if (
-    nickname.value === initialUserInfo.value.nickname &&
-    sex.value === initialUserInfo.value.sex &&
-    birthday.value === initialUserInfo.value.birthday &&
-    introduce.value === initialUserInfo.value.introduce &&
-    avatar.value === initialUserInfo.value.avatar &&
-    constellation.value === initialUserInfo.value.constellation &&
-    nicknameColor.value === initialUserInfo.value.nicknameColor &&
-    area.value === initialUserInfo.value.area &&
-    phone.value === initialUserInfo.value.phone
-  ) {
+  const hasChanges =
+    nickname.value !== initialUserInfo.value.nickname ||
+    sex.value !== initialUserInfo.value.sex ||
+    birthday.value !== initialUserInfo.value.birthday ||
+    introduce.value !== initialUserInfo.value.introduce ||
+    avatar.value !== initialUserInfo.value.avatar ||
+    constellation.value !== initialUserInfo.value.constellation ||
+    nicknameColor.value !== initialUserInfo.value.nicknameColor ||
+    area.value !== initialUserInfo.value.area ||
+    phone.value !== initialUserInfo.value.phone;
+
+  if (!hasChanges) {
     ElMessage.info("暂无数据修改");
     return;
   }
+
   try {
+    // 如果有待保存的头像，则上传新头像并删除旧头像
+    let avatarUrl = avatar.value;
+    if (pendingAvatarBlob.value) {
+      // 上传新头像
+      const newAvatarUrl = await avatarManager.updateAvatar(
+        pendingAvatarBlob.value
+      );
+      avatarUrl = newAvatarUrl;
+
+      // 清空待保存的头像
+      pendingAvatarBlob.value = null;
+
+      // 释放临时URL
+      URL.revokeObjectURL(avatar.value);
+    }
+
     const response = await axiosConfig.put("/users/info", {
       nickname: nickname.value,
       sex: parseInt(sex.value, 10),
       birthday: birthday.value,
       introduce: introduce.value,
-      avatar: avatar.value,
+      avatar: avatarUrl,
       constellation: constellation.value,
       nicknameColor: nicknameColor.value,
       area: area.value,
@@ -1058,8 +758,7 @@ const updateUserInfo = async () => {
     }
     ElMessage.error(errorMessage);
   }
-};
-// 注销账号
+}; // 注销账号
 const deleteAccount = async () => {
   try {
     await ElMessageBox.confirm("确定注销账号吗？", "账号注销确认", {
@@ -1121,9 +820,10 @@ const fetchLikedArticles = async () => {
 };
 const logout = () => {
   Cookies.remove("ds-token");
-  router.push("/login/index");
+  router.push({ name: "login/index" });
 };
 onMounted(() => {
+  setupAvatarRefresh();
   fetchUserInfo().then(() => {
     fetchLikedArticles();
     getAllUsers();
@@ -1140,31 +840,4 @@ onMounted(() => {
 
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
-//
-
-:deep(.el-input__wrapper) {
-  background: var(--bgColor1);
-}
-
-:deep(.el-input__wrapper) {
-  background: var(--bgColor1);
-}
-
-:deep(.el-select__wrapper) {
-  background: var(--bgColor1);
-}
-
-:deep(.el-table tr) {
-  background: var(--bgColor1);
-}
-
-:deep(.el-input.is-disabled .el-input__wrapper) {
-  background: var(--bgColor1);
-  color: var(--color-bg3);
-}
-
-:deep(.el-textarea__inner) {
-  background: var(--bgColor1);
-  color: var(--color-bg3);
-}
 </style>

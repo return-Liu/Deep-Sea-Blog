@@ -527,11 +527,17 @@
             <el-descriptions-item label="用户ID">{{
               currentReport?.user?.id
             }}</el-descriptions-item>
+            <el-descriptions-item label="用户名">{{
+              currentReport?.user?.username
+            }}</el-descriptions-item>
             <el-descriptions-item label="昵称">{{
               currentReport?.user?.nickname
             }}</el-descriptions-item>
             <el-descriptions-item label="邮箱">{{
               currentReport?.user?.email
+            }}</el-descriptions-item>
+            <el-descriptions-item label="注册时间">{{
+              formatTime(currentReport?.user?.createdAt)
             }}</el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
@@ -541,6 +547,7 @@
             <el-descriptions-item label="留言ID">{{
               currentReport?.wall?.id
             }}</el-descriptions-item>
+
             <el-descriptions-item label="内容">
               <div class="detail-content">
                 {{ currentReport?.wall?.content }}
@@ -557,11 +564,17 @@
             <el-descriptions-item label="用户ID">{{
               currentReport?.wall?.User?.id
             }}</el-descriptions-item>
+            <el-descriptions-item label="用户名">{{
+              currentReport?.wall?.User?.username
+            }}</el-descriptions-item>
             <el-descriptions-item label="昵称">{{
               currentReport?.wall?.User?.nickname
             }}</el-descriptions-item>
             <el-descriptions-item label="邮箱">{{
               currentReport?.wall?.User?.email
+            }}</el-descriptions-item>
+            <el-descriptions-item label="注册时间">{{
+              formatTime(currentReport?.wall?.User?.createdAt)
             }}</el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
@@ -656,19 +669,6 @@ const reportFilters = ref({
   keyword: "",
   status: "",
   dateRange: "",
-});
-
-// 添加分页状态
-const feedbackPagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0,
-});
-
-const reportPagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0,
 });
 
 // 添加详情对话框状态

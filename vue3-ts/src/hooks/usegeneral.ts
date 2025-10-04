@@ -36,6 +36,7 @@ export function useGeneral() {
           pageSize: reportPagination.value.pageSize,
         },
       });
+      console.log(response);
 
       const reportList = response.data.data.reports;
       const pagination = response.data.data.pagination;

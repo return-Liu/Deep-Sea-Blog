@@ -2,7 +2,11 @@ const express = require("express");
 const router = express.Router();
 const { User, Device } = require("../models");
 const { success, failure } = require("../utils/responses");
-const { createSixNum, verifyEmail } = require("../utils/email");
+const {
+  createSixNum,
+  verifyEmailForRegister,
+  verifyEmailForLogin,
+} = require("../utils/email"); // 修改这里
 const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
 const userAuth = require("../middlewares/user-auth");
@@ -16,7 +20,6 @@ const {
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { log } = require("console");
 // 生成设备唯一标识符
 function generateDeviceId(userId, userAgent) {
   const hash = crypto.createHash("md5");
@@ -293,32 +296,60 @@ router.post("/sign_in", async (req, res) => {
   }
 });
 
+// 邮箱验证码登录 - 发送验证码（带频率限制）
+router.post("/email/verify", async (req, res) => {
+  try {
+    const { email, clientFeatureCode } = req.body;
+
+    const key = `email:${email}`;
+    if (!canSendCode(key)) {
+      throw new BadRequestError("请求频繁，请稍后再试");
+    }
+
+    if (clientFeatureCode) {
+      const featureKey = `feature:${clientFeatureCode}`;
+      if (!canSendCode(featureKey)) {
+        throw new BadRequestError("请求频繁，请稍后再试");
+      }
+    }
+
+    // 查找用户
+    const user = await User.findOne({ where: { email } });
+    const code = createSixNum();
+
+    // 发送对应的邮件
+    if (!user) {
+      await verifyEmailForRegister(email, code);
+      // 创建临时用户记录
+      await User.create({
+        email,
+        code,
+        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
+      });
+    } else {
+      await verifyEmailForLogin(email, code);
+      await user.update({
+        code,
+        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
+      });
+    }
+
+    success(res, "验证码发送成功");
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
 // 邮箱验证码登录
 router.post("/email", async (req, res) => {
   try {
     const { email, code, clientFeatureCode } = req.body;
 
-    // 查找用户，如果不存在则创建
+    // 查找用户
     let user = await User.findOne({ where: { email } });
 
     if (!user) {
-      // 如果用户不存在，创建新用户
-      user = await User.create({
-        email,
-        password: generatePassword(),
-        nickname: generateNickname(),
-        sex: 0,
-        uuid: generateUUID(),
-        clientFeatureCode: clientFeatureCode || generateFeatureCode(),
-        username: `${generateUUID()}`,
-        avatar: null,
-        birthday: null,
-        introduce: "",
-        constellation: null,
-        area: null,
-        nicknameColor: "#000000",
-        phone: "",
-      });
+      throw new NotFoundError("用户不存在，请先注册");
     }
 
     // 检查用户是否被冻结
@@ -338,6 +369,25 @@ router.post("/email", async (req, res) => {
     if (user.code !== code) throw new BadRequestError("验证码错误");
     if (new Date() > user.codeExpire) throw new BadRequestError("验证码已过期");
 
+    // 如果用户没有设置完整信息（临时注册用户），完善用户信息
+    if (!user.password || !user.username) {
+      await user.update({
+        password: generatePassword(),
+        nickname: generateNickname(),
+        sex: 0,
+        uuid: generateUUID(),
+        clientFeatureCode: clientFeatureCode || generateFeatureCode(),
+        username: `${generateUUID()}`,
+        avatar: null,
+        birthday: null,
+        introduce: "",
+        constellation: null,
+        area: null,
+        nicknameColor: "#000000",
+        phone: "",
+      });
+    }
+
     // 登录成功
     await handlePostLogin(user, req, res, "邮箱登录");
   } catch (error) {
@@ -345,44 +395,6 @@ router.post("/email", async (req, res) => {
   }
 });
 
-// 邮箱验证码登录 - 发送验证码（带频率限制）
-router.post("/email/verify", async (req, res) => {
-  try {
-    const { email, clientFeatureCode } = req.body;
-
-    const key = `email:${email}`;
-    if (!canSendCode(key)) {
-      throw new BadRequestError("请求频繁，请明天再试");
-    }
-
-    if (clientFeatureCode) {
-      const featureKey = `feature:${clientFeatureCode}`;
-      if (!canSendCode(featureKey)) {
-        throw new BadRequestError("请求频繁，请明天再试");
-      }
-    }
-
-    // 只查找用户，不再创建用户
-    const user = await User.findOne({ where: { email } });
-
-    // 如果用户不存在，直接返回错误
-    if (!user) {
-      throw new NotFoundError("用户不存在，请先注册");
-    }
-
-    const code = createSixNum();
-    await user.update({
-      code,
-      codeExpire: new Date(Date.now() + 5 * 60 * 1000),
-    });
-
-    await verifyEmail(email, code);
-
-    success(res, "验证码已发送，请查收您的邮箱");
-  } catch (error) {
-    failure(res, error);
-  }
-});
 // 登录设备管理
 router.post("/login/device", userAuth, async (req, res) => {
   try {
@@ -445,7 +457,20 @@ router.get("/devices", userAuth, async (req, res) => {
       currentDeviceInfo.userAgent
     );
 
-    // 只查询状态为"已登录"的设备
+    // 先检查并更新过期设备状态
+    const now = new Date();
+    await Device.update(
+      { status: "未登录" },
+      {
+        where: {
+          userId: currentUser.id,
+          status: "已登录",
+          loginExpire: { [Op.lt]: now },
+        },
+      }
+    );
+
+    // 查询更新后的设备列表
     const devices = await Device.findAll({
       where: {
         userId: currentUser.id,
@@ -454,25 +479,8 @@ router.get("/devices", userAuth, async (req, res) => {
       order: [["lastLoginTime", "DESC"]],
     });
 
-    // 检查设备是否过期并更新状态
-    const now = new Date();
-    const updatedDevices = await Promise.all(
-      devices.map(async (device) => {
-        // 如果设备状态为已登录但已过期，则更新为未登录
-        if (
-          device.status === "已登录" &&
-          device.loginExpire &&
-          device.loginExpire < now
-        ) {
-          await device.update({ status: "未登录" });
-          device.status = "未登录"; // 更新内存中的状态
-        }
-        return device;
-      })
-    );
-
-    const formattedDevices = updatedDevices.map((device) => ({
-      id: device.deviceId,
+    const formattedDevices = devices.map((device) => ({
+      id: device.deviceId, // 保持一致，使用 deviceId
       deviceName: device.deviceName,
       deviceType: device.deviceType,
       os: device.os,
@@ -493,15 +501,17 @@ router.get("/devices", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-
 // 删除登录设备
-router.delete("/devices/:id", userAuth, async (req, res) => {
+router.delete("/devices/:deviceId", userAuth, async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
-    const { id } = req.params;
+    const { deviceId } = req.params;
 
     const device = await Device.findOne({
-      where: { id, userId: currentUser.id },
+      where: {
+        deviceId: deviceId,
+        userId: currentUser.id,
+      },
     });
     if (!device) {
       throw new NotFoundError("设备不存在");

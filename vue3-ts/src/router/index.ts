@@ -1,3 +1,4 @@
+// router/index.ts
 import {
   createRouter,
   createWebHashHistory,
@@ -17,7 +18,6 @@ const PUBLIC_PATHS = [
   "/resetpassword",
   "/userprotocol",
   "/privacy",
-  "/frozencontainer", // 添加冻结页面到公共路径
 ];
 
 // 管理员专用页面路径
@@ -55,22 +55,36 @@ const router = createRouter({
       name: "Privacy",
       component: () => import("../views/privacy/Privacy.vue"),
     },
-    {
-      path: "/frozencontainer",
-      name: "frozencontainer",
-      component: () => import("../views/frozencontainer/FrozenContainer.vue"),
-    },
   ],
 });
 
 let isDynamicRoutesAdded = false;
+
+// 验证token是否有效
+async function validateToken(token: string): Promise<boolean> {
+  try {
+    await axiosConfig.get("/auth/validate", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+// ... existing code ...
 router.beforeEach(async (to, from, next) => {
   NProgress.start();
 
   const token = Cookies.get("ds-token");
+  const isPublicPath = PUBLIC_PATHS.includes(to.path);
+  const isLoginPath = to.path === "/login/index";
+  const isFromResetPass = from.path === "/resetpassword";
 
-  // 只在用户登录后且动态路由未添加时添加动态路由
-  if (token && !isDynamicRoutesAdded && to.path !== "/login/index") {
+  // 1. 动态路由添加逻辑
+  if (token && !isDynamicRoutesAdded && !isLoginPath) {
     try {
       const isTokenValid = await validateToken(token);
       if (isTokenValid) {
@@ -88,22 +102,17 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 原有的路由守卫逻辑
-  const isPublicPath = PUBLIC_PATHS.includes(to.path);
-  const isLoginPath = to.path === "/login/index";
-  const isFromResetPass = from.path === "/resetpassword";
-  const isFrozenPath = to.path === "/frozencontainer";
-
-  // 公共路径处理
+  // 2. 公共路径处理
   if (isPublicPath) {
     if (isFromResetPass && isLoginPath) {
       Cookies.remove("ds-token");
-      isDynamicRoutesAdded = false; // 重置标志
+      isDynamicRoutesAdded = false;
       next();
       return;
     }
 
     if (token && isLoginPath) {
+      // 已登录用户访问登录页，跳转到首页
       next({ path: "/layout", replace: true });
       return;
     }
@@ -112,53 +121,23 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  // 非公共路径必须登录
+  // 3. 非公共路径必须登录
   if (!token) {
-    isDynamicRoutesAdded = false; // 重置标志
+    isDynamicRoutesAdded = false;
     next("/login/index");
     return;
   }
 
-  // 验证 token 是否有效
+  // 4. 验证token是否有效
   const isTokenValid = await validateToken(token);
   if (!isTokenValid) {
     Cookies.remove("ds-token");
-    isDynamicRoutesAdded = false; // 重置标志
+    isDynamicRoutesAdded = false;
     next("/login/index");
     return;
   }
 
-  // 检查是否为冻结页面
-  if (isFrozenPath) {
-    try {
-      // 检查用户是否真的被冻结
-      const response = await axiosConfig.get("/auth/status");
-
-      if (response.data.data && response.data.data.isFrozen) {
-        // 用户确实被冻结，允许访问冻结页面
-        next();
-        return;
-      } else {
-        // 用户未被冻结，重定向到主页
-        next({ path: "/login/index", replace: true });
-        return;
-      }
-    } catch (error: AxiosError | any) {
-      console.error("检查用户冻结状态失败:", error);
-
-      // 根据错误类型处理
-      if (error?.response?.status === 401) {
-        // 未授权，跳转到登录页
-        next("/login/index");
-      } else {
-        // 其他错误，重定向到主页
-        next({ path: "/layout", replace: true });
-      }
-      return;
-    }
-  }
-
-  // 如果是管理员路径，检查用户是否为管理员
+  // 6. 如果是管理员路径，检查用户是否为管理员
   if (ADMIN_PATHS.includes(to.path)) {
     try {
       // 获取用户信息以检查角色
@@ -170,7 +149,7 @@ router.beforeEach(async (to, from, next) => {
 
       // 检查用户角色
       if (userStore.user.role !== "admin") {
-        // 如果不是管理员，重定向到首页或显示无权限页面
+        // 如果不是管理员，重定向到首页
         next({ path: "/home" });
         return;
       }
@@ -181,22 +160,25 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // 7. 确保动态路由已添加
+  if (!isDynamicRoutesAdded) {
+    try {
+      routerConfig.forEach((route) => {
+        router.addRoute("layout", route);
+      });
+      isDynamicRoutesAdded = true;
+
+      // 重新导航以确保路由生效
+      next({ ...to, replace: true });
+      return;
+    } catch (error) {
+      console.error("添加动态路由失败:", error);
+    }
+  }
+
+  // 所有检查通过，允许导航
   next();
 });
-
-// 验证 token 是否有效
-async function validateToken(token: string): Promise<boolean> {
-  try {
-    await axiosConfig.get("/auth/validate", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
 
 // 后置钩子：结束进度条
 router.afterEach(() => {
