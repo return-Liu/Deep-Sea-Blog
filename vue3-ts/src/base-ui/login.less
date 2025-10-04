@@ -1,10 +1,16 @@
-.login-container {
+.login-wrapper {
   width: 100%;
   min-height: 100vh;
+  background: #fff;
+}
+
+/* 登录页面 - 水平居中 */
+.login-center-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  min-height: 100vh;
+  width: 100%;
 }
 
 .login-modal {
@@ -13,9 +19,7 @@
   width: 800px;
   height: 400px;
   padding: 0 0 24px 0;
-  // 3D效果阴影
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.12),
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12),
     0 1.5px 4px rgba(64, 158, 255, 0.08),
     0 0.5px 0.5px rgba(64, 158, 255, 0.08) inset;
   background-position: 0 100%, 100% 100%;
@@ -62,16 +66,13 @@
 .login-footer {
   display: flex;
   justify-content: space-between;
-  /* 调整为左右对齐 */
   align-items: center;
   margin: 35px 40px 0 40px;
 
   .register-btn,
   .login-button {
     flex: 1;
-    /* 使两个按钮宽度相等 */
     margin: 0 8px;
-    /* 添加一些间距 */
   }
 
   .register-btn {

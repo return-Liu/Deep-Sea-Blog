@@ -86,6 +86,110 @@
         border: 1px solid var(--border);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
+
+      .deep-container {
+        width: 100px;
+        height: 35px;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 50px;
+        display: flex;
+        margin: 10px 0;
+
+        .deep-container,
+        .selected {
+          background-color: #2196f3;
+          /* 选中时的背景颜色 */
+          color: var(--color-bg8);
+          border-radius: 5px;
+        }
+
+        .deep-img {
+          width: 16px;
+
+          img {
+            width: 16px;
+            background: #ffff;
+            border-radius: 10px;
+          }
+        }
+
+        .deep-think-toggle {
+          display: flex;
+          align-items: center;
+          font-size: 10px;
+          margin-left: 2px;
+          color: var(--color-bg8);
+
+          label {
+            margin-right: 10px;
+            font-weight: bold;
+          }
+
+          .toggle-slider {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            background: var(--bg3);
+            border-radius: 34px;
+
+            &:before {
+              position: absolute;
+              content: "";
+              height: 26px;
+              width: 26px;
+              left: 4px;
+              bottom: 4px;
+              background: var(--bg3);
+              border-radius: 50%;
+              transition: 0.4s;
+            }
+
+            input:checked+.toggle-slider {
+              background-color: #2196f3;
+            }
+
+            input:checked+.toggle-slider:before {
+              transform: translateX(26px);
+            }
+
+            input {
+              opacity: 0;
+              width: 0;
+              height: 0;
+            }
+          }
+        }
+
+        p {
+          margin-top: 10px;
+          font-size: 14px;
+          color: var(--color-bg8);
+        }
+      }
+
+      .thinking-indicator {
+        font-size: 14px;
+        color: var(--color-bg8);
+        margin: 10px 0;
+        text-align: center;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+
+        50% {
+          opacity: 0.3;
+        }
+
+        100% {
+          opacity: 1;
+        }
+      }
     }
   }
 

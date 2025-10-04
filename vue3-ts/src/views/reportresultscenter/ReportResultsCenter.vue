@@ -315,8 +315,8 @@
                   align="center"
                 />
                 <el-table-column
-                  prop="userId"
-                  label="举报人ID"
+                  prop="user.username"
+                  label="举报人账号"
                   width="100"
                   align="center"
                 />
@@ -527,16 +527,16 @@
             <el-descriptions-item label="用户ID">{{
               currentReport?.user?.id
             }}</el-descriptions-item>
-            <el-descriptions-item label="用户名">{{
+            <el-descriptions-item label="用户账号">{{
               currentReport?.user?.username
             }}</el-descriptions-item>
-            <el-descriptions-item label="昵称">{{
+            <el-descriptions-item label="用户昵称">{{
               currentReport?.user?.nickname
             }}</el-descriptions-item>
-            <el-descriptions-item label="邮箱">{{
+            <el-descriptions-item label="用户邮箱">{{
               currentReport?.user?.email
             }}</el-descriptions-item>
-            <el-descriptions-item label="注册时间">{{
+            <el-descriptions-item label="用户注册时间">{{
               formatTime(currentReport?.user?.createdAt)
             }}</el-descriptions-item>
           </el-descriptions>
@@ -564,16 +564,16 @@
             <el-descriptions-item label="用户ID">{{
               currentReport?.wall?.User?.id
             }}</el-descriptions-item>
-            <el-descriptions-item label="用户名">{{
+            <el-descriptions-item label="用户账号">{{
               currentReport?.wall?.User?.username
             }}</el-descriptions-item>
-            <el-descriptions-item label="昵称">{{
+            <el-descriptions-item label="用户昵称">{{
               currentReport?.wall?.User?.nickname
             }}</el-descriptions-item>
-            <el-descriptions-item label="邮箱">{{
+            <el-descriptions-item label="用户邮箱">{{
               currentReport?.wall?.User?.email
             }}</el-descriptions-item>
-            <el-descriptions-item label="注册时间">{{
+            <el-descriptions-item label="用户注册时间">{{
               formatTime(currentReport?.wall?.User?.createdAt)
             }}</el-descriptions-item>
           </el-descriptions>
@@ -1006,336 +1006,6 @@ onMounted(() => {
   getReportList();
 });
 </script>
-
-<style scoped lang="scss">
-.admin-report-center-container {
-  :deep(.el-card__body) {
-    background: var(--bgColor1);
-  }
-  :deep(.el-input__wrapper) {
-    background: var(--bgColor1);
-  }
-  :deep(.el-select__wrapper) {
-    background: var(--bgColor1);
-  }
-  :deep(.el-range-separator) {
-    color: var(--color-bg3);
-  }
-  :deep(.el-table tr) {
-    background: var(--bgColor1);
-  }
-  padding: 24px;
-  min-height: calc(100vh - 80px);
-  .header-section {
-    margin-bottom: 24px;
-
-    .header-main {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-
-      .page-title {
-        display: flex;
-        align-items: center;
-        font-size: 24px;
-        font-weight: 600;
-        color: var(--color-bg3);
-        margin: 0;
-
-        .title-icon {
-          margin-right: 10px;
-          color: #409eff;
-        }
-      }
-
-      .header-actions {
-        .refresh-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-      }
-    }
-
-    .header-subtitle {
-      font-size: 14px;
-      color: var(--color-bg3);
-    }
-  }
-
-  .stats-card {
-    margin-bottom: 24px;
-    border-radius: 8px;
-    border: none;
-    background: var(--bgColor1);
-    .stat-item {
-      display: flex;
-      align-items: center;
-      padding: 16px 0;
-
-      .stat-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        margin-right: 12px;
-        font-size: 20px;
-
-        &.total {
-          background-color: #ecf5ff;
-          color: #409eff;
-        }
-
-        &.pending {
-          background-color: #fdf6ec;
-          color: #e6a23c;
-        }
-
-        &.processed {
-          background-color: #f0f9eb;
-          color: #67c23a;
-        }
-      }
-
-      .stat-content {
-        .stat-value {
-          font-size: 24px;
-          font-weight: 700;
-          line-height: 1.2;
-          margin-bottom: 4px;
-          color: var(--color-bg4);
-          margin-left: 20px;
-        }
-
-        .stat-label {
-          font-size: 14px;
-          color: #909399;
-        }
-      }
-    }
-  }
-
-  .tabs-card {
-    border-radius: 8px;
-    border: none;
-
-    :deep(.el-tabs__header) {
-      margin-bottom: 0;
-
-      .el-tabs__nav-wrap {
-        padding: 0 24px;
-
-        &::after {
-          height: 1px;
-        }
-      }
-
-      .el-tabs__item {
-        font-weight: 500;
-        padding: 0 20px;
-        height: 50px;
-        line-height: 50px;
-      }
-    }
-
-    :deep(.el-tabs__content) {
-      padding: 24px;
-    }
-
-    .tab-content {
-      .filter-section {
-        margin-bottom: 20px;
-
-        .filter-input,
-        .filter-select,
-        .filter-date,
-        .filter-reset {
-          width: 100%;
-        }
-      }
-
-      .table-container {
-        .data-table {
-          border-radius: 8px;
-          overflow: hidden;
-
-          :deep(.el-table__header) {
-            th {
-              background: var(--bgColor1);
-              color: #606266;
-              font-weight: 600;
-            }
-          }
-
-          .content-cell {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-
-          .status-tag {
-            border: none;
-            font-weight: 500;
-          }
-
-          .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-
-            .action-btn {
-              border-radius: 4px;
-              font-weight: 500;
-
-              &.process-btn {
-                background-color: #67c23a;
-                border-color: #67c23a;
-              }
-
-              &.detail-btn {
-                background-color: #409eff;
-                border-color: #409eff;
-              }
-
-              &.delete-btn {
-                background-color: #f56c6c;
-                border-color: #f56c6c;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .process-dialog,
-  .el-dialog {
-    border-radius: 12px;
-
-    :deep(.el-dialog__header) {
-      padding: 20px 20px 10px;
-      border-bottom: 1px var(--border);
-      margin-right: 0;
-
-      .el-dialog__title {
-        font-weight: 600;
-        color: #303133;
-      }
-    }
-
-    :deep(.el-dialog__body) {
-      padding: 20px;
-    }
-
-    :deep(.el-dialog__footer) {
-      padding: 10px 20px 20px;
-      border-top: 1px solid #e4e7ed;
-    }
-  }
-
-  .detail-content {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    padding: 8px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-  }
-
-  .process-result-detail {
-    div {
-      margin-bottom: 8px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  .detail-tabs {
-    :deep(.el-tabs__header) {
-      margin-bottom: 20px;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-report-center-container {
-    padding: 16px;
-
-    .header-section {
-      .header-main {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-
-        .header-actions {
-          width: 100%;
-
-          .refresh-btn {
-            width: 100%;
-          }
-        }
-      }
-    }
-
-    .stats-card {
-      .el-row {
-        .el-col {
-          flex: 0 0 50%;
-          max-width: 50%;
-          margin-bottom: 10px;
-        }
-      }
-    }
-
-    .tabs-card {
-      :deep(.el-tabs__content) {
-        padding: 16px;
-      }
-
-      .tab-content {
-        .filter-section {
-          .el-row {
-            .el-col {
-              margin-bottom: 12px;
-            }
-          }
-        }
-
-        .table-container {
-          overflow-x: auto;
-
-          .data-table {
-            min-width: 800px;
-
-            .action-buttons {
-              flex-direction: column;
-              gap: 4px;
-
-              .action-btn {
-                width: 100%;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-report-center-container {
-    .stats-card {
-      .el-row {
-        .el-col {
-          flex: 0 0 100%;
-          max-width: 100%;
-        }
-      }
-    }
-  }
-}
+<style scoped lang="less">
+@import "../../base-ui/reportresultscenter.less";
 </style>

@@ -1,7 +1,8 @@
 <template>
-  <el-empty :description="notfound" />
+  <YkEmpty :description="notfound" />
 </template>
 <script setup lang="ts" name="NotFound">
+import { YkEmpty } from "@yike-design/ui";
 import { ref } from "vue";
 const notfound = ref("404 页面走丢了 😢");
 </script>

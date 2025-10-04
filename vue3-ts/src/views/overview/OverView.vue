@@ -232,7 +232,6 @@
                       content.likesCount || 0
                     }})
                   </el-button>
-         
                 </div>
               </div>
             </div>
@@ -1379,61 +1378,4 @@ onMounted(async () => {
 
 <style scoped lang="less">
 @import "../../base-ui/overview.less";
-/* 编辑模式样式 */
-.edit-mode {
-  padding: 24px;
-
-  .edit-field {
-    margin-bottom: 24px;
-
-    .edit-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #1e293b;
-      font-size: 14px;
-    }
-  }
-
-  .edit-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
-
-    .el-button {
-      min-width: 100px;
-    }
-  }
-}
-
-/* 编辑按钮样式 */
-.edit-btn {
-  margin-right: 8px;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .edit-mode {
-    padding: 16px;
-
-    .edit-actions {
-      flex-direction: column;
-
-      .el-button {
-        width: 100%;
-      }
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 8px;
-
-    .el-button {
-      flex: 1;
-    }
-  }
-}
 </style>
