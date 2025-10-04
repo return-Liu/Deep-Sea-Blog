@@ -78,23 +78,6 @@ router.delete("/delete", userAuth, async (req, res) => {
       return failure(res, new Error("注销确认令牌无效或已过期"));
     }
 
-    // 4. 记录操作日志到数据库
-    await OperationLog.create(
-      {
-        userId: user.id,
-        action: "account_deletion_request",
-        description: `用户 ${user.username} 请求注销账号`,
-        ipAddress: req.ip || req.connection.remoteAddress,
-        userAgent: req.get("User-Agent"),
-        details: {
-          userId: user.id,
-          username: user.username,
-          timestamp: new Date().toISOString(),
-        },
-      },
-      { transaction }
-    );
-
     // 5. 处理用户点赞过的留言
     const userLikedWalls = await LikesWall.findAll({
       where: { userId: user.id },
