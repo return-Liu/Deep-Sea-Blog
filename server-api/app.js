@@ -7,6 +7,8 @@ const userAuth = require("./middlewares/user-auth");
 const AutoUnfreezeService = require("./utils/autoUnfreeze");
 const deviceTrackerMiddleware = require("./middlewares/deviceTrackerMiddleware");
 const DeviceCleanupScheduler = require("./utils/deviceCleanupScheduler");
+const { createServer } = require("http");
+const WebSocket = require("ws");
 
 // 启动定时任务
 DeviceCleanupScheduler.start(); // 清理未登录设备
@@ -21,6 +23,7 @@ const authRouter = require("./routes/auth");
 const emailRouter = require("./routes/email");
 const themeRouter = require("./routes/theme");
 const locationRouter = require("./routes/location");
+const deviceRouter = require("./routes/device");
 // 后台路由
 // const adminAuthRouter = require("./routes/admin/auth");
 const adminArticleRouter = require("./routes/admin/article");
@@ -35,6 +38,7 @@ const adminWallRouter = require("./routes/admin/wall");
 const adminLikesWallRouter = require("./routes/admin/likeswall");
 const adminCommentRouter = require("./routes/admin/comment");
 const adminLikesCommentRouter = require("./routes/admin/likescomment");
+const adminAuthRouter = require("./routes/admin/auth");
 const app = express();
 // 配置静态文件服务
 app.use(express.static(path.join(__dirname, "public")));
@@ -45,6 +49,40 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(autoUnfreezeMiddleware);
 app.use(deviceTrackerMiddleware);
+const server = createServer(app);
+
+const wss = new WebSocket.Server({ server });
+
+wss.on("connection", (ws) => {
+  console.log("用户已连接");
+
+  // 处理消息
+  ws.on("message", (message) => {
+    console.log("接收到原始消息:", message);
+
+    try {
+      const data = JSON.parse(message);
+      console.log("解析后的消息:", data);
+
+      // 广播给除发送者外的所有客户端
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      });
+    } catch (err) {
+      console.error("解析消息错误:", err);
+    }
+  });
+
+  // 处理断开连接
+  ws.on("close", () => {
+    console.log("用户已断开连接");
+  });
+});
+server.listen(3001, () => {
+  console.log("WebSocket 服务已启动");
+});
 // 全局配置 CORS
 app.use(
   cors({
@@ -65,19 +103,21 @@ app.use("/search", searchRouter);
 app.use("/auth", authRouter);
 app.use("/email", emailRouter);
 app.use("/theme", themeRouter);
-app.use("/location", locationRouter);
+app.use("/location", userAuth, locationRouter);
+app.use("/device", userAuth, deviceRouter);
+
 // 后台路由配置
-// app.use("/admin/auth", adminAuthRouter);
-app.use("/admin/article", adminArticleRouter);
-app.use("/admin/photography", adminPhotographyRouter);
-app.use("/admin/note", adminNoteRouter);
-app.use("/admin/likes", adminLikesRouter);
-app.use("/admin/uploadavatar", adminUploadAvatarRouter);
-app.use("/admin/upload", adminUploadRouter);
-app.use("/admin/feedback", adminFeedbackRouter);
+app.use("/admin/article", userAuth, adminArticleRouter);
+app.use("/admin/photography", userAuth, adminPhotographyRouter);
+app.use("/admin/note", userAuth, adminNoteRouter);
+app.use("/admin/likes", userAuth, adminLikesRouter);
+app.use("/admin/uploadavatar", userAuth, adminUploadAvatarRouter);
+app.use("/admin/upload", userAuth, adminUploadRouter);
+app.use("/admin/feedback", userAuth, adminFeedbackRouter);
 app.use("/admin/update", adminUpdateRouter);
-app.use("/admin/wall", adminWallRouter);
-app.use("/admin/likeswall", adminLikesWallRouter);
-app.use("/admin/comment", adminCommentRouter);
-app.use("/admin/likescomment", adminLikesCommentRouter);
+app.use("/admin/wall", userAuth, adminWallRouter);
+app.use("/admin/likeswall", userAuth, adminLikesWallRouter);
+app.use("/admin/comment", userAuth, adminCommentRouter);
+app.use("/admin/likescomment", userAuth, adminLikesCommentRouter);
+app.use("/admin/auth", userAuth, adminAuthRouter);
 module.exports = app;
