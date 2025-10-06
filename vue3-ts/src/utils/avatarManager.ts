@@ -149,8 +149,8 @@ export const useAvatarManager = () => {
         userStore.user.avatar = signedUrl;
         getAllUsers();
         userStore.loadUser();
+        ElMessage.success("头像更新成功");
 
-        ElMessage.success("重新上传头像成功");
         return signedUrl;
       } else {
         throw new Error("获取签名URL失败");

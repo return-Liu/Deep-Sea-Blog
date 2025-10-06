@@ -101,10 +101,7 @@
         class="ai-search mini-entrance tw-cursor-pointer"
         @click="handleAiSearchClick"
       >
-        <img
-          src="https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-8.png"
-          class="icon"
-        />
+        <img :src="botAvatar" class="icon" />
         <div class="tooltip">
           智能体深度推理模型X1已上线，当前接入<strong>科大讯飞星火深度推理模型X1大模型</strong>。
           <br />
@@ -125,9 +122,9 @@
           <div class="header">
             <h3 style="margin-top: -15px">
               智能体深度推理模型X1 内测版
-              <span style="font-size: 14px; color: #e67e22; margin-left: 10px"
-                >嘿～我正在学习中，有问题尽管问！</span
-              >
+              <span style="font-size: 14px; color: #e67e22; margin-left: 10px">
+                基于大语言模型的智能助手，欢迎体验！
+              </span>
             </h3>
             <!-- 全屏 -->
             <el-tooltip
@@ -292,7 +289,8 @@ import { Right, Back } from "@element-plus/icons-vue";
 import ChatWindow from "../chatwindow/ChatWindow.vue";
 const aiDialogVisible = ref(false);
 const isFullscreen = ref(false);
-const deepSeekEnabled = ref(false);
+const botAvatar =
+  "https://tse2-mm.cn.bing.net/th/id/OIP-C.c6XX36qUmH-ucd5vMsLqjQHaHa?w=143&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3";
 const dialogWidth = ref("400px"); // 默认宽度
 const handleAiSearchClick = () => {
   aiDialogVisible.value = true;

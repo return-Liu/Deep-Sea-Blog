@@ -10,8 +10,6 @@ const {
 const { canSendCode } = require("../utils/rateLimiter");
 const { extractDeviceInfo } = require("../utils/deviceInfo");
 const userAuth = require("../middlewares/user-auth");
-const adminAuth = require("../middlewares/admin-auth");
-const { Op } = require("sequelize");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -325,6 +323,60 @@ router.post("/email/verify", async (req, res) => {
         email,
         code,
         codeExpire: new Date(Date.now() + 5 * 60 * 1000),
+        uuid: require("crypto").randomUUID(), // 生成随机UUID
+        password: Math.random().toString(36).slice(-8), // 生成临时密码
+        sex: 0, // 设置默认性别
+        clientFeatureCode: clientFeatureCode || "unknown", // 使用传入的特征码或默认值
+        theme: "light", // 添加必需的主题字段
+        role: "user", // 添加必需的角色字段
+      });
+    } else {
+      await verifyEmailForLogin(email, code);
+      await user.update({
+        code,
+        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
+      });
+    }
+
+    success(res, "验证码发送成功");
+  } catch (error) {
+    failure(res, error);
+  }
+}); // 邮箱验证码登录 - 发送验证码（带频率限制）
+router.post("/email/verify", async (req, res) => {
+  try {
+    const { email, clientFeatureCode } = req.body;
+
+    const key = `email:${email}`;
+    if (!canSendCode(key)) {
+      throw new BadRequestError("请求频繁，请稍后再试");
+    }
+
+    if (clientFeatureCode) {
+      const featureKey = `feature:${clientFeatureCode}`;
+      if (!canSendCode(featureKey)) {
+        throw new BadRequestError("请求频繁，请稍后再试");
+      }
+    }
+
+    // 查找用户
+    const user = await User.findOne({ where: { email } });
+    const code = createSixNum();
+
+    // 发送对应的邮件
+    if (!user) {
+      await verifyEmailForRegister(email, code);
+      // 创建临时用户记录
+      await User.create({
+        email,
+        code,
+        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
+        uuid: require("crypto").randomUUID(), // 生成随机UUID
+        password: Math.random().toString(36).slice(-8), // 生成临时密码
+        sex: 0, // 设置默认性别
+        clientFeatureCode: clientFeatureCode || "unknown", // 使用传入的特征码或默认值
+        theme: "light", // 添加必需的主题字段
+        role: "user", // 添加必需的角色字段
       });
     } else {
       await verifyEmailForLogin(email, code);
@@ -395,133 +447,6 @@ router.post("/email", async (req, res) => {
   }
 });
 
-// 登录设备管理
-router.post("/login/device", userAuth, async (req, res) => {
-  try {
-    // 获取当前用户
-    const currentUser = await getCurrentUser(req);
-
-    // 提取设备信息
-    const deviceInfo = await extractDeviceInfo(req);
-    const deviceId = generateDeviceId(currentUser.id, deviceInfo.userAgent);
-
-    // 查找或创建设备记录
-    let device = await Device.findOne({
-      where: {
-        deviceId: deviceId,
-      },
-    });
-
-    // 确保所有必需字段都有默认值
-    const deviceData = {
-      userId: currentUser.id,
-      deviceId: deviceId,
-      deviceName: deviceInfo.deviceName || deviceInfo.deviceType || "未知设备",
-      deviceType: deviceInfo.deviceType || "unknown",
-      os: deviceInfo.os || "unknown",
-      browser: deviceInfo.browser || "unknown",
-      lastLoginTime: new Date(),
-      userAgent: deviceInfo.userAgent,
-      location: deviceInfo.location || "未知位置",
-      province: deviceInfo.province || "未知省",
-      loginExpire: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), //7天后过期
-      lastActiveAt: new Date(),
-    };
-
-    if (!device) {
-      // 创建设备记录前确保所有必需字段都已设置
-      device = await Device.create(deviceData);
-    } else {
-      // 更新最后登录时间
-      await device.update({
-        lastLoginTime: new Date(),
-      });
-    }
-
-    success(res, "设备信息记录成功", {
-      deviceId: device.deviceId,
-      isTrusted: device.isTrusted,
-    });
-  } catch (error) {
-    console.error("设备记录失败:", error);
-    failure(res, error);
-  }
-});
-// 获取用户所有登录设备
-router.get("/devices", userAuth, async (req, res) => {
-  try {
-    const currentUser = await getCurrentUser(req);
-    const currentDeviceInfo = await extractDeviceInfo(req);
-    const currentDeviceId = generateDeviceId(
-      currentUser.id,
-      currentDeviceInfo.userAgent
-    );
-
-    // 先检查并更新过期设备状态
-    const now = new Date();
-    await Device.update(
-      { status: "未登录" },
-      {
-        where: {
-          userId: currentUser.id,
-          status: "已登录",
-          loginExpire: { [Op.lt]: now },
-        },
-      }
-    );
-
-    // 查询更新后的设备列表
-    const devices = await Device.findAll({
-      where: {
-        userId: currentUser.id,
-        status: "已登录",
-      },
-      order: [["lastLoginTime", "DESC"]],
-    });
-
-    const formattedDevices = devices.map((device) => ({
-      id: device.deviceId, // 保持一致，使用 deviceId
-      deviceName: device.deviceName,
-      deviceType: device.deviceType,
-      os: device.os,
-      browser: device.browser,
-      lastLoginTime: device.lastLoginTime,
-      location: device.location,
-      city: device.city,
-      province: device.province,
-      isCurrentDevice: device.deviceId === currentDeviceId,
-      loginMethod: device.loginMethod || "未知登录方式",
-      status: device.status,
-      lastActiveAt: device.lastActiveAt,
-      loginExpire: device.loginExpire,
-    }));
-
-    success(res, "获取设备列表成功", formattedDevices);
-  } catch (error) {
-    failure(res, error);
-  }
-});
-// 删除登录设备
-router.delete("/devices/:deviceId", userAuth, async (req, res) => {
-  try {
-    const currentUser = await getCurrentUser(req);
-    const { deviceId } = req.params;
-
-    const device = await Device.findOne({
-      where: {
-        deviceId: deviceId,
-        userId: currentUser.id,
-      },
-    });
-    if (!device) {
-      throw new NotFoundError("设备不存在");
-    }
-    await device.destroy();
-    success(res, "设备删除成功");
-  } catch (error) {
-    failure(res, error);
-  }
-});
 router.get("/validate", userAuth, async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
@@ -531,214 +456,20 @@ router.get("/validate", userAuth, async (req, res) => {
       // 清除token，强制退出登录
       return failure(res, new UnauthorizedError("账户已被冻结"));
     }
-
-    success(res, "Token 有效", {
+    success(res, "认证成功", {
       userId: currentUser.id,
       username: currentUser.username,
       email: currentUser.email,
       isFrozen: currentUser.isFrozen,
+      nickname: currentUser.nickname,
+      avatar: currentUser.avatar,
+      role: currentUser.role,
     });
   } catch (error) {
     failure(res, error);
   }
 });
-// 添加冻结用户的接口（管理员权限）
-router.post("/freeze", userAuth, adminAuth, async (req, res) => {
-  try {
-    const { username, reason, freezeType, durationDays } = req.body;
 
-    if (!username || !reason || !freezeType) {
-      return failure(
-        res,
-        new BadRequestError("用户名、冻结原因和冻结类型不能为空")
-      );
-    }
-
-    if (freezeType !== "temporary" && freezeType !== "permanent") {
-      return failure(
-        res,
-        new BadRequestError("冻结类型必须是 temporary 或 permanent")
-      );
-    }
-
-    if (freezeType === "temporary" && (!durationDays || durationDays <= 0)) {
-      return failure(
-        res,
-        new BadRequestError("临时冻结必须提供有效的冻结天数")
-      );
-    }
-
-    // 通过用户名查找用户
-    const user = await User.findOne({ where: { username } });
-    if (!user) {
-      return failure(res, new NotFoundError("用户不存在"));
-    }
-
-    // 计算解冻时间（如果是临时冻结）
-    let unfreezeAt = null;
-    let frozenMessage = "";
-
-    if (freezeType === "temporary") {
-      unfreezeAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
-      frozenMessage = `您的账户因以下原因被临时冻结：${reason}。冻结期限：${durationDays}天，预计解冻时间：${unfreezeAt.toLocaleString()}。`;
-    } else {
-      frozenMessage = `您的账户因以下原因被永久冻结：${reason}。如有疑问请联系客服。`;
-    }
-
-    // 冻结用户
-    await user.update({
-      isFrozen: 1,
-      frozenReason: reason,
-      frozenAt: new Date(),
-      frozenBy: req.user.id,
-      freezeType: freezeType,
-      unfreezeAt: unfreezeAt,
-      frozenMessage: frozenMessage,
-    });
-
-    const responseData = {
-      userId: user.id,
-      username: user.username,
-      isFrozen: 1,
-      frozenReason: reason,
-      frozenAt: new Date(),
-      freezeType: freezeType,
-      unfreezeAt: unfreezeAt,
-    };
-
-    if (freezeType === "temporary") {
-      responseData.durationDays = durationDays;
-    }
-
-    return success(
-      res,
-      `用户已${freezeType === "temporary" ? "临时" : "永久"}冻结`,
-      responseData
-    );
-  } catch (error) {
-    failure(res, error);
-  }
-});
-
-// 添加解冻用户的接口（管理员权限）
-router.post("/unfreeze", userAuth, adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return failure(res, new BadRequestError("用户ID不能为空"));
-    }
-
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return failure(res, new NotFoundError("用户不存在"));
-    }
-
-    // 解冻用户
-    await user.update({
-      isFrozen: 0,
-      frozenReason: null,
-      frozenAt: null,
-      unfreezeAt: null,
-      freezeType: null,
-      frozenMessage: null,
-      frozenBy: null,
-    });
-
-    return success(res, "用户已解冻", {
-      userId: user.id,
-      username: user.username,
-      isFrozen: 0,
-    });
-  } catch (error) {
-    failure(res, error);
-  }
-});
-// 获取冻结用户列表
-router.get("/freeze/list", userAuth, adminAuth, async (req, res) => {
-  try {
-    const { page = 1, pageSize = 10 } = req.query;
-    const limit = parseInt(pageSize);
-    const offset = (parseInt(page) - 1) * limit;
-    const { count, rows } = await User.findAndCountAll({
-      where: { isFrozen: 1 },
-      limit,
-      offset,
-    });
-    return success(res, "获取冻结用户列表成功", {
-      total: count,
-      page: parseInt(page), // 转换为数字
-      pageSize: parseInt(pageSize), // 转换为数字
-      users: rows,
-    });
-  } catch (error) {
-    failure(res, error);
-  }
-});
-router.get(
-  "/users/username/:username",
-  userAuth,
-  adminAuth,
-  async (req, res) => {
-    try {
-      const { username } = req.params;
-
-      // 添加参数验证
-      if (!username || username.trim().length === 0) {
-        return failure(res, "用户名不能为空", 400);
-      }
-
-      // 限制搜索长度，防止过长的搜索
-      if (username.length > 50) {
-        return failure(res, "搜索关键词过长", 400);
-      }
-
-      const users = await User.findAll({
-        where: {
-          username: {
-            [Op.like]: `%${username.trim()}%`,
-          },
-        },
-        // 添加分页和字段选择
-        attributes: [
-          "id",
-          "username",
-          "email",
-          "createdAt",
-          "isFrozen",
-          "area",
-          "birthday",
-          "clientFeatureCode",
-          "constellation",
-          "frozenReason",
-          "frozenAt",
-          "unfreezeAt",
-          "freezeType",
-          "frozenMessage",
-          "introduce",
-          "nickname",
-          "nicknameColor",
-          "phone",
-          "role",
-          "sex",
-          "theme",
-          "updatedAt",
-          "uuid",
-        ], // 返回更多用户信息字段
-        limit: 50, // 限制返回数量
-        order: [["username", "ASC"]], // 按用户名排序
-      });
-
-      return success(res, "搜索用户成功", {
-        users,
-        total: users.length,
-      });
-    } catch (error) {
-      console.error("搜索用户失败:", error);
-      failure(res, "搜索用户失败");
-    }
-  }
-);
 //   // 获取用户信息的方法
 router.get("/currentuser", userAuth, async (req, res) => {
   try {
@@ -749,18 +480,18 @@ router.get("/currentuser", userAuth, async (req, res) => {
   }
 });
 // 添加用户状态检查接口
-router.get("/status", userAuth, async (req, res) => {
-  try {
-    const user = await getCurrentUser(req);
-    success(res, "获取用户状态成功", {
-      isFrozen: user.isFrozen === 1,
-      frozenReason: user.frozenReason,
-      frozenAt: user.frozenAt,
-      unfreezeAt: user.unfreezeAt,
-      freezeType: user.freezeType,
-    });
-  } catch (error) {
-    failure(res, error);
-  }
-});
+// router.get("/status", userAuth, async (req, res) => {
+//   try {
+//     const user = await getCurrentUser(req);
+//     success(res, "获取用户状态成功", {
+//       isFrozen: user.isFrozen === 1,
+//       frozenReason: user.frozenReason,
+//       frozenAt: user.frozenAt,
+//       unfreezeAt: user.unfreezeAt,
+//       freezeType: user.freezeType,
+//     });
+//   } catch (error) {
+//     failure(res, error);
+//   }
+// });
 module.exports = router;

@@ -383,18 +383,6 @@
               </div>
             </div>
           </div>
-          <!-- 超级调色盘 -->
-          <div
-            v-if="activeTab === 'supercolorpalette'"
-            class="super-color-palette"
-          >
-            <h2 class="super-color-palette-title">
-              {{ t("settings.supercolorpalette.title") }}
-            </h2>
-            <p class="super-color-palette-description">
-              {{ t("settings.supercolorpalette.description") }}
-            </p>
-          </div>
         </div>
       </div>
     </div>
@@ -605,14 +593,13 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts" name="Setting">
 import AvatarCropper from "../../components/avatarcropper/AvatarCropper.vue";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import axiosConfig from "../../utils/request";
 import { useRouter, useRoute } from "vue-router";
 import Cookies from "js-cookie";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, ElLoading } from "element-plus";
 import {
   tabs,
   initialUserInfo,
@@ -643,6 +630,7 @@ import { useI18n } from "vue-i18n";
 import { getAllUsers, accounts } from "../../utils/publicuser";
 import { type Article } from "../../utils/article";
 import { useAvatarManager } from "../../utils/avatarManager";
+
 const { t, locale } = useI18n();
 const currentLanguage = computed(() => {
   return locale.value;
@@ -667,9 +655,8 @@ const followSystem = computed({
   },
 });
 
-// / 添加图片裁剪功能
+// 图片裁剪功能
 const avatarCropper = ref();
-// 添加图片编辑功能
 const editImage = () => {
   if (!avatar.value) return;
   avatarCropper.value.openCropper(avatar.value);
@@ -677,7 +664,6 @@ const editImage = () => {
 
 let refreshTimer: number | null = null;
 const avatarManager = useAvatarManager();
-// 设置头像刷新定时器
 const setupAvatarRefresh = () => {
   refreshTimer = avatarManager.setupAvatarRefresh(async () => {
     await avatarManager.checkAndUpdateAvatarIfNeeded(
@@ -686,12 +672,11 @@ const setupAvatarRefresh = () => {
     );
   });
 };
+
 const handleCropped = async (blob: Blob) => {
   try {
-    // 创建临时URL用于预览，不立即删除旧头像
     const newAvatarUrl = URL.createObjectURL(blob);
     avatar.value = newAvatarUrl;
-    // 保存blob用于后续保存操作
     pendingAvatarBlob.value = blob;
     ElMessage.success("头像裁剪完成，请点击页面顶部的保存按钮以应用更改");
     getAllUsers();
@@ -702,17 +687,8 @@ const handleCropped = async (blob: Blob) => {
   }
 };
 
-// 新增：用于存储待保存的头像blob
+// 用户信息相关
 const pendingAvatarBlob = ref<Blob | null>(null);
-///   添加图片上传功能
-const handleChange = (uploadFile: { raw: File }) => {
-  const reader = new FileReader();
-  reader.onload = (e: ProgressEvent<FileReader>) => {
-    avatarCropper.value.openCropper(e.target?.result as string);
-  };
-  reader.readAsDataURL(uploadFile.raw);
-};
-// 保留原有变量声明
 const showNicknameColorCard = ref<boolean>(false);
 const nickname = ref<string>("");
 const sex = ref<string>("0");
@@ -734,21 +710,32 @@ const activeTab = ref<string>(
 );
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
+
+// 冻结账号相关
 const showFrozenDialogs = ref(false);
 const currentFrozenData = ref<any>({});
 const countdownText = ref("");
 const countdownTimer = ref<number | null>(null);
+
+// 图片上传功能
+const handleChange = (uploadFile: { raw: File }) => {
+  const reader = new FileReader();
+  reader.onload = (e: ProgressEvent<FileReader>) => {
+    avatarCropper.value.openCropper(e.target?.result as string);
+  };
+  reader.readAsDataURL(uploadFile.raw);
+};
 
 // 显示冻结账号弹窗
 const showFrozenDialog = (frozenData: any) => {
   currentFrozenData.value = frozenData;
   showFrozenDialogs.value = true;
 
-  // 如果是临时冻结且有解冻时间，启动倒计时
   if (frozenData.freezeType === "temporary" && frozenData.unfreezeAt) {
     startCountdown();
   }
 };
+
 // 关闭冻结弹窗
 const closeFrozenDialog = () => {
   showFrozenDialogs.value = false;
@@ -765,7 +752,7 @@ const formatTime = (timeString: string) => {
   return date.toLocaleString("zh-CN");
 };
 
-// 冻结类型文本映射（根据枚举类型修改）
+// 冻结类型文本映射
 const getFreezeTypeText = (freezeType: string) => {
   const types: Record<string, string> = {
     temporary: "临时冻结",
@@ -780,12 +767,12 @@ const startCountdown = () => {
     clearInterval(countdownTimer.value);
   }
 
-  updateCountdown(); // 立即执行一次
-
+  updateCountdown();
   countdownTimer.value = window.setInterval(() => {
     updateCountdown();
   }, 1000);
 };
+
 // 更新倒计时
 const updateCountdown = () => {
   if (
@@ -805,7 +792,6 @@ const updateCountdown = () => {
     if (countdownTimer.value) {
       clearInterval(countdownTimer.value);
     }
-    // 可以添加自动关闭弹窗逻辑
     setTimeout(() => {
       closeFrozenDialog();
       ElMessage.success("账户已解冻，请重新登录");
@@ -833,9 +819,10 @@ const refreshCountdown = () => {
 const contactSupport = () => {
   ElMessage.info("该功能处于测试阶段，请耐心等待");
 };
+
+// 切换账号
 const switchAccount = async (id: string) => {
   try {
-    // 先在前端检查是否是当前账号 - 确保类型一致
     if (userStore.user.id === Number(id)) {
       ElMessage.info("你已经在该账号下登录啦~");
       return;
@@ -845,7 +832,6 @@ const switchAccount = async (id: string) => {
       userId: id,
     });
 
-    // 检查账号是否被冻结
     if (response.data.data?.isFrozen) {
       const frozenData = response.data.data;
       showFrozenDialog(frozenData);
@@ -867,10 +853,10 @@ const switchAccount = async (id: string) => {
     ElMessage.error(errorMessage);
   }
 };
+
 // 组件卸载时清理定时器
 onUnmounted(() => {
   avatarManager.cleanupAvatarRefresh();
-  // 清理临时创建的URL
   if (pendingAvatarBlob.value && avatar.value.startsWith("blob:")) {
     URL.revokeObjectURL(avatar.value);
   }
@@ -878,6 +864,7 @@ onUnmounted(() => {
     clearInterval(countdownTimer.value);
   }
 });
+
 const addNewAccount = () => {
   logout();
 };
@@ -885,10 +872,13 @@ const addNewAccount = () => {
 const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
+
 const changeTab = (tabId: string) => {
   activeTab.value = tabId;
   router.push({ name: "setting", params: { tab: tabId } });
 };
+
+// 获取用户信息
 const fetchUserInfo = async () => {
   try {
     const response = await axiosConfig.get("/users/me");
@@ -898,9 +888,7 @@ const fetchUserInfo = async () => {
     birthday.value =
       userInfo.birthday || new Date().toISOString().split("T")[0];
     introduce.value = userInfo.introduce || "";
-    avatar.value =
-      userInfo.avatar ||
-      "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
+    avatar.value = userInfo.avatar || defaultAvatar;
     uuid.value = userInfo.uuid || "";
     area.value = userInfo.area || "";
     constellation.value = userInfo.constellation || "";
@@ -908,7 +896,7 @@ const fetchUserInfo = async () => {
     nicknameColor.value = userInfo.nicknameColor || "#000000";
     phone.value = userInfo.phone || "";
     themeStore.user = userInfo.uuid.toString();
-    // 记录初始状态
+
     initialUserInfo.value = {
       nickname: nickname.value,
       sex: sex.value,
@@ -928,12 +916,14 @@ const fetchUserInfo = async () => {
     ElMessage.error(errorMessage);
   }
 };
+
 const changeLanguage = (lang: string) => {
   if (uuid.value) {
     locale.value = lang;
     localStorage.setItem(`language-style-${uuid.value}`, lang);
   }
 };
+
 const beforeUpload = (file: File) => {
   const allowedTypes = [
     "image/jpeg",
@@ -964,9 +954,9 @@ const handleSuccess = () => {
   uploadRef.value.clearFiles();
   showUploadButton.value = false;
 };
-// 更新信息
+
+// 更新用户信息
 const updateUserInfo = async () => {
-  // 检查信息是否发生更改
   const hasChanges =
     nickname.value !== initialUserInfo.value.nickname ||
     sex.value !== initialUserInfo.value.sex ||
@@ -984,19 +974,13 @@ const updateUserInfo = async () => {
   }
 
   try {
-    // 如果有待保存的头像，则上传新头像并删除旧头像
     let avatarUrl = avatar.value;
     if (pendingAvatarBlob.value) {
-      // 上传新头像
       const newAvatarUrl = await avatarManager.updateAvatar(
         pendingAvatarBlob.value
       );
       avatarUrl = newAvatarUrl;
-
-      // 清空待保存的头像
       pendingAvatarBlob.value = null;
-
-      // 释放临时URL
       URL.revokeObjectURL(avatar.value);
     }
 
@@ -1011,6 +995,7 @@ const updateUserInfo = async () => {
       area: area.value,
       phone: phone.value,
     });
+
     const updatedUserInfo = response.data.data;
     nickname.value = updatedUserInfo.nickname || "";
     sex.value = updatedUserInfo.sex.toString() || "0";
@@ -1024,7 +1009,7 @@ const updateUserInfo = async () => {
     userStore.setUser(updatedUserInfo);
     getAllUsers();
     userStore.loadUser();
-    // 更新初始状态
+
     initialUserInfo.value = {
       nickname: nickname.value,
       sex: sex.value,
@@ -1036,58 +1021,64 @@ const updateUserInfo = async () => {
       area: area.value,
       phone: phone.value,
     };
+
     ElMessage.success(response.data.message);
   } catch (error: any) {
     let errorMessage = "添加失败";
-    // 检查 error 是否包含 errors 数组
     if (
       error?.response?.data?.errors &&
       Array.isArray(error.response.data.errors)
     ) {
-      // 获取 errors 数组的第一个元素作为错误消息
       errorMessage = error.response.data.errors[0] || "添加失败";
     } else {
-      // 兼容 message 字段
       errorMessage =
         error?.response?.data?.message || error?.message || "添加失败";
     }
     ElMessage.error(errorMessage);
   }
 };
+
 // 注销账号
 const deleteAccount = async () => {
   try {
+    const loading = ElLoading.service({
+      lock: true,
+      text: "正在注销账号...",
+      background: "rgba(0, 0, 0, 0.7)",
+    });
+
     await ElMessageBox.confirm("确定注销账号吗？", "账号注销确认", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
       type: "warning",
     });
 
-    // 生成确认令牌
-    const confirmToken = `${userStore.user.id}_${Math.floor(
-      Date.now() / 1000 / 60
-    )}`;
-
-    // 删除账户
+    const confirmToken = `${userStore.user.id}_${Date.now()}`;
     const response = await axiosConfig.delete("/users/delete", {
-      data: { confirmToken }, // 将确认令牌发送到后端
+      data: { confirmToken },
     });
 
-    // 删除主题
+    loading.close();
+    themeStore.clearThemeInDatabase(userStore.user.id);
     localStorage.removeItem(`theme-${uuid.value}`);
-    // 清除 cookie 和缓存
     Cookies.remove("ds-token");
-    themeStore.clearUserTheme();
+
     ElMessage.success(response.data.message);
     router.push({ name: "login/index" });
   } catch (error: any) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "删除失败，请稍后再试。";
-    ElMessage.error(errorMessage);
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      Cookies.remove("ds-token");
+      router.push("/login/index");
+    } else {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "删除失败，请稍后再试。";
+      ElMessage.error(errorMessage);
+    }
   }
 };
+
 const fetchLikedArticles = async () => {
   try {
     const response = await axiosConfig.get("/admin/article", {
@@ -1110,17 +1101,22 @@ const fetchLikedArticles = async () => {
     ElMessage.error(errorMessage);
   }
 };
+
 const logout = () => {
   Cookies.remove("ds-token");
   router.push("/login/index");
 };
-onMounted(() => {
+
+// 初始化
+onMounted(async () => {
   setupAvatarRefresh();
-  fetchUserInfo().then(() => {
-    fetchLikedArticles();
-    getAllUsers();
-    userStore.loadUser();
-  });
+
+  await fetchUserInfo();
+  await fetchLikedArticles();
+  await getAllUsers();
+  await userStore.loadUser();
+
+  // 加载语言设置
   const savedLanguage = localStorage.getItem(
     `language-style-${userStore.user.uuid}`
   );
@@ -1129,10 +1125,8 @@ onMounted(() => {
   }
 });
 </script>
-
 <style lang="less" scoped>
 @import "../../base-ui/setting.less";
-//
 
 :deep(.el-input__wrapper) {
   background: var(--bgColor1);

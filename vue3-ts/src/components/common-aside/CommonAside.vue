@@ -7,7 +7,7 @@
       class="common-aside-logo"
       :style="{ display: isCollapsed ? 'none' : 'block' }"
     >
-      {{ $t("commonaside.home.logo") }}
+      {{ t("commonaside.home.logo") }}
     </h2>
     <el-menu
       :router="true"
@@ -15,96 +15,94 @@
       :collapse-transition="false"
       :collapse="isCollapsed"
     >
-      <el-tooltip :content="$t('commonaside.home.home')" placement="right">
+      <el-tooltip :content="t('commonaside.home.home')" placement="right">
         <el-menu-item index="/home">
           <el-icon><HomeFilled /></el-icon>
-          <router-link to="/home">{{
-            $t("commonaside.home.home")
-          }}</router-link>
+          <router-link to="/home">{{ t("commonaside.home.home") }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.localResources')"
+        :content="t('commonaside.home.localResources')"
         placement="right"
       >
         <el-menu-item index="/localresources">
           <el-icon><Picture /></el-icon>
           <router-link to="/localresources">{{
-            $t("commonaside.home.localResources")
+            t("commonaside.home.localResources")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.personalShare')"
+        :content="t('commonaside.home.personalShare')"
         placement="right"
       >
         <el-menu-item index="/share/essays">
           <el-icon><Share /></el-icon>
           <router-link to="/share/essays">{{
-            $t("commonaside.home.personalShare")
+            t("commonaside.home.personalShare")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.momentInTime')"
+        :content="t('commonaside.home.momentInTime')"
         placement="right"
       >
         <el-menu-item index="/messagewall/messages?category=全部">
           <el-icon><CameraFilled /></el-icon>
           <router-link to="/messagewall/messages?category=全部">{{
-            $t("commonaside.home.momentInTime")
+            t("commonaside.home.momentInTime")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
-      <el-tooltip :content="$t('commonaside.home.photo')" placement="right">
+      <el-tooltip :content="t('commonaside.home.photo')" placement="right">
         <el-menu-item index="/photowall/photos?category=自然风光">
           <el-icon><PictureFilled /></el-icon>
           <router-link to="/photowall/photos?category=自然风光">{{
-            $t("commonaside.home.photo")
+            t("commonaside.home.photo")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.suggestions')"
+        :content="t('commonaside.home.suggestions')"
         placement="right"
       >
         <el-menu-item index="/suggestionsfeedback">
           <el-icon><EditPen /></el-icon>
           <router-link to="/suggestions">{{
-            $t("commonaside.home.suggestions")
+            t("commonaside.home.suggestions")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.reportresultscenter')"
+        :content="t('commonaside.home.reportresultscenter')"
         placement="right"
       >
-        <el-menu-item index="/reportresultscenter" v-if="userStore.isAdmin">
+        <el-menu-item index="/reportresultscenter">
           <el-icon><Calendar /></el-icon>
           <router-link to="/reportresultscenter">
-            {{ $t("commonaside.home.reportresultscenter") }}
+            {{ t("commonaside.home.reportresultscenter") }}
           </router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.reportresultscenter')"
+        :content="t('commonaside.home.reportresultscenter')"
         placement="right"
       >
         <el-menu-item index="/securitycenter">
           <el-icon><Tools /></el-icon>
           <router-link to="/securitycenter">{{
-            $t("commonaside.home.securitycenter")
+            t("commonaside.home.securitycenter")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
       <el-tooltip
-        :content="$t('commonaside.home.freezemanagement')"
+        :content="t('commonaside.home.freezemanagement')"
         placement="right"
       >
         <el-menu-item index="/freezemanagement" v-if="userStore.isAdmin">
           <el-icon><UserFilled /></el-icon>
           <router-link to="/freezemanagement">{{
-            $t("commonaside.home.freezemanagement")
+            t("commonaside.home.freezemanagement")
           }}</router-link>
         </el-menu-item>
       </el-tooltip>
@@ -112,8 +110,8 @@
     <el-tooltip
       :content="
         isCollapsed
-          ? $t('commonaside.home.expand')
-          : $t('commonaside.home.collapse')
+          ? t('commonaside.home.expand')
+          : t('commonaside.home.collapse')
       "
       placement="right"
     >

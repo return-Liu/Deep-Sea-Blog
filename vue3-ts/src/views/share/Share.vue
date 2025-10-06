@@ -371,20 +371,31 @@ async function fetchData(currentPageNum: number = 1) {
   }
 }
 
-// 事件处理
 const handleMouseEnter = async (item: any) => {
   if (item.type === "essay" && !item.isViewed) {
     try {
-      await axiosConfig.post(`/admin/article/views/${item.id}`);
+      const response = await axiosConfig.post(`/admin/article/views/${item.id}`);
       const index = essay.value.findIndex((article) => article.id === item.id);
       if (index !== -1) {
-        essay.value[index].views += 1;
+        // 只有在真正增加浏览量时才更新计数
+        if (response.data.message === "浏览量更新成功") {
+          essay.value[index].views += 1;
+        }
+        // 标记为已浏览
         essay.value[index].isViewed = true;
       }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || "未知错误";
-      ElMessage.error(errorMessage);
+      // 如果是已记录的情况，也标记为已浏览
+      if (error?.response?.data?.message === "浏览量已记录") {
+        const index = essay.value.findIndex((article) => article.id === item.id);
+        if (index !== -1) {
+          essay.value[index].isViewed = true;
+        }
+      } else {
+        ElMessage.error(errorMessage);
+      }
     }
   }
 };

@@ -5,6 +5,7 @@ const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
 const userAuth = require("../../middlewares/user-auth");
 const { client } = require("../../utils/oss");
+const cache = require("memory-cache");
 
 // 查询文章列表
 router.get("/", userAuth, async (req, res) => {
@@ -205,10 +206,30 @@ router.put("/:id", userAuth, async (req, res) => {
 router.post("/views/:id", userAuth, async (req, res) => {
   try {
     const articleId = req.params.id;
-    await Article.update(
-      { views: sequelize.literal("views + 1") },
-      { where: { id: articleId } }
-    );
+    const userId = req.user.userId;
+
+    // 检查文章是否存在
+    const article = await Article.findByPk(articleId);
+    if (!article) {
+      return failure(res, "文章不存在", 404);
+    }
+
+    // 构造缓存键名（包含用户ID、文章ID和日期）
+    const today = new Date().toISOString().split("T")[0];
+    const viewKey = `article:${articleId}:user:${userId}:date:${today}`;
+
+    // 检查用户今天是否已经浏览过该文章
+    const hasViewed = cache.get(viewKey);
+    if (hasViewed) {
+      return success(res, "浏览量已记录");
+    }
+
+    // 增加浏览量
+    await Article.increment("views", { where: { id: articleId } });
+
+    // 记录用户已浏览（设置24小时过期时间）
+    cache.put(viewKey, true, 24 * 60 * 60 * 1000);
+
     success(res, "浏览量更新成功");
   } catch (error) {
     failure(res, error);

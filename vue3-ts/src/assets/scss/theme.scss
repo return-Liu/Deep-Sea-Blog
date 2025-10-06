@@ -7,7 +7,7 @@ $light-theme: (
   gray-900: #111111,
   gray-800: #333333,
   gray-700: #555555,
-  gray-600: #777777,
+  gray-600: #ffffff,
   gray-500: #999999,
   gray-400: #bbbbbb,
   gray-300: #dddddd,
@@ -99,10 +99,9 @@ $dark-theme: (
 
 @mixin theme-vars($theme) {
   @each $name, $value in $theme {
-    --#{$name}: #{$value};
+    --#{"" + $name}: #{$value};
   }
 }
-
 // 应用默认亮色主题
 :root {
   @include theme-vars($light-theme);

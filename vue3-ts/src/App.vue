@@ -36,7 +36,7 @@ watch(
     }
     if (newUser) {
       const savedLanguage = localStorage.getItem(
-        `language-style${newUser.uuid}`
+        `language-style-${newUser.uuid}`
       );
       if (savedLanguage) {
         locale.value = savedLanguage;

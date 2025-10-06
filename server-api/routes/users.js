@@ -50,10 +50,9 @@ router.put("/info", userAuth, async (req, res) => {
   }
 });
 // 注销账号
-// 注销账号
 router.delete("/delete", userAuth, async (req, res) => {
   const sequelize = require("../models").sequelize;
-  const { Op, OperationLog } = require("../models");
+  const { Op } = require("../models");
   const transaction = await sequelize.transaction();
 
   try {
@@ -202,19 +201,6 @@ router.delete("/delete", userAuth, async (req, res) => {
         } catch (error) {
           console.error(`删除文章图片失败: ${article.image}`, error);
           // 记录删除失败的文件信息，便于后续处理
-          await OperationLog.create(
-            {
-              userId: user.id,
-              action: "oss_deletion_failed",
-              description: `删除文章图片失败: ${article.image}`,
-              details: {
-                error: error.message,
-                articleId: article.id,
-                image: article.image,
-              },
-            },
-            { transaction }
-          );
         }
       }
     }
@@ -227,19 +213,6 @@ router.delete("/delete", userAuth, async (req, res) => {
         } catch (error) {
           console.error(`删除摄影图片失败: ${photography.image}`, error);
           // 记录删除失败的文件信息，便于后续处理
-          await OperationLog.create(
-            {
-              userId: user.id,
-              action: "oss_deletion_failed",
-              description: `删除摄影图片失败: ${photography.image}`,
-              details: {
-                error: error.message,
-                photographyId: photography.id,
-                image: photography.image,
-              },
-            },
-            { transaction }
-          );
         }
       }
     }
@@ -252,19 +225,6 @@ router.delete("/delete", userAuth, async (req, res) => {
         } catch (error) {
           console.error(`删除笔记图片失败: ${note.image}`, error);
           // 记录删除失败的文件信息，便于后续处理
-          await OperationLog.create(
-            {
-              userId: user.id,
-              action: "oss_deletion_failed",
-              description: `删除笔记图片失败: ${note.image}`,
-              details: {
-                error: error.message,
-                noteId: note.id,
-                image: note.image,
-              },
-            },
-            { transaction }
-          );
         }
       }
     }
@@ -276,19 +236,6 @@ router.delete("/delete", userAuth, async (req, res) => {
       } catch (error) {
         console.error(`删除用户头像失败: ${user.avatar}`, error);
         // 记录删除失败的文件信息，便于后续处理
-        await OperationLog.create(
-          {
-            userId: user.id,
-            action: "oss_deletion_failed",
-            description: `删除用户头像失败: ${user.avatar}`,
-            details: {
-              error: error.message,
-              userId: user.id,
-              image: user.avatar,
-            },
-          },
-          { transaction }
-        );
       }
     }
 
@@ -298,9 +245,16 @@ router.delete("/delete", userAuth, async (req, res) => {
       transaction,
     });
 
+    // 将其他用户回复该用户的评论中的replyToUserId设为null
     await Comment.update(
       { replyToUserId: null },
       { where: { replyToUserId: user.id }, transaction }
+    );
+
+    // 将其他用户评论中parentId指向该用户评论的设为null
+    await Comment.update(
+      { parentId: null },
+      { where: { parentId: user.id }, transaction }
     );
 
     await Device.destroy({
@@ -311,42 +265,14 @@ router.delete("/delete", userAuth, async (req, res) => {
     // 9. 最后删除用户账号
     await user.destroy({ transaction });
 
-    // 10. 记录成功注销日志
-    await OperationLog.create(
-      {
-        userId: user.id,
-        action: "account_deletion_success",
-        description: `用户 ${user.username} 成功注销账号`,
-        details: {
-          userId: user.id,
-          username: user.username,
-          timestamp: new Date().toISOString(),
-        },
-      },
-      { transaction }
-    );
-
-    // 11. 提交事务
+    // 10. 提交事务
     await transaction.commit();
 
     success(res, "注销账号成功");
   } catch (error) {
     // 回滚事务
     await transaction.rollback();
-    // 记录错误日志
-    OperationLog.create({
-      userId: req.userId,
-      action: "account_deletion_failed",
-      description: `用户注销账号失败`,
-      ipAddress: req.ip || req.connection.remoteAddress,
-      details: {
-        userId: req.userId,
-        error: error.message,
-        stack: error.stack,
-      },
-    }).catch((logError) => {
-      console.error("记录错误日志失败:", logError);
-    });
+
     failure(res, error);
   }
 });

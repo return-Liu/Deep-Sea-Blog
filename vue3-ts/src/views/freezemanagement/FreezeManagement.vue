@@ -687,7 +687,7 @@ const detailUser = ref<User | null>(null);
 const fetchFrozenUsers = async () => {
   loading.value = true;
   try {
-    const response = await axiosConfig.get("/auth/freeze/list", {
+    const response = await axiosConfig.get("/admin/auth/freeze/list", {
       params: {
         page: currentPage.value,
         pageSize: pageSize.value,
@@ -734,7 +734,7 @@ const searchUser = async () => {
   (searchUser as any).debounceTimer = setTimeout(async () => {
     try {
       const response = await axiosConfig.get(
-        `/auth/users/username/${encodeURIComponent(searchForm.username.trim())}`
+        `/admin/auth/search/${encodeURIComponent(searchForm.username.trim())}`
       );
       searchedUser.value = response.data.data.users[0] || null;
       ElMessage.success(response.data.message);
@@ -834,7 +834,7 @@ const confirmFreeze = async () => {
 
   freezing.value = true;
   try {
-    const response = await axiosConfig.post("/auth/freeze", {
+    const response = await axiosConfig.post("/admin/auth/freeze", {
       username: freezeForm.username,
       reason: freezeForm.reason,
       freezeType: freezeForm.freezeType,

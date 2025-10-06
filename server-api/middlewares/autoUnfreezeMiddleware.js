@@ -1,4 +1,5 @@
 const { User } = require("../models");
+const jwt = require("jsonwebtoken");
 
 const autoUnfreezeMiddleware = async (req, res, next) => {
   try {

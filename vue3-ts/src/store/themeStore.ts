@@ -17,12 +17,14 @@ export const useThemeStore = defineStore("theme", () => {
     setTheme(systemTheme);
   };
 
-  const setTheme = (mode: "light" | "dark") => {
+  const setTheme = (mode: "light" | "dark" | "auto") => {
     document.documentElement.setAttribute("data-theme", mode);
   };
+
   const toggleTheme = async (mode: "auto" | "light" | "dark") => {
     followSystem.value = mode === "auto";
     currentTheme.value = mode;
+
     if (mode === "auto") {
       addSystemThemeChangeListener();
       handleSystemThemeChange();
@@ -34,10 +36,7 @@ export const useThemeStore = defineStore("theme", () => {
     if (user.value) {
       try {
         await updateThemeInDatabase(user.value, mode);
-        // 确保写入 localStorage 的值有效
-        if (typeof mode === "string" && mode.trim() !== "") {
-          localStorage.setItem(`theme-style-${user.value}`, mode);
-        }
+        localStorage.setItem(`theme-style-${user.value}`, mode);
       } catch (error) {
         console.error("Failed to update theme in database:", error);
       }
@@ -90,6 +89,7 @@ export const useThemeStore = defineStore("theme", () => {
       await toggleTheme(fallbackTheme);
     }
   };
+
   const addSystemThemeChangeListener = () => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
@@ -106,24 +106,14 @@ export const useThemeStore = defineStore("theme", () => {
     user.value = userId;
   };
 
-  const clearUserTheme = async () => {
-    if (user.value) {
-      try {
-        await clearThemeInDatabase(user.value);
-      } catch (error) {
-        console.error("Failed to clear theme in database:", error);
-      }
-      toggleTheme("light");
-    }
-  };
-
   onMounted(async () => {
-    await loadTheme(); // 确保 loadTheme 先加载用户信息
+    await loadTheme();
   });
 
   onUnmounted(() => {
     removeSystemThemeChangeListener();
   });
+
   const updateThemeInDatabase = async (userId: number, theme: string) => {
     try {
       await axiosConfig.put(`/theme/${userId}/style`, {
@@ -135,6 +125,7 @@ export const useThemeStore = defineStore("theme", () => {
       ElMessage.error(errorMessage);
     }
   };
+
   const getThemeFromDatabase = async (userId: number) => {
     try {
       const response = await axiosConfig.get(`/theme/${userId}/style`);
@@ -145,6 +136,7 @@ export const useThemeStore = defineStore("theme", () => {
       ElMessage.error(errorMessage);
     }
   };
+
   const clearThemeInDatabase = async (userId: number) => {
     try {
       await axiosConfig.delete(`/theme/${userId}/style`);
@@ -154,9 +146,10 @@ export const useThemeStore = defineStore("theme", () => {
       ElMessage.error(errorMessage);
     }
   };
+
   return {
     getThemeFromDatabase,
-    updateThemeInDatabase, // 添加这一行
+    updateThemeInDatabase,
     followSystem,
     currentTheme,
     user,
@@ -167,7 +160,7 @@ export const useThemeStore = defineStore("theme", () => {
     addSystemThemeChangeListener,
     removeSystemThemeChangeListener,
     setUser,
-    clearUserTheme,
+    clearThemeInDatabase,
     currentThemeMode: computed(() => currentTheme.value),
   };
 });

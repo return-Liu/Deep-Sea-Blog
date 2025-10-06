@@ -20,8 +20,21 @@ const PUBLIC_PATHS = [
   "/privacy",
 ];
 
-// 管理员专用页面路径
-const ADMIN_PATHS = ["/reportresultscenter", "/freezemanagement"];
+// 权限配置 - 定义各角色可访问的路径
+const PERMISSION_CONFIG = {
+  admin: ["/freezemanagement"],
+  // 可以轻松添加其他角色和对应路径
+};
+
+// 获取路径需要的角色
+function getRequiredRole(path: string): string | null {
+  for (const [role, paths] of Object.entries(PERMISSION_CONFIG)) {
+    if (paths.includes(path)) {
+      return role;
+    }
+  }
+  return null;
+}
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -68,13 +81,13 @@ async function validateToken(token: string): Promise<boolean> {
         Authorization: `Bearer ${token}`,
       },
     });
+
     return true;
   } catch (error) {
     return false;
   }
 }
 
-// ... existing code ...
 router.beforeEach(async (to, from, next) => {
   NProgress.start();
 
@@ -113,7 +126,7 @@ router.beforeEach(async (to, from, next) => {
 
     if (token && isLoginPath) {
       // 已登录用户访问登录页，跳转到首页
-      next({ path: "/layout", replace: true });
+      next({ path: "/home", replace: true });
       return;
     }
 
@@ -137,8 +150,9 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  // 6. 如果是管理员路径，检查用户是否为管理员
-  if (ADMIN_PATHS.includes(to.path)) {
+  // 6. 权限检查 - 检查用户是否有访问该路径的权限
+  const requiredRole = getRequiredRole(to.path);
+  if (requiredRole) {
     try {
       // 获取用户信息以检查角色
       const userStore = useUserStore();
@@ -148,8 +162,8 @@ router.beforeEach(async (to, from, next) => {
       }
 
       // 检查用户角色
-      if (userStore.user.role !== "admin") {
-        // 如果不是管理员，重定向到首页
+      if (userStore.user.role !== requiredRole) {
+        // 如果没有权限，重定向到首页
         next({ path: "/home" });
         return;
       }
@@ -179,8 +193,6 @@ router.beforeEach(async (to, from, next) => {
   // 所有检查通过，允许导航
   next();
 });
-
-// 后置钩子：结束进度条
 router.afterEach(() => {
   NProgress.done();
 });

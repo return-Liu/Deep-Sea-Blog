@@ -57,10 +57,6 @@ export const tabs = [
     id: "toggleaccount",
     icon: SwapOutlined,
   },
-  {
-    id: "supercolorpalette",
-    icon: SuperColorPaletteIcon,
-  },
 ];
 export const constellationes = ref(
   constellations.map((item) => ({

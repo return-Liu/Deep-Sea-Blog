@@ -34,6 +34,7 @@
     "sequelize": "^6.37.5",
     "sequelize-cli": "^6.6.2",
     "sharp": "^0.34.3",
+    "socket.io": "^4.8.1",
     "ua-parser-js": "^2.0.4",
     "uuid": "^11.1.0",
     "ws": "^8.18.2"

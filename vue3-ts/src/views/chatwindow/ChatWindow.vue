@@ -117,7 +117,7 @@ const messages = ref<{ text: string; isUser: boolean }[]>([]);
 const messageContainer = ref<HTMLElement | null>(null);
 const isThinking = ref(false); // 控制"正在思考中"提示的显示
 const botAvatar =
-  "https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-8.png";
+  "https://tse2-mm.cn.bing.net/th/id/OIP-C.c6XX36qUmH-ucd5vMsLqjQHaHa?w=143&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3";
 const userAvatar = ref("");
 let ws: WebSocket | null = null;
 const APPID = modelID;
@@ -178,12 +178,18 @@ const getWebsocketUrl = () => {
 };
 const connectWebSocket = () => {
   try {
-    ws = new WebSocket("ws://localhost:3001");
+    const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    const host = window.location.hostname; // 使用主机名而不是完整地址
+    const port = "3001"; // 指定后端服务端口
+    const wsUrl = `${protocol}${host}:${port}/websocket`;
+
+    ws = new WebSocket(wsUrl);
+
     ws.onopen = () => {
       console.log("Socket连接成功");
-      // 添加连接成功的提示
       ElMessage.success("开始与智能体深度推理模型X1的对话吧");
     };
+
     ws.onmessage = (event) => {
       let msg: string;
       try {
@@ -233,7 +239,11 @@ const connectWebSocket = () => {
 
     ws.onclose = () => {
       console.log("Socket连接关闭");
-      setTimeout(connectWebSocket, 3000);
+      // 添加重连限制，避免无限重连
+      setTimeout(() => {
+        if (!userStore.user) return; // 用户退出则不重连
+        connectWebSocket();
+      }, 3000);
     };
   } catch (error) {
     console.error("WebSocket初始化失败:", error);
@@ -378,6 +388,7 @@ const sendMessage = async () => {
 
   inputText.value = "";
 };
+
 const handleEnter = (e: KeyboardEvent) => {
   if (e.shiftKey) return; // Shift+Enter 换行
   e.preventDefault();
@@ -400,4 +411,189 @@ const handleAvatar = (isUser: boolean) => {
 
 <style scoped lang="less">
 @import "../../base-ui/chatWindow.less";
+.deep-container {
+  width: 110px;
+  height: 35px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 50px;
+  display: flex;
+  margin: 10px 0;
+
+  &.selected {
+    background-color: #2196f3;
+    /* 选中时的背景颜色 */
+    color: var(--color-bg8);
+    border-radius: 50px;
+  }
+
+  .deep-img {
+    width: 16px;
+
+    img {
+      width: 16px;
+      background: #ffff;
+      border-radius: 10px;
+    }
+  }
+
+  .deep-think-toggle {
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    margin-left: 2px;
+    color: var(--color-bg8);
+
+    label {
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .toggle-slider {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      background: var(--bg3);
+      border-radius: 34px;
+
+      &:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background: var(--bg3);
+        border-radius: 50%;
+        transition: 0.4s;
+      }
+
+      input:checked + .toggle-slider {
+        background-color: #2196f3;
+      }
+
+      input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+      }
+
+      input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+    }
+  }
+
+  p {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--color-bg8);
+  }
+}
+
+.thinking-indicator {
+  font-size: 14px;
+  color: var(--color-bg8);
+  margin: 10px 0;
+  text-align: center;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.input-container {
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+  padding: 16px;
+  position: sticky;
+  bottom: 0;
+
+  .input-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--bg2);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    .custom-input {
+      flex: 1;
+
+      :deep(.el-textarea__inner) {
+        border: none;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        background: var(--bg2);
+        color: var(--black);
+
+        resize: none;
+        box-shadow: none;
+        min-height: 24px !important;
+
+        &:focus {
+          box-shadow: none;
+          color: var(--black);
+          background: var(--bg1);
+        }
+      }
+    }
+
+    .send-button {
+      padding-bottom: 4px;
+      border-radius: 6px;
+    }
+
+    .custom-button {
+      border-radius: 6px;
+      height: 36px;
+      padding: 0 20px;
+      font-size: 14px;
+      background: var(--bg5);
+      color: var(--white);
+      border: none;
+
+      &:hover {
+        background: var(--bg5);
+        color: var(--gray-500);
+      }
+
+      &:disabled {
+        background: var(--bg5);
+        color: var(--gray-500);
+      }
+    }
+  }
+}
+
+.disclaimer-section {
+  font-size: 14px;
+  color: var(--gray-800);
+  line-height: 1.6;
+  padding: 10px;
+  background: var(--bg3);
+
+  p {
+    margin-bottom: 12px;
+  }
+
+  strong {
+    margin-right: 8px;
+  }
+}
 </style>

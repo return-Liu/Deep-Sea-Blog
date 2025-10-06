@@ -213,7 +213,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="!row.status"
+                        v-if="userStore.isAdmin"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'feedback')"
@@ -230,6 +230,7 @@
                         详情
                       </el-button>
                       <el-button
+                        v-if="userStore.isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteFeedback(row.id)"
@@ -362,7 +363,7 @@
                   <template #default="{ row }">
                     <div class="action-buttons">
                       <el-button
-                        v-if="!row.status"
+                        v-if="userStore.isAdmin"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'report')"
@@ -379,6 +380,7 @@
                         详情
                       </el-button>
                       <el-button
+                        v-if="userStore.isAdmin"
                         type="danger"
                         size="small"
                         @click="deleteReport(row.id)"
@@ -630,7 +632,8 @@ import {
   resultTypeOptions,
   formatResultType,
 } from "../../utils/reportresultscenter";
-
+import { useUserStore } from "../../store/userStore";
+const userStore = useUserStore();
 const {
   reports,
   currentFeedbacks,

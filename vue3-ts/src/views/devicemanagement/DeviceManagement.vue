@@ -223,7 +223,7 @@ const formatDate = (dateString: string | Date | undefined) => {
 const fetchDevices = async () => {
   try {
     loading.value = true;
-    const response = await axiosConfig.get("/auth/devices");
+    const response = await axiosConfig.get("/device/devices");
     console.log(response);
 
     devices.value = response.data.data;
@@ -250,7 +250,7 @@ const logoutDevice = async (deviceId: string) => {
       }
     );
     device.actionLoading = true;
-    const response = await axiosConfig.delete(`/auth/devices/${deviceId}`);
+    const response = await axiosConfig.delete(`/device/devices/${deviceId}`);
     devices.value = devices.value.filter(
       (device: any) => device.id !== deviceId
     );
@@ -279,7 +279,7 @@ const logoutAllDevices = async () => {
       type: "warning",
     });
     loading.value = true;
-    const response = await axiosConfig.post("/auth/login/device");
+    const response = await axiosConfig.post("/device/login/device");
     ElMessage.success(response.data.message);
     fetchDevices();
   } catch (error: any) {
