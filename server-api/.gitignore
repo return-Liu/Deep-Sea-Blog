@@ -1,2 +1,52 @@
 # Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
+
+# Runtime data
+dist/
+tmp/
+temp/
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Dotfiles
+.DS_Store
+.idea/
+*.swp
+*.swo
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Testing
+coverage/
+
+# Sequelize CLI
+.sequelizerc
+sequelize-data/
+
+# PM2 process file
+ecosystem.config.js
+
+# Misc
+*.local
