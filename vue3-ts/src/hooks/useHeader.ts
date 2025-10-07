@@ -1,15 +1,18 @@
 import { Search, Message } from "@element-plus/icons-vue";
 import { ref, computed, onMounted, reactive } from "vue";
 import { ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import axiosConfig from "../utils/request";
 import { useUserStore } from "../store/userStore";
 import { useSearchStore } from "../store/searchStore";
+
 export default function useHeader() {
   const router = useRouter();
+  const route = useRoute();
   const searchStore = useSearchStore();
   const userStore = useUserStore();
   const user = computed(() => userStore.user);
+
   // 状态管理
   const isSearchActive = ref(false);
   const isScrollingPaused = ref(false);
@@ -34,13 +37,49 @@ export default function useHeader() {
     formattedCreatedAt: string;
   }
 
+  // 封装导航函数
+  const navigateToSetting = (tab: string) => {
+    const currentPath = route.path;
+    const targetPath = `/setting/${tab}`;
+
+    if (currentPath !== targetPath) {
+      router.push({ path: targetPath });
+    } else {
+      ElMessage.info(`您已经在${getTabName(tab)}页面`);
+    }
+  };
+
+  // 获取标签页名称（用于提示）
+  const getTabName = (tab: string) => {
+    const names: { [key: string]: string } = {
+      personals: "个人资料",
+      securitys: "账号安全",
+      likes: "我的点赞",
+      modes: "模式选择",
+      languages: "语言设置",
+    };
+    return names[tab] || "该设置";
+  };
+
+  // 导航处理 - 使用封装函数
+  const changeSetting = () => navigateToSetting("personals");
+  const viewAccountSecurity = () => navigateToSetting("securitys");
+  const goToLikedArticles = () => navigateToSetting("likes");
+  const openSettings = () => navigateToSetting("modes");
+  const superColorPalette = () => navigateToSetting("languages");
+
+  // 检查当前是否在设置页面
+  const isInSettingsPage = computed(() => route.path.startsWith("/setting/"));
+
   // 消息视图
   const viewMessage = () => {
     drawerVisible.value = true;
   };
+
   const handleFocus = () => {
     isSearchActive.value = true;
   };
+
   const viewAvatar = () => {
     if (user.value?.avatar) {
       window.open(user.value.avatar, "_blank");
@@ -48,6 +87,7 @@ export default function useHeader() {
       ElMessage.error("头像未设置");
     }
   };
+
   // 更新处理
   const handleUpdates = async () => {
     try {
@@ -85,6 +125,7 @@ export default function useHeader() {
       handleError("获取系统信息失败", error);
     }
   };
+
   // 搜索处理
   const handleSearch = async () => {
     try {
@@ -98,6 +139,7 @@ export default function useHeader() {
       handleError("搜索失败,请稍后再试", err);
     }
   };
+
   // 输入处理
   const handleInput = (e: Event) => {
     searchStore.searchQuery = (e.target as HTMLInputElement).value;
@@ -118,26 +160,6 @@ export default function useHeader() {
 
   const handleMouseLeave = () => {
     isScrollingPaused.value = false;
-  };
-
-  // 导航处理
-  const changeSetting = () => {
-    router.push({ path: "/setting/personals" });
-  };
-
-  const viewAccountSecurity = () => {
-    router.push({ path: "/setting/securitys" });
-  };
-
-  const goToLikedArticles = () => {
-    router.push({ path: "/setting/likes" });
-  };
-
-  const openSettings = () => {
-    router.push({ path: "/setting/modes" });
-  };
-  const superColorPalette = () => {
-    router.push({ path: "/setting/languages" });
   };
 
   // 辅助函数
@@ -173,6 +195,7 @@ export default function useHeader() {
     drawerVisible.value = false;
     showDialog.value = false;
   };
+
   onMounted(() => {
     handleUpdates();
   });
@@ -189,18 +212,10 @@ export default function useHeader() {
     text: reactive([
       { name: "加入日间 夜间 夜间模式跟随系统 欢迎来体验" },
       { name: "用户建议与反馈系统已上线，期待您的建议" },
-      {
-        name: "搜索功能问题已排除,正常使用即可",
-      },
-      {
-        name: "支持多种语言,欢迎使用 如有问题请反馈",
-      },
-      {
-        name: "欢迎 使用 Deep Sea 管理系统",
-      },
-      {
-        name: "裁剪上传图片功能已上线,请使用",
-      },
+      { name: "搜索功能问题已排除,正常使用即可" },
+      { name: "支持多种语言,欢迎使用 如有问题请反馈" },
+      { name: "欢迎 使用 Deep Sea 管理系统" },
+      { name: "裁剪上传图片功能已上线,请使用" },
     ]),
     handleInput,
     changeSetting,
@@ -223,5 +238,6 @@ export default function useHeader() {
     superColorPalette,
     viewsystem,
     viewAvatar,
+    isInSettingsPage,
   };
 }

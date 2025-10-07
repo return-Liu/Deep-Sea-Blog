@@ -703,11 +703,6 @@ const clientFeatureCode = ref<string | null>(null);
 const nicknameColor = ref<string>("#000000");
 const likedArticles = ref<Article[]>([]);
 const previousImageUrl = ref<string>("");
-const activeTab = ref<string>(
-  Array.isArray(route.params.tab)
-    ? route.params.tab[0]
-    : route.params.tab || "personal"
-);
 const uuid = ref<string | null>(null);
 const uploadRef = ref<any>(null);
 
@@ -873,9 +868,19 @@ const changePassword = () => {
   router.push({ name: "resetpassword" });
 };
 
+const activeTab = computed(() => {
+  return route.params.tab as string || 'personals';
+});
+
+// 切换标签页
 const changeTab = (tabId: string) => {
-  activeTab.value = tabId;
-  router.push({ name: "setting", params: { tab: tabId } });
+  // 如果已经是当前标签页，则不重复跳转
+  if (activeTab.value === tabId) return;
+
+  router.push({
+    name: 'setting',
+    params: { tab: tabId }
+  });
 };
 
 // 获取用户信息

@@ -39,6 +39,7 @@ const routers = [
     path: "/setting/:tab?",
     name: "setting",
     component: () => import("../views/setting/Setting.vue"),
+    props: true,
   },
   {
     path: "/suggestionsfeedback",

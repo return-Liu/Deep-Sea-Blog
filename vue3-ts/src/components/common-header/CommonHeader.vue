@@ -5,7 +5,7 @@
       <div class="avatar-box">
         <div class="email-box" title="系统通知" @click="viewMessage">
           <el-icon :size="30" :color="'#0078d4'">
-            <message />
+            <Message />
           </el-icon>
         </div>
         <div class="avatar-img">
@@ -53,15 +53,46 @@
             </div>
             <div class="info-card-content">
               <div class="info-card-item">
-                <p @click="changeSetting">我的资料</p>
+                <p
+                  @click="changeSetting"
+                  :class="{
+                    'current-page': $route.path === '/setting/personals',
+                  }"
+                >
+                  我的资料
+                </p>
                 <span></span>
-                <p @click="viewAccountSecurity">账号安全</p>
+                <p
+                  @click="viewAccountSecurity"
+                  :class="{
+                    'current-page': $route.path === '/setting/securitys',
+                  }"
+                >
+                  账号安全
+                </p>
                 <span></span>
-                <p @click="goToLikedArticles">我的点赞</p>
+                <p
+                  @click="goToLikedArticles"
+                  :class="{ 'current-page': $route.path === '/setting/likes' }"
+                >
+                  我的点赞
+                </p>
                 <span></span>
-                <p @click="openSettings">模式选择</p>
+                <p
+                  @click="openSettings"
+                  :class="{ 'current-page': $route.path === '/setting/modes' }"
+                >
+                  模式选择
+                </p>
                 <span></span>
-                <p @click="superColorPalette">多种语言</p>
+                <p
+                  @click="superColorPalette"
+                  :class="{
+                    'current-page': $route.path === '/setting/languages',
+                  }"
+                >
+                  多种语言
+                </p>
               </div>
             </div>
           </div>
@@ -88,7 +119,7 @@
             <p class="update-description">{{ update.content }}</p>
             <p class="update-time-text">
               <el-icon :size="16" :color="'#909399'">
-                <clock />
+                <Clock />
               </el-icon>
               更新时间: {{ update.formattedCreatedAt }}
             </p>
@@ -126,9 +157,12 @@
     </el-dialog>
   </div>
 </template>
+
 <script setup lang="ts" name="CommonHeader">
 import useHeader from "../../hooks/useHeader";
 import { defineProps } from "vue";
+import { Clock } from "@element-plus/icons-vue";
+
 // 使用插槽来显示搜索框 以便在不同的路由下显示不同的搜索框
 defineProps({
   showSearchBox: {
@@ -136,7 +170,8 @@ defineProps({
     default: false,
   },
 });
-let {
+
+const {
   Message,
   openSettings,
   goToLikedArticles,
@@ -153,9 +188,8 @@ let {
   user,
   drawerVisible,
   updates,
-  viewsystem,
   superColorPalette,
-
+  viewsystem,
   viewAvatar,
 } = useHeader();
 </script>
