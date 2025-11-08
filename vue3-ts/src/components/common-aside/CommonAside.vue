@@ -55,9 +55,9 @@
         </el-menu-item>
       </el-tooltip>
       <el-tooltip :content="t('commonaside.home.photo')" placement="right">
-        <el-menu-item index="/photowall/photos?category=自然风光">
+        <el-menu-item index="/photowall/photos?category=全部">
           <el-icon><PictureFilled /></el-icon>
-          <router-link to="/photowall/photos?category=自然风光">{{
+          <router-link to="/photowall/photos?category=全部">{{
             t("commonaside.home.photo")
           }}</router-link>
         </el-menu-item>

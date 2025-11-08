@@ -1,154 +1,162 @@
-.comment-form {
-  margin-bottom: 20px;
-
-  .input-wrapper {
-    position: relative;
-    margin-bottom: 15px;
-
-    .emoji-trigger {
-      position: absolute;
-      right: 60px;
-      bottom: 10px;
-      z-index: 1;
-    }
-
-    .bg-trigger {
-      position: absolute;
-      right: 90px;
-      bottom: 10px;
-      z-index: 1;
-    }
+  .comment-title {
+    margin: 10px 0;
+    font-size: 16px;
+    font-weight: 500;
   }
 
-  // 优化预览卡样式
-  .comment-bg-preview {
-    margin-top: 15px;
+  .comment-form {
+    margin-bottom: 20px;
 
-    .preview-card {
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
 
-      .preview-content {
-        .preview-user-info {
-          display: flex;
-          align-items: center;
-          margin-bottom: 10px;
 
-          .preview-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            margin-right: 10px;
-          }
+    .input-wrapper {
+      position: relative;
+      margin-bottom: 15px;
 
-          .user-detail {
-            flex: 1;
+      .emoji-trigger {
+        position: absolute;
+        right: 60px;
+        bottom: 1px;
+        z-index: 1;
+      }
 
-            .preview-header {
-              display: flex;
-              align-items: center;
-              margin-bottom: 2px;
+      .bg-trigger {
+        position: absolute;
+        right: 90px;
+        bottom: 1px;
+        z-index: 1;
+      }
+    }
 
-              .preview-time {
-                font-size: 12px;
-                color: rgba(0, 0, 0, 0.6);
-              }
+    // 优化预览卡样式
+    .comment-bg-preview {
+      margin-top: 15px;
+
+      .preview-card {
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+
+        .preview-content {
+          .preview-user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+
+            .preview-avatar {
+              width: 35px;
+              height: 35px;
+              border-radius: 50%;
+              margin-right: 10px;
             }
 
-            .preview-name-area {
-              display: flex;
-              align-items: center;
-              flex-wrap: wrap;
+            .user-detail {
+              flex: 1;
 
-              .preview-username {
-                font-weight: 500;
-                margin-right: 8px;
-                font-size: 14px;
+              .preview-header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 2px;
+
+                .preview-time {
+                  font-size: 12px;
+                  color: rgba(0, 0, 0, 0.6);
+                }
               }
 
-              .preview-area {
-                font-size: 12px;
-                color: rgba(0, 0, 0, 0.5);
+              .preview-name-area {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+
+                .preview-username {
+                  font-weight: 500;
+                  margin-right: 8px;
+                  font-size: 14px;
+                }
+
+                .preview-area {
+                  font-size: 12px;
+                  color: rgba(0, 0, 0, 0.5);
+                }
               }
+            }
+          }
+
+          .preview-text {
+            .preview-message {
+              font-size: 14px;
+              line-height: 1.5;
+              color: rgba(0, 0, 0, 0.8);
+              word-break: break-word;
             }
           }
         }
 
-        .preview-text {
-          .preview-message {
-            font-size: 14px;
-            line-height: 1.5;
-            color: rgba(0, 0, 0, 0.8);
-            word-break: break-word;
+        .preview-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+          .action-item {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+            font-size: 13px;
+            color: rgba(0, 0, 0, 0.6);
           }
         }
       }
+    }
+  }
 
-      .preview-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
+  // 表情包和背景卡样式
+  .emoji-container {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    padding: 8px;
 
-        .action-item {
-          display: flex;
-          align-items: center;
-          margin-left: 15px;
-          font-size: 13px;
-          color: rgba(0, 0, 0, 0.6);
-        }
+    .emoji-item {
+      cursor: pointer;
+      font-size: 20px;
+      text-align: center;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.2);
       }
     }
   }
-}
 
-// 表情包和背景卡样式
-.emoji-container {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
-  padding: 8px;
+  .bg-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); // 每行 4 个
+    // gap: 10px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
 
-  .emoji-item {
-    cursor: pointer;
-    font-size: 20px;
-    text-align: center;
-    transition: transform 0.2s;
+    .bg-item {
+      cursor: pointer;
 
-    &:hover {
-      transform: scale(1.2);
+      .bg-preview {
+        width: 80px;
+        height: 50px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      &.bg-item-selected .bg-preview {
+        border: 2px solid #409eff;
+        box-shadow: 0 0 0 2px #409eff;
+      }
+
+      .bg-name {
+        font-size: 12px;
+      }
     }
   }
-}
-
-.bg-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); // 每行 4 个
-  // gap: 10px;
-  padding: 10px;
-  max-height: 300px;
-  overflow-y: auto;
-
-  .bg-item {
-    cursor: pointer;
-
-    .bg-preview {
-      width: 80px;
-      height: 50px;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    }
-
-    &.bg-item-selected .bg-preview {
-      border: 2px solid #409eff;
-      box-shadow: 0 0 0 2px #409eff;
-    }
-
-    .bg-name {
-      font-size: 12px;
-    }
-  }
-}

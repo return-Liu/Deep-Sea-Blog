@@ -17,7 +17,7 @@
                 "
                 alt="头像"
                 class="avatar"
-                @click="handleAvatarClick"
+                @click="previewImage(user?.avatar || defaultAvatar)"
               />
             </div>
             <div class="user-text">
@@ -125,12 +125,16 @@
 
           <div v-else class="content-grid">
             <div
-              v-for="item in getCurrentTabContent()"
+              v-for="(item, index) in getCurrentTabContent()"
               :key="item.id"
               class="content-card"
             >
               <div class="content-image">
-                <img :src="item.image" :alt="item.title" />
+                <img
+                  :src="item.image"
+                  :alt="item.title"
+                  @click="previewImage(item.image, index)"
+                />
               </div>
               <div class="content-info">
                 <h3>{{ item.title }}</h3>
@@ -218,11 +222,19 @@
         </div>
       </div>
     </transition>
+
+    <!-- 图片预览组件 -->
+    <ImagePreview
+      :visible="showImageViewer"
+      :images="imagePreviewList"
+      :initial-index="initialIndex"
+      @close="showImageViewer = false"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import axiosConfig from "../../utils/request";
 import { YkEmpty } from "@yike-design/ui";
@@ -239,6 +251,7 @@ import Uuid from "../../components/icon/Uuid.vue";
 import { useUserStore } from "../../store/userStore";
 import { ElMessage } from "element-plus";
 import { el } from "date-fns/locale";
+import ImagePreview from "../../components/imagepreview/ImagePreview.vue";
 const userStore = useUserStore();
 const loadmore = ref(false);
 import { modelURL } from "../../config";
@@ -264,6 +277,13 @@ const showAvatarModal = ref(false); // 控制弹窗显示
 const route = useRoute();
 const user = ref<User | null>(null);
 
+// 图片预览相关状态
+const showImageViewer = ref(false);
+const imagePreviewList = ref<string[]>([]);
+const initialIndex = ref(0);
+const defaultAvatar =
+  "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
+
 const currentTab = ref("essay");
 const uuid = ref<string | string[]>();
 const tabs = [
@@ -272,6 +292,24 @@ const tabs = [
   { key: "notes", label: "随记" },
 ];
 const contentLoading = ref(false);
+
+// 图片预览方法
+const previewImage = (url: string, index?: number) => {
+  if (currentTab.value) {
+    // 如果是在内容区域点击图片，收集当前tab的所有图片
+    const currentContent = getCurrentTabContent();
+    imagePreviewList.value = currentContent
+      .filter((item) => item.image)
+      .map((item) => item.image as string);
+    initialIndex.value = index !== undefined ? index : 0;
+  } else {
+    // 如果是头像，只预览头像
+    imagePreviewList.value = [url];
+    initialIndex.value = 0;
+  }
+
+  showImageViewer.value = true;
+};
 
 const reportComment = () => {
   showReportModal.value = true;

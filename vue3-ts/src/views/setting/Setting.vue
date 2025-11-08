@@ -869,7 +869,7 @@ const changePassword = () => {
 };
 
 const activeTab = computed(() => {
-  return route.params.tab as string || 'personals';
+  return (route.params.tab as string) || "personals";
 });
 
 // 切换标签页
@@ -878,8 +878,8 @@ const changeTab = (tabId: string) => {
   if (activeTab.value === tabId) return;
 
   router.push({
-    name: 'setting',
-    params: { tab: tabId }
+    name: "setting",
+    params: { tab: tabId },
   });
 };
 
@@ -1058,7 +1058,10 @@ const deleteAccount = async () => {
       type: "warning",
     });
 
-    const confirmToken = `${userStore.user.id}_${Date.now()}`;
+    // 修改为与后端一致的令牌格式：精确到分钟的时间戳
+    const confirmToken = `${userStore.user.id}_${Math.floor(
+      Date.now() / 1000 / 60
+    )}`;
     const response = await axiosConfig.delete("/users/delete", {
       data: { confirmToken },
     });
@@ -1069,7 +1072,7 @@ const deleteAccount = async () => {
     Cookies.remove("ds-token");
 
     ElMessage.success(response.data.message);
-    router.push({ name: "login/index" });
+    router.push("/login/index");
   } catch (error: any) {
     if (error?.response?.status === 401 || error?.response?.status === 403) {
       Cookies.remove("ds-token");
@@ -1083,7 +1086,6 @@ const deleteAccount = async () => {
     }
   }
 };
-
 const fetchLikedArticles = async () => {
   try {
     const response = await axiosConfig.get("/admin/article", {

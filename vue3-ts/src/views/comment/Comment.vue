@@ -66,7 +66,7 @@
             popper-class="bg-popover-custom"
           >
             <template #reference>
-              <LinkOutlined
+              <PictureOutlined
                 style="color: #1890ff; cursor: pointer; font-size: 20px"
               />
             </template>
@@ -196,10 +196,9 @@ import {
   HeartOutlined,
   MessageOutlined,
   SmileOutlined,
-  LinkOutlined,
+  PictureOutlined,
 } from "@ant-design/icons-vue";
 import CommentItem from "./CommentItem.vue"; // 引入递归组件
-const replySelectedBackground = ref<string | null>(null);
 const defaultAvatar =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
 // 用户相关

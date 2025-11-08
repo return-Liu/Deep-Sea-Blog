@@ -235,6 +235,87 @@ router.post("/views/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
+// 添加分享文章接口
+router.post("/:id/share", userAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const article = await Article.findByPk(id, {
+      include: [
+        {
+          model: User,
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    if (!article) {
+      return failure(res, "文章不存在", 404);
+    }
+
+    // 生成分享链接或分享码
+    // 这里我们生成一个带有文章ID的分享标识符
+    const shareToken = `${id}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    // 在实际应用中，你可能想要将这个token存储到数据库中，并设置过期时间
+    // 这样可以更好地控制分享链接的有效性
+
+    success(res, "生成分享链接成功", {
+      shareLink: `/share/article/${shareToken}`,
+      shareToken: shareToken,
+      article: {
+        id: article.id,
+        title: article.title,
+        content: article.content,
+        image: article.image,
+        createdAt: article.createdAt,
+      },
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
+
+// 获取分享的文章内容（公开接口，无需认证）
+router.get("/share/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // 解析token获取文章ID
+    const articleId = token.split("-")[0];
+
+    if (!articleId) {
+      return failure(res, "无效的分享链接", 400);
+    }
+
+    const article = await Article.findByPk(articleId, {
+      include: [
+        {
+          model: User,
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    if (!article) {
+      return failure(res, "分享的文章不存在或已被删除", 404);
+    }
+
+    success(res, "获取分享文章成功", {
+      article: {
+        id: article.id,
+        title: article.title,
+        content: article.content,
+        image: article.image,
+        createdAt: article.createdAt,
+        views: article.views,
+      },
+    });
+  } catch (error) {
+    failure(res, error);
+  }
+});
 // 查询指定用户的文章列表
 router.get("/user/:uuid", async (req, res) => {
   try {

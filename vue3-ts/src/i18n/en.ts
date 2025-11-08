@@ -75,7 +75,7 @@ export const en = {
     toggleaccount: {
       title: "Toggle Account",
       description: "Add multiple accounts and switch between them anytime.",
-      currentAccount: "Current Account",
+      currentAccount: "Current Account Supports three account additions",
       addNewAccount: "Add or Register New Account",
     },
     supercolorpalette: {
@@ -86,7 +86,7 @@ export const en = {
   },
   commonaside: {
     home: {
-      logo: "Deep Sea",
+      logo: "Moment in Time",
       home: "Home",
       localResources: "Local Files",
       personalShare: "Personal Share",

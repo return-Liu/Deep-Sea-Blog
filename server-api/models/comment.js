@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       userId: DataTypes.INTEGER,
       content: DataTypes.TEXT,
-      wallId: DataTypes.STRING,
+      wallId: DataTypes.INTEGER,
       likesCount: DataTypes.INTEGER,
       commentbackground: DataTypes.STRING,
       // 添加回复功能所需的字段

@@ -24,6 +24,19 @@ function generateDeviceId(userId, userAgent) {
   hash.update(`${userId}-${userAgent}`);
   return hash.digest("hex");
 }
+// 定期清理过期的验证码（每小时执行一次）
+if (!global.verificationCleanupInterval) {
+  global.verificationCleanupInterval = setInterval(() => {
+    if (global.pendingEmailVerifications) {
+      const now = new Date();
+      for (const email in global.pendingEmailVerifications) {
+        if (global.pendingEmailVerifications[email].expire < now) {
+          delete global.pendingEmailVerifications[email];
+        }
+      }
+    }
+  }, 60 * 60 * 1000); // 每小时清理一次
+}
 // 生成一个随机的特征码
 function generateFeatureCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -224,6 +237,17 @@ router.post("/switch-account", userAuth, async (req, res) => {
       throw new UnauthorizedError("无权限切换到该账号");
     }
 
+    // 检查当前用户组的账号数量是否超过限制
+    const accountCount = await User.count({
+      where: {
+        clientFeatureCode: currentUser.clientFeatureCode,
+      },
+    });
+
+    if (accountCount > 3) {
+      throw new BadRequestError("每个用户最多只能创建3个账号");
+    }
+
     // 检查目标用户是否被冻结
     if (targetUser.isFrozen === 1) {
       return success(res, "账户已被冻结", {
@@ -245,6 +269,7 @@ router.post("/switch-account", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
+
 /**
  * 用户登录
  */
@@ -284,16 +309,14 @@ router.post("/sign_in", async (req, res) => {
 
     // 验证密码
     const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedError("密码错误,请输入正确的密码");
+    if (!isPasswordValid) throw new NotFoundError("密码错误,请输入正确的密码");
 
-    // 登录成功
+    // 登录成功，传递登录方式参数
     await handlePostLogin(user, req, res, "密码登录");
   } catch (error) {
     failure(res, error);
   }
 });
-
 // 邮箱验证码登录 - 发送验证码（带频率限制）
 router.post("/email/verify", async (req, res) => {
   try {
@@ -318,66 +341,15 @@ router.post("/email/verify", async (req, res) => {
     // 发送对应的邮件
     if (!user) {
       await verifyEmailForRegister(email, code);
-      // 创建临时用户记录
-      await User.create({
-        email,
-        code,
-        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
-        uuid: require("crypto").randomUUID(), // 生成随机UUID
-        password: Math.random().toString(36).slice(-8), // 生成临时密码
-        sex: 0, // 设置默认性别
-        clientFeatureCode: clientFeatureCode || "unknown", // 使用传入的特征码或默认值
-        theme: "light", // 添加必需的主题字段
-        role: "user", // 添加必需的角色字段
-      });
-    } else {
-      await verifyEmailForLogin(email, code);
-      await user.update({
-        code,
-        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
-      });
-    }
-
-    success(res, "验证码发送成功");
-  } catch (error) {
-    failure(res, error);
-  }
-}); // 邮箱验证码登录 - 发送验证码（带频率限制）
-router.post("/email/verify", async (req, res) => {
-  try {
-    const { email, clientFeatureCode } = req.body;
-
-    const key = `email:${email}`;
-    if (!canSendCode(key)) {
-      throw new BadRequestError("请求频繁，请稍后再试");
-    }
-
-    if (clientFeatureCode) {
-      const featureKey = `feature:${clientFeatureCode}`;
-      if (!canSendCode(featureKey)) {
-        throw new BadRequestError("请求频繁，请稍后再试");
+      // 不再创建临时用户记录，而是将验证码信息存储在内存中
+      if (!global.pendingEmailVerifications) {
+        global.pendingEmailVerifications = {};
       }
-    }
-
-    // 查找用户
-    const user = await User.findOne({ where: { email } });
-    const code = createSixNum();
-
-    // 发送对应的邮件
-    if (!user) {
-      await verifyEmailForRegister(email, code);
-      // 创建临时用户记录
-      await User.create({
-        email,
-        code,
-        codeExpire: new Date(Date.now() + 5 * 60 * 1000),
-        uuid: require("crypto").randomUUID(), // 生成随机UUID
-        password: Math.random().toString(36).slice(-8), // 生成临时密码
-        sex: 0, // 设置默认性别
-        clientFeatureCode: clientFeatureCode || "unknown", // 使用传入的特征码或默认值
-        theme: "light", // 添加必需的主题字段
-        role: "user", // 添加必需的角色字段
-      });
+      global.pendingEmailVerifications[email] = {
+        code: code,
+        expire: new Date(Date.now() + 5 * 60 * 1000),
+        clientFeatureCode: clientFeatureCode || "unknown",
+      };
     } else {
       await verifyEmailForLogin(email, code);
       await user.update({
@@ -388,10 +360,15 @@ router.post("/email/verify", async (req, res) => {
 
     success(res, "验证码发送成功");
   } catch (error) {
-    failure(res, error);
+    // 特别处理手机号唯一性冲突错误
+    if (error.name === "SequelizeUniqueConstraintError" && error.fields.phone) {
+      // 如果是手机号唯一性错误，可以忽略或给出特殊处理
+      success(res, "验证码发送成功");
+    } else {
+      failure(res, error);
+    }
   }
 });
-
 // 邮箱验证码登录
 router.post("/email", async (req, res) => {
   try {
@@ -401,43 +378,90 @@ router.post("/email", async (req, res) => {
     let user = await User.findOne({ where: { email } });
 
     if (!user) {
-      throw new NotFoundError("用户不存在，请先注册");
-    }
+      // 检查是否存在待验证的验证码
+      if (
+        !global.pendingEmailVerifications ||
+        !global.pendingEmailVerifications[email]
+      ) {
+        throw new NotFoundError("验证码已过期或未发送，请重新获取验证码");
+      }
 
-    // 检查用户是否被冻结
-    if (user.isFrozen === 1) {
-      return success(res, "账户已被冻结", {
-        isFrozen: true,
-        username: user.username,
-        frozenReason: user.frozenReason || "违反社区规定",
-        frozenAt: user.frozenAt,
-        unfreezeAt: user.unfreezeAt,
-        freezeType: user.freezeType,
-        frozenMessage: user.frozenMessage,
-      });
-    }
+      const pendingVerification = global.pendingEmailVerifications[email];
+      // 验证验证码
+      if (pendingVerification.code !== code)
+        throw new BadRequestError("验证码错误");
+      if (new Date() > pendingVerification.expire)
+        throw new BadRequestError("验证码已过期");
 
-    // 验证验证码
-    if (user.code !== code) throw new BadRequestError("验证码错误");
-    if (new Date() > user.codeExpire) throw new BadRequestError("验证码已过期");
+      // 验证通过，创建新用户
+      try {
+        user = await User.create({
+          email,
+          code: pendingVerification.code,
+          codeExpire: pendingVerification.expire,
+          uuid: generateUUID(), // 生成随机UUID
+          password: Math.random().toString(36).slice(-8), // 生成临时密码
+          sex: 0, // 设置默认性别
+          clientFeatureCode: pendingVerification.clientFeatureCode, // 使用之前存储的特征码
+          theme: "light", // 添加必需的主题字段
+          role: "user", // 添加必需的角色字段
+          phone: null, // 显式设置phone为null，避免唯一性约束问题
+          nickname: generateNickname(),
+          username: `${generateUUID()}`,
+          avatar: null,
+          birthday: null,
+          introduce: "",
+          constellation: null,
+          area: null,
+          nicknameColor: "#000000",
+        });
+      } catch (createError) {
+        // 处理用户创建过程中可能发生的错误
+        if (createError.name === "SequelizeUniqueConstraintError") {
+          throw new BadRequestError("账户创建失败，请稍后重试");
+        }
+        throw createError;
+      }
 
-    // 如果用户没有设置完整信息（临时注册用户），完善用户信息
-    if (!user.password || !user.username) {
-      await user.update({
-        password: generatePassword(),
-        nickname: generateNickname(),
-        sex: 0,
-        uuid: generateUUID(),
-        clientFeatureCode: clientFeatureCode || generateFeatureCode(),
-        username: `${generateUUID()}`,
-        avatar: null,
-        birthday: null,
-        introduce: "",
-        constellation: null,
-        area: null,
-        nicknameColor: "#000000",
-        phone: "",
-      });
+      // 清除已使用的验证码信息
+      delete global.pendingEmailVerifications[email];
+    } else {
+      // 检查用户是否被冻结
+      if (user.isFrozen === 1) {
+        return success(res, "账户已被冻结", {
+          isFrozen: true,
+          username: user.username,
+          frozenReason: user.frozenReason || "违反社区规定",
+          frozenAt: user.frozenAt,
+          unfreezeAt: user.unfreezeAt,
+          freezeType: user.freezeType,
+          frozenMessage: user.frozenMessage,
+        });
+      }
+
+      // 验证验证码
+      if (user.code !== code) throw new BadRequestError("验证码错误");
+      if (new Date() > user.codeExpire)
+        throw new BadRequestError("验证码已过期");
+
+      // 如果用户没有设置完整信息（临时注册用户），完善用户信息
+      if (!user.password || !user.username) {
+        await user.update({
+          password: generatePassword(),
+          nickname: generateNickname(),
+          sex: 0,
+          uuid: generateUUID(),
+          clientFeatureCode: clientFeatureCode || generateFeatureCode(),
+          username: `${generateUUID()}`,
+          avatar: null,
+          birthday: null,
+          introduce: "",
+          constellation: null,
+          area: null,
+          nicknameColor: "#000000",
+          phone: null, // 修改这里：将空字符串改为null
+        });
+      }
     }
 
     // 登录成功
@@ -446,7 +470,6 @@ router.post("/email", async (req, res) => {
     failure(res, error);
   }
 });
-
 router.get("/validate", userAuth, async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);

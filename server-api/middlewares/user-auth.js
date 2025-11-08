@@ -1,7 +1,15 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { User, Device } = require("../models");
 const { UnauthorizedError } = require("../utils/errors");
 const { failure } = require("../utils/responses");
+const crypto = require("crypto");
+
+// 生成设备唯一标识符
+function generateDeviceId(userId, userAgent) {
+  const hash = crypto.createHash("md5");
+  hash.update(`${userId}-${userAgent}`);
+  return hash.digest("hex");
+}
 
 // 定义认证相关的错误消息常量
 const AUTH_ERRORS = {
@@ -13,6 +21,7 @@ const AUTH_ERRORS = {
   INCOMPLETE_TOKEN_INFO: "登录凭证信息不完整，请重新登录",
   USER_NOT_FOUND: "用户不存在或已经注销",
   USER_FROZEN: "您的账户已被冻结，请联系管理员",
+  DEVICE_NOT_FOUND: "登录设备不存在，请重新登录", // 添加设备不存在错误消息
 };
 
 module.exports = async (req, res, next) => {
@@ -59,6 +68,20 @@ module.exports = async (req, res, next) => {
     // 检查用户冻结状态
     if (user.isFrozen === 1) {
       throw new UnauthorizedError(AUTH_ERRORS.USER_FROZEN);
+    }
+
+    // 检查设备是否存在（用于强制下线功能）
+    const deviceInfo = req.get("User-Agent") || "";
+    const deviceId = generateDeviceId(userId, deviceInfo);
+    const device = await Device.findOne({
+      where: {
+        deviceId: deviceId,
+        userId: userId,
+      },
+    });
+
+    if (!device) {
+      throw new UnauthorizedError(AUTH_ERRORS.DEVICE_NOT_FOUND);
     }
 
     // 将用户信息附加到请求对象

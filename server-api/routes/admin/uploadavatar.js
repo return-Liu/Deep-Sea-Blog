@@ -115,9 +115,7 @@ router.post("/cropAvatar", upload.single("avatar"), async (req, res) => {
     }
 
     // 生成新文件名
-    const newFilename = `cropped_${Date.now()}${path.extname(
-      req.file.originalname
-    )}`;
+    const newFilename = `${Date.now()}${path.extname(req.file.originalname)}`;
 
     // 使用sharp处理图片 - 裁剪为正方形并调整大小
     const metadata = await sharp(req.file.buffer).metadata();

@@ -1,144 +1,89 @@
 <template>
-  <div class="content-detail-container">
-    <!-- 功能提示 -->
-    <el-alert
-      title="目前仅支持封面图片更换，更多精彩功能正在快马加鞭开发中～"
-      type="warning"
-      :closable="false"
-      effect="dark"
-      class="feature-alert"
-    ></el-alert>
+  <div class="ov-page">
+    <div v-if="content" class="ov-shell" :class="`type-${contentType}`">
+      <header class="ov-toolbar">
+        <div class="ov-breadcrumb">
+          <button class="ov-crumb" type="button" @click="goBack">
+            <el-icon><ArrowLeft /></el-icon>
+            <span>返回</span>
+          </button>
+          <span class="ov-crumb-sep">/</span>
+          <span class="ov-crumb active">{{ currentTypeText }}</span>
+        </div>
+        <div class="ov-actions">
+          <el-button
+            type="primary"
+            :icon="EditOutlined"
+            @click="startEditing"
+            class="ov-btn"
+            >编辑</el-button
+          >
+          <el-button
+            type="danger"
+            plain
+            :icon="DeleteOutlined"
+            @click="handleDelete(content.id)"
+            class="ov-btn"
+            >删除</el-button
+          >
+        </div>
+      </header>
 
-    <!-- 内容区域 -->
-    <div class="content-wrapper" v-if="content">
-      <!-- 主要内容区域 -->
-      <div class="main-content">
-        <div class="content-card" :class="contentType">
-          <!-- 文章类型 -->
-          <div v-if="contentType === 'essay'" class="essay-content">
-            <!-- 文章头部 -->
-            <div class="content-header">
-              <div class="breadcrumb">
-                <span class="breadcrumb-item" @click="goBack">
-                  <el-icon><ArrowLeft /></el-icon>
-                  返回列表
-                </span>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">{{
-                  currentTypeText
-                }}</span>
-              </div>
-
-              <div class="header-actions">
-                <el-button
-                  type="primary"
-                  :icon="EditOutlined"
-                  @click="startEditing"
-                  class="edit-btn"
-                >
-                  编辑
-                </el-button>
-                <el-button
-                  type="danger"
-                  :icon="DeleteOutlined"
-                  @click="handleDelete(content.id)"
-                  class="delete-btn"
-                  plain
-                >
-                  删除
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 编辑模式 -->
-            <div v-if="isEditing" class="edit-mode">
-              <!-- 标题编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">文章标题</label>
-                <el-input
-                  v-model="editData.title"
-                  placeholder="请输入文章标题"
-                  maxlength="100"
-                  show-word-limit
-                ></el-input>
-              </div>
-
-              <!-- 标签编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">文章标签</label>
-                <el-input
-                  v-model="editData.label"
-                  placeholder="请输入文章标签"
-                  maxlength="20"
-                  show-word-limit
-                ></el-input>
-              </div>
-
-              <!-- 内容编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">文章内容</label>
-                <el-input
-                  v-model="editData.content"
-                  type="textarea"
-                  :rows="15"
-                  placeholder="请输入文章内容"
-                  resize="vertical"
-                ></el-input>
-              </div>
-
-              <!-- 编辑操作按钮 -->
-              <div class="edit-actions">
-                <el-button
-                  type="primary"
-                  :icon="CheckOutlined"
-                  @click="saveEditing"
-                  :loading="isSaving"
-                >
-                  保存
-                </el-button>
-                <el-button
-                  :icon="CloseOutlined"
-                  @click="cancelEditing"
-                  :disabled="isSaving"
-                >
-                  取消
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 阅读模式 -->
-            <div v-else>
-              <!-- 文章元信息 -->
-              <div class="content-meta">
-                <div class="meta-left">
-                  <el-tag class="category-tag" type="primary" effect="light">
-                    {{ content.label }}
-                  </el-tag>
-                  <span class="publish-date">
-                    <el-icon><Calendar /></el-icon>
-                    {{ formatDate(content.createdAt) }}
-                  </span>
+      <div class="ov-layout" :class="{ full: contentType !== 'essay' }">
+        <main class="ov-main">
+          <section v-if="contentType === 'essay'" class="ov-card ov-essay">
+            <template v-if="isEditing">
+              <div class="ov-edit">
+                <div class="ov-field">
+                  <label class="ov-label">文章标题</label>
+                  <el-input
+                    v-model="editData.title"
+                    placeholder="请输入文章标题"
+                    maxlength="100"
+                    show-word-limit
+                  />
                 </div>
-                <div class="meta-right">
-                  <div class="stat-item">
-                    <el-icon><View /></el-icon>
-                    <span>{{ content.views || 0 }} 次浏览</span>
-                  </div>
-                  <div class="stat-item">
-                    <el-icon><Star /></el-icon>
-                    <span>{{ content.likesCount || 0 }} 次点赞</span>
-                  </div>
+                <div class="ov-field">
+                  <label class="ov-label">文章标签</label>
+                  <el-input
+                    v-model="editData.label"
+                    placeholder="请输入文章标签"
+                    maxlength="20"
+                    show-word-limit
+                  />
+                </div>
+                <div class="ov-field">
+                  <label class="ov-label">文章内容</label>
+                  <el-input
+                    v-model="editData.content"
+                    type="textarea"
+                    :rows="14"
+                    placeholder="请输入文章内容"
+                    resize="vertical"
+                  />
+                </div>
+                <div class="ov-edit-actions">
+                  <el-button
+                    type="primary"
+                    :icon="CheckOutlined"
+                    :loading="isSaving"
+                    @click="saveEditing"
+                    >保存</el-button
+                  >
+                  <el-button
+                    :icon="CloseOutlined"
+                    :disabled="isSaving"
+                    @click="cancelEditing"
+                    >取消</el-button
+                  >
                 </div>
               </div>
-
-              <!-- 文章标题 -->
-              <h1 class="content-title">{{ content.title }}</h1>
-
-              <!-- 文章封面 -->
-              <div class="featured-image" v-if="content.image">
+            </template>
+            <template v-else>
+              <div v-if="content.image" class="ov-media">
                 <el-upload
                   ref="essayUploadRef"
-                  class="essay-photo-uploader"
+                  class="ov-upload"
                   :action="`${apiUrl}/admin/upload`"
                   :show-file-list="false"
                   :before-upload="beforeUpload"
@@ -149,174 +94,156 @@
                   :auto-upload="false"
                   @change="handleChange"
                 >
-                  <div class="image-container">
+                  <div class="ov-media-box">
                     <img
                       :src="content.image"
                       v-lazy="content.image"
-                      class="content-image"
+                      class="ov-media-img"
+                      alt="文章封面"
                     />
-                    <div class="image-overlay">
-                      <div class="overlay-content">
-                        <el-icon><Camera /></el-icon>
-                        <span>更换封面</span>
-                      </div>
+                    <div class="ov-media-mask">
+                      <el-icon><Camera /></el-icon>
+                      <span>更换封面</span>
                     </div>
                   </div>
                 </el-upload>
-                <div v-if="showUploadButton" class="upload-actions">
+                <div v-if="showUploadButton" class="ov-upload-actions">
                   <el-button
+                    size="small"
                     type="primary"
-                    size="small"
+                    class="ov-pill"
                     @click="submitUpload('essay')"
-                    class="update-image-btn"
+                    >更换图片</el-button
                   >
-                    更换图片
-                  </el-button>
                   <el-button
-                    type="info"
                     size="small"
+                    class="ov-pill"
                     @click="cancelUpload('essay')"
-                    class="cancel-upload-btn"
+                    >取消</el-button
                   >
-                    取消
-                  </el-button>
                 </div>
               </div>
 
-              <!-- 文章内容 -->
-              <div class="content-body">
-                <div
-                  class="content-text"
-                  v-html="formatContent(content.content)"
-                ></div>
-              </div>
-
-              <!-- 文章底部 -->
-              <div class="content-footer">
-                <div class="author-info">
-                  <div class="author-avatar">
-                    <img
-                      @click="openAuthorProfile()"
-                      v-if="user.avatar || defaultAvatar"
-                      v-lazy="user.avatar || defaultAvatar"
-                      :title="'博主头像'"
-                      class="avatar"
-                    />
-                  </div>
-                  <div class="author-details">
-                    <span
-                      class="author-name"
-                      :style="{ color: user.nicknameColor }"
-                    >
-                      {{ user.nickname || "匿名" }}
-                    </span>
-                    <span class="author-role">博主</span>
-                  </div>
+              <header class="ov-head">
+                <h1 class="ov-title">{{ content.title }}</h1>
+                <div class="ov-meta">
+                  <el-tag class="ov-badge" type="primary" effect="light">{{
+                    content.label
+                  }}</el-tag>
+                  <span class="ov-meta-item">
+                    <el-icon><Calendar /></el-icon
+                    >{{ formatDate(content.createdAt) }}
+                  </span>
+                  <span class="ov-meta-item">
+                    <el-icon><View /></el-icon>{{ content.views || 0 }} 浏览
+                  </span>
+                  <span class="ov-meta-item">
+                    <el-icon><Star /></el-icon
+                    >{{ content.likesCount || 0 }} 点赞
+                  </span>
                 </div>
+              </header>
 
-                <div class="action-buttons">
+              <article
+                class="ov-body"
+                v-html="formatContent(content.content)"
+              />
+
+              <footer class="ov-foot">
+                <div class="ov-cta">
                   <el-button
                     type="primary"
                     :icon="ShareAltOutlined"
-                    class="share-btn"
+                    class="ov-pill"
                     @click="handleShare"
+                    >分享</el-button
                   >
-                    分享
-                  </el-button>
                   <el-button
                     :icon="HeartOutlined"
                     :type="isLiked ? 'warning' : ''"
-                    class="like-btn"
+                    class="ov-pill"
                   >
                     {{ isLiked ? "已点赞" : "点赞" }} ({{
                       content.likesCount || 0
                     }})
                   </el-button>
+                  <el-dropdown
+                    v-if="contentType === 'essay'"
+                    @command="changeStyle"
+                  >
+                    <el-button class="ov-pill" :icon="SkinOutlined"
+                      >风格</el-button
+                    >
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="default"
+                          >默认风格</el-dropdown-item
+                        >
+                        <el-dropdown-item command="ink"
+                          >水墨风格</el-dropdown-item
+                        >
+                        <el-dropdown-item command="antique"
+                          >古典风格</el-dropdown-item
+                        >
+                        <el-dropdown-item command="modern"
+                          >现代风格</el-dropdown-item
+                        >
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </footer>
+            </template>
+          </section>
+
+          <section
+            v-else-if="contentType === 'photography'"
+            class="ov-card ov-photo"
+          >
+            <template v-if="isEditing">
+              <div class="ov-edit">
+                <div class="ov-field">
+                  <label class="ov-label">作品描述</label>
+                  <el-input
+                    v-model="editData.content"
+                    type="textarea"
+                    :rows="10"
+                    placeholder="请输入作品描述"
+                    resize="vertical"
+                  />
+                </div>
+                <div class="ov-edit-actions">
+                  <el-button
+                    type="primary"
+                    :icon="CheckOutlined"
+                    :loading="isSaving"
+                    @click="saveEditing"
+                    >保存</el-button
+                  >
+                  <el-button
+                    :icon="CloseOutlined"
+                    :disabled="isSaving"
+                    @click="cancelEditing"
+                    >取消</el-button
+                  >
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+            <template v-else>
+              <header class="ov-head">
+                <h1 class="ov-title">{{ content.title || "摄影作品" }}</h1>
+                <div class="ov-meta">
+                  <span class="ov-meta-item"
+                    ><el-icon><Calendar /></el-icon
+                    >{{ formatDate(content.createdAt) }}</span
+                  >
+                </div>
+              </header>
 
-          <!-- 摄影类型 -->
-          <div
-            v-else-if="contentType === 'photography'"
-            class="photography-content"
-          >
-            <!-- 摄影头部 -->
-            <div class="content-header">
-              <div class="breadcrumb">
-                <span class="breadcrumb-item" @click="goBack">
-                  <el-icon><ArrowLeft /></el-icon>
-                  返回列表
-                </span>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">{{
-                  currentTypeText
-                }}</span>
-              </div>
-
-              <div class="header-actions">
-                <el-button
-                  type="primary"
-                  :icon="EditOutlined"
-                  @click="startEditing"
-                  class="edit-btn"
-                >
-                  编辑
-                </el-button>
-                <el-button
-                  type="danger"
-                  :icon="DeleteOutlined"
-                  @click="handleDelete(content.id)"
-                  class="delete-btn"
-                  plain
-                >
-                  删除
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 编辑模式 -->
-            <div v-if="isEditing" class="edit-mode">
-              <!-- 内容编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">作品描述</label>
-                <el-input
-                  v-model="editData.content"
-                  type="textarea"
-                  :rows="10"
-                  placeholder="请输入作品描述"
-                  resize="vertical"
-                ></el-input>
-              </div>
-
-              <!-- 编辑操作按钮 -->
-              <div class="edit-actions">
-                <el-button
-                  type="primary"
-                  :icon="CheckOutlined"
-                  @click="saveEditing"
-                  :loading="isSaving"
-                >
-                  保存
-                </el-button>
-                <el-button
-                  :icon="CloseOutlined"
-                  @click="cancelEditing"
-                  :disabled="isSaving"
-                >
-                  取消
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 阅读模式 -->
-            <div v-else>
-              <!-- 摄影作品 -->
-              <div class="photo-container">
+              <div class="ov-photo-hero">
                 <el-upload
                   ref="photoUploadRef"
-                  class="photography-photo-uploader"
+                  class="ov-upload"
                   :action="`${apiUrl}/admin/upload`"
                   :show-file-list="false"
                   :before-upload="beforeUpload"
@@ -327,336 +254,359 @@
                   :auto-upload="false"
                   @change="handleChange"
                 >
-                  <div class="photo-wrapper">
-                    <div class="photo-meta-overlay">
-                      <h2 class="photo-title">
-                        {{ content.title || "摄影作品" }}
-                      </h2>
-                      <span class="photo-date">{{
-                        formatDate(content.createdAt)
-                      }}</span>
-                    </div>
+                  <div class="ov-photo-frame">
                     <img
                       :src="content.image"
                       v-lazy="content.image"
-                      class="photo-image"
+                      class="ov-photo-img"
+                      alt="摄影作品"
                     />
-                    <div class="photo-actions">
+                    <div class="ov-photo-mask">
                       <el-button
                         type="primary"
                         :icon="CameraOutlined"
-                        class="change-photo-btn"
+                        class="ov-pill"
                         @click.stop="submitUpload('photography')"
+                        >更换图片</el-button
                       >
-                        更换图片
-                      </el-button>
-                    </div>
-                  </div>
-                </el-upload>
-              </div>
-
-              <!-- 摄影描述 -->
-              <div class="photo-description" v-if="content.content">
-                <h3 class="description-title">作品描述</h3>
-                <p class="description-text">{{ content.content }}</p>
-              </div>
-
-              <!-- EXIF信息 -->
-              <div class="exif-section" v-if="content.exif">
-                <h3 class="exif-title">拍摄信息</h3>
-                <div class="exif-grid">
-                  <div
-                    class="exif-item"
-                    v-for="(val, k) in content.exif"
-                    :key="k"
-                  >
-                    <span class="exif-label">{{ k }}</span>
-                    <span class="exif-value">{{ val }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 笔记类型 -->
-          <div v-else-if="contentType === 'notes'" class="notes-content">
-            <!-- 笔记头部 -->
-            <div class="content-header">
-              <div class="breadcrumb">
-                <span class="breadcrumb-item" @click="goBack">
-                  <el-icon><ArrowLeft /></el-icon>
-                  返回列表
-                </span>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-item active">{{
-                  currentTypeText
-                }}</span>
-              </div>
-
-              <div class="header-actions">
-                <el-button
-                  type="primary"
-                  :icon="EditOutlined"
-                  @click="startEditing"
-                  class="edit-btn"
-                >
-                  编辑
-                </el-button>
-                <el-button
-                  type="danger"
-                  :icon="DeleteOutlined"
-                  @click="handleDelete(content.id)"
-                  class="delete-btn"
-                  plain
-                >
-                  删除
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 编辑模式 -->
-            <div v-if="isEditing" class="edit-mode">
-              <!-- 标题编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">随笔标题</label>
-                <el-input
-                  v-model="editData.title"
-                  placeholder="请输入随笔标题"
-                  maxlength="100"
-                  show-word-limit
-                ></el-input>
-              </div>
-
-              <!-- 内容编辑 -->
-              <div class="edit-field">
-                <label class="edit-label">随笔内容</label>
-                <el-input
-                  v-model="editData.content"
-                  type="textarea"
-                  :rows="12"
-                  placeholder="请输入随笔内容"
-                  resize="vertical"
-                ></el-input>
-              </div>
-
-              <!-- 编辑操作按钮 -->
-              <div class="edit-actions">
-                <el-button
-                  type="primary"
-                  :icon="CheckOutlined"
-                  @click="saveEditing"
-                  :loading="isSaving"
-                >
-                  保存
-                </el-button>
-                <el-button
-                  :icon="CloseOutlined"
-                  @click="cancelEditing"
-                  :disabled="isSaving"
-                >
-                  取消
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 阅读模式 -->
-            <div v-else>
-              <!-- 笔记元信息 -->
-              <div class="note-meta">
-                <span class="note-date">
-                  <el-icon><Calendar /></el-icon>
-                  {{ formatDate(content.createdAt) }}
-                </span>
-              </div>
-
-              <!-- 笔记标题 -->
-              <h1 class="note-title">{{ content.title }}</h1>
-
-              <!-- 笔记封面 -->
-              <div class="note-image" v-if="content.image">
-                <el-upload
-                  ref="notesUploadRef"
-                  class="notes-photo-uploader"
-                  :action="`${apiUrl}/admin/upload`"
-                  :show-file-list="false"
-                  :before-upload="beforeUpload"
-                  :on-success="handleSuccess"
-                  method="post"
-                  :data="{ userId: userId }"
-                  name="image"
-                  :auto-upload="false"
-                  @change="handleChange"
-                >
-                  <div class="image-container">
-                    <img
-                      :src="content.image"
-                      v-lazy="content.image"
-                      class="content-image"
-                    />
-                    <div class="image-overlay">
-                      <div class="overlay-content">
-                        <el-icon><Camera /></el-icon>
-                        <span>更换封面</span>
+                      <div v-if="showUploadButton" class="ov-photo-actions">
+                        <el-button
+                          type="primary"
+                          size="small"
+                          class="ov-pill"
+                          @click="submitUpload('photography')"
+                          >确认更换</el-button
+                        >
+                        <el-button
+                          size="small"
+                          class="ov-pill"
+                          @click="cancelUpload('photography')"
+                          >取消</el-button
+                        >
                       </div>
                     </div>
                   </div>
                 </el-upload>
-                <div v-if="showUploadButton" class="upload-actions">
+              </div>
+
+              <div class="ov-sections">
+                <section v-if="content.content" class="ov-section">
+                  <div class="ov-section-head">
+                    <el-icon><Edit /></el-icon>
+                    <h3>作品描述</h3>
+                  </div>
+                  <p class="ov-desc">{{ content.content }}</p>
+                </section>
+                <section
+                  v-if="content.exif && Object.keys(content.exif).length > 0"
+                  class="ov-section"
+                >
+                  <div class="ov-section-head">
+                    <el-icon><Camera /></el-icon>
+                    <h3>拍摄信息</h3>
+                  </div>
+                  <div class="ov-exif">
+                    <div
+                      class="ov-exif-item"
+                      v-for="(val, k) in content.exif"
+                      :key="k"
+                    >
+                      <div class="ov-exif-icon">
+                        <el-icon v-if="getExifIcon(String(k))"
+                          ><component :is="getExifIcon(String(k))"
+                        /></el-icon>
+                      </div>
+                      <div class="ov-exif-meta">
+                        <span class="ov-exif-label">{{
+                          getExifLabel(String(k))
+                        }}</span>
+                        <span class="ov-exif-value">{{ String(val) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                <section
+                  v-if="content.tags && content.tags.length"
+                  class="ov-section"
+                >
+                  <div class="ov-section-head">
+                    <el-icon><PriceTag /></el-icon>
+                    <h3>作品标签</h3>
+                  </div>
+                  <div class="ov-tags">
+                    <el-tag
+                      v-for="tag in content.tags"
+                      :key="tag"
+                      class="ov-tag"
+                      type="info"
+                      effect="light"
+                      >{{ tag }}</el-tag
+                    >
+                  </div>
+                </section>
+              </div>
+            </template>
+          </section>
+
+          <section v-else-if="contentType === 'notes'" class="ov-card ov-notes">
+            <template v-if="isEditing">
+              <div class="ov-edit">
+                <div class="ov-field">
+                  <label class="ov-label">随笔标题</label>
+                  <el-input
+                    v-model="editData.title"
+                    placeholder="请输入随笔标题"
+                    maxlength="100"
+                    show-word-limit
+                  />
+                </div>
+                <div class="ov-field">
+                  <label class="ov-label">随笔内容</label>
+                  <el-input
+                    v-model="editData.content"
+                    type="textarea"
+                    :rows="12"
+                    placeholder="请输入随笔内容"
+                    resize="vertical"
+                  />
+                </div>
+                <div class="ov-edit-actions">
                   <el-button
                     type="primary"
-                    size="small"
-                    @click="submitUpload('notes')"
-                    class="update-image-btn"
+                    :icon="CheckOutlined"
+                    :loading="isSaving"
+                    @click="saveEditing"
+                    >保存</el-button
                   >
-                    更新图片
-                  </el-button>
                   <el-button
-                    type="info"
-                    size="small"
-                    @click="cancelUpload('notes')"
-                    class="cancel-upload-btn"
+                    :icon="CloseOutlined"
+                    :disabled="isSaving"
+                    @click="cancelEditing"
+                    >取消</el-button
                   >
-                    取消
-                  </el-button>
                 </div>
               </div>
+            </template>
+            <template v-else>
+              <header class="ov-head">
+                <h1 class="ov-title">{{ content.title }}</h1>
+                <div class="ov-meta">
+                  <span class="ov-meta-item">
+                    <el-icon><Calendar /></el-icon>
+                    {{ formatDate(content.createdAt) }}
+                  </span>
+                </div>
+              </header>
 
-              <!-- 笔记内容 -->
-              <div class="note-body">
-                <div
-                  class="note-text"
-                  v-html="formatContent(content.content)"
-                ></div>
+              <div class="ov-note-cover">
+                <el-upload
+                  ref="notesUploadRef"
+                  class="ov-upload"
+                  :action="`${apiUrl}/admin/upload`"
+                  :show-file-list="false"
+                  :before-upload="beforeUpload"
+                  :on-success="handleSuccess"
+                  method="post"
+                  :data="{ userId: userId }"
+                  name="image"
+                  :auto-upload="false"
+                  @change="handleChange"
+                >
+                  <div class="ov-note-frame">
+                    <img
+                      :src="content.image"
+                      v-lazy="content.image"
+                      class="ov-note-img"
+                      alt="笔记封面"
+                    />
+                    <div class="ov-note-mask">
+                      <!-- 仅保留右下角的更换封面按钮 -->
+                      <div class="ov-note-mask-row bottom-right">
+                        <el-button
+                          type="primary"
+                          :icon="CameraOutlined"
+                          class="ov-pill"
+                          @click.stop="submitUpload('notes')"
+                          >更换封面</el-button
+                        >
+                        <div v-if="showUploadButton" class="ov-upload-actions">
+                          <el-button
+                            type="primary"
+                            size="small"
+                            class="ov-pill"
+                            @click="submitUpload('notes')"
+                            >确认更换</el-button
+                          >
+                          <el-button
+                            size="small"
+                            class="ov-pill"
+                            @click="cancelUpload('notes')"
+                            >取消</el-button
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </el-upload>
               </div>
 
-              <!-- 笔记标签 -->
-              <div class="note-tags" v-if="content.tags && content.tags.length">
-                <h3 class="tags-title">标签</h3>
-                <div class="tags-container">
+              <section class="ov-section">
+                <div class="ov-section-head">
+                  <el-icon><Document /></el-icon>
+                  <h3>随笔内容</h3>
+                </div>
+                <div
+                  class="ov-note-body"
+                  v-html="formatContent(content.content)"
+                />
+              </section>
+              <section
+                v-if="content.tags && content.tags.length"
+                class="ov-section"
+              >
+                <div class="ov-section-head">
+                  <el-icon><PriceTag /></el-icon>
+                  <h3>标签</h3>
+                </div>
+                <div class="ov-tags">
                   <el-tag
                     v-for="tag in content.tags"
                     :key="tag"
-                    class="tag-item"
+                    class="ov-tag"
                     type="info"
-                    effect="plain"
+                    effect="light"
+                    >{{
+                      tag.length > 6 ? tag.substring(0, 6) + "..." : tag
+                    }}</el-tag
                   >
-                    {{ tag }}
-                  </el-tag>
+                </div>
+              </section>
+            </template>
+          </section>
+        </main>
+
+        <aside v-if="contentType === 'essay'" class="ov-aside">
+          <section class="ov-side-card">
+            <h3 class="ov-side-title">
+              <el-icon><Star /></el-icon>相关推荐
+            </h3>
+            <div class="ov-rel-list">
+              <div
+                v-for="item in relatedContent"
+                :key="item.id"
+                class="ov-rel-item"
+                @click="goToDetail(item)"
+              >
+                <div class="ov-rel-thumb">
+                  <img
+                    :src="getItemImageUrl(item)"
+                    :alt="item.title"
+                    @error="handleRelatedImageError"
+                  />
+                  <span class="ov-rel-type">{{
+                    getContentTypeText(item.type)
+                  }}</span>
+                </div>
+                <div class="ov-rel-meta">
+                  <h4 class="ov-rel-title">{{ item.title || "无标题" }}</h4>
+                  <p class="ov-rel-excerpt">
+                    {{ getRelatedExcerpt(item.content) }}
+                  </p>
+                  <div class="ov-rel-stats">
+                    <span class="ov-rel-date">{{
+                      formatDate(item.createdAt)
+                    }}</span>
+                    <div class="ov-rel-right">
+                      <span class="ov-rel-stat"
+                        ><el-icon><View /></el-icon>{{ item.views || 0 }}</span
+                      >
+                      <span class="ov-rel-stat"
+                        ><el-icon><Star /></el-icon
+                        >{{ item.likesCount || 0 }}</span
+                      >
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
 
-      <!-- 相关推荐侧边栏 -->
-      <div class="related-content">
-        <h3 class="related-title">
-          <el-icon><Star /></el-icon>
-          相关推荐
-        </h3>
-        <div class="related-list">
-          <div
-            v-for="item in relatedContent"
-            :key="item.id"
-            class="related-item"
-            @click="goToDetail(item)"
-          >
-            <div class="related-image-container">
+          <section class="ov-side-card">
+            <h4 class="ov-side-title">
+              <el-icon><PriceTag /></el-icon>热门标签
+            </h4>
+            <div class="ov-side-tags">
+              <el-tag
+                v-for="tag in popularTags"
+                :key="tag"
+                class="ov-side-tag"
+                effect="plain"
+                >{{ tag }}</el-tag
+              >
+            </div>
+          </section>
+
+          <section class="ov-side-card ov-author-card">
+            <div class="ov-author-row">
               <img
-                :src="getItemImageUrl(item)"
-                :alt="item.title"
-                class="related-image"
-                @error="handleRelatedImageError"
+                :src="user.avatar || defaultAvatar"
+                :alt="user.nickname"
+                class="ov-author-avatar"
+                @click="openAuthorProfile()"
               />
-              <div class="image-type-tag">
-                {{ getContentTypeText(item.type) }}
+              <div class="ov-author-info">
+                <h4
+                  class="ov-author-title"
+                  :style="{ color: user.nicknameColor }"
+                >
+                  {{ user.nickname || "未知昵称" }}
+                </h4>
+                <p class="ov-author-bio">{{ user.introduce || "未知介绍" }}</p>
               </div>
             </div>
-            <div class="related-info">
-              <h4 class="related-item-title">
-                {{ item.title || "无标题" }}
-              </h4>
-              <p class="related-excerpt">
-                {{ getRelatedExcerpt(item.content) }}
-              </p>
-              <div class="related-meta">
-                <span class="related-date">{{
-                  formatDate(item.createdAt)
-                }}</span>
-                <div class="related-stats">
-                  <span class="stat">
-                    <el-icon><View /></el-icon>
-                    {{ item.views || 0 }}
-                  </span>
-                  <span class="stat">
-                    <el-icon><Star /></el-icon>
-                    {{ item.likesCount || 0 }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- 热门标签 -->
-        <div class="popular-tags">
-          <h4 class="tags-title">
-            <el-icon><PriceTag /></el-icon>
-            热门标签
-          </h4>
-          <div class="tags-list">
-            <el-tag
-              v-for="tag in popularTags"
-              :key="tag"
-              class="popular-tag"
-              effect="plain"
+            <!-- 确保统计信息正确显示 -->
+            <div
+              v-if="articleTotal || photographyTotal || noteTotal"
+              class="ov-author-stats"
             >
-              {{ tag }}
-            </el-tag>
-          </div>
-        </div>
+              <div class="ov-author-stat">
+                <span class="num">{{ articleTotal }}</span>
+                <span class="lab">博客文章</span>
+              </div>
+              <div class="ov-author-stat">
+                <span class="num">{{ photographyTotal }}</span>
+                <span class="lab">摄影图库</span>
+              </div>
+              <div class="ov-author-stat">
+                <span class="num">{{ noteTotal }}</span>
+                <span class="lab">随笔随机</span>
+              </div>
+            </div>
 
-        <!-- 作者信息卡片 -->
-        <div class="author-card">
-          <div class="author-header">
-            <img
-              :src="user.avatar || defaultAvatar"
-              :alt="user.nickname"
-              class="author-avatar-side"
-              @click="openAuthorProfile()"
-            />
-            <div class="author-info-side">
-              <h4 class="author-name-side">
-                {{ user.nickname || "未知昵称" }}
-              </h4>
-              <p class="author-bio">{{ user.introduce || "未知介绍" }}</p>
+            <!-- 如果没有数据，显示默认信息 -->
+            <div v-else class="ov-author-stats">
+              <div class="ov-author-stat">
+                <span class="num">0</span>
+                <span class="lab">博客文章</span>
+              </div>
+              <div class="ov-author-stat">
+                <span class="num">0</span>
+                <span class="lab">摄影图库</span>
+              </div>
+              <div class="ov-author-stat">
+                <span class="num">0</span>
+                <span class="lab">随笔随机</span>
+              </div>
             </div>
-          </div>
-          <div class="author-stats">
-            <div class="stat-item-side">
-              <span class="stat-number">{{ articleTotal }}</span>
-              <span class="stat-label">博客文章</span>
-            </div>
-            <div class="stat-item-side">
-              <span class="stat-number">{{ photographyTotal }}</span>
-              <span class="stat-label">摄影图库</span>
-            </div>
-            <div class="stat-item-side">
-              <span class="stat-number">{{ noteTotal }}</span>
-              <span class="stat-label">随笔随机</span>
-            </div>
-          </div>
-        </div>
+          </section>
+        </aside>
       </div>
     </div>
 
-    <!-- 加载状态 -->
-    <div v-else class="loading-state">
-      <div class="loading-content">
-        <el-icon class="loading-icon" :size="40"><Loading /></el-icon>
-        <p>正在加载内容...</p>
-      </div>
+    <div v-else class="ov-loading">
+      <el-icon class="ov-spinner" :size="40"><Loading /></el-icon>
+      <p>正在加载内容...</p>
     </div>
   </div>
 </template>
@@ -674,26 +624,127 @@ import {
   EditOutlined,
   CheckOutlined,
   CloseOutlined,
-  CommentOutlined,
+  UserOutlined,
+  SkinOutlined,
 } from "@ant-design/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import type { UploadFile } from "element-plus";
-import {
-  ElMessage,
-  ElUpload,
-  ElMessageBox,
-  ElButton,
-  ElTag,
-  ElIcon,
-  ElInput,
-} from "element-plus";
+import { ElMessage, ElUpload, ElMessageBox } from "element-plus";
 import axiosConfig from "../../utils/request";
 import { format } from "date-fns";
 import { apiUrl } from "../../config";
 import { useUserStore } from "../../store/userStore";
 
 const { openAuthorProfile } = useUserStore();
+// EXIF 信息标签映射
 
+// EXIF 信息图标映射
+const getExifIcon = (key: string) => {
+  const iconMap: { [key: string]: any } = {
+    相机型号: "Camera",
+    镜头: "VideoCamera",
+    焦距: "Aim",
+    光圈: "CircleCheck",
+    快门速度: "Flash",
+    ISO: "Sunny",
+    曝光补偿: "Adjust",
+    白平衡: "Sunny",
+    拍摄时间: "Clock",
+  };
+  return iconMap[key] || "Camera";
+};
+
+// EXIF 信息标签映射
+const getExifLabel = (key: string) => {
+  const labelMap: { [key: string]: string } = {
+    Model: "相机型号",
+    Lens: "镜头",
+    FocalLength: "焦距",
+    Aperture: "光圈",
+    ShutterSpeed: "快门速度",
+    ISO: "ISO",
+    ExposureCompensation: "曝光补偿",
+    WhiteBalance: "白平衡",
+    DateTime: "拍摄时间",
+  };
+  return labelMap[key] || key;
+};
+
+const formatContent = (text: string) => {
+  if (!text) return "";
+
+  // 将连续空格或换行转为 <br>，但保留段落结构
+  let formattedText = text.replace(/\n/g, "<br>");
+
+  // 如果是纯文本，按行拆分并包裹成 <p>
+  if (formattedText.includes("<br>")) {
+    const lines = formattedText.split("<br>");
+    formattedText = lines
+      .map((line) => {
+        if (line.trim() === "") return "";
+        return `<p>${line.trim()}</p>`;
+      })
+      .join("");
+  }
+
+  // 根据当前风格应用不同的内容格式化
+  switch (currentStyle.value) {
+    case "ink": // 水墨风格 - 添加书法元素
+      formattedText = formatInkStyle(formattedText);
+      break;
+    case "antique": // 古典风格 - 添加古典元素
+      formattedText = formatAntiqueStyle(formattedText);
+      break;
+    case "modern": // 现代风格 - 添加现代元素
+      formattedText = formatModernStyle(formattedText);
+      break;
+    default: // 默认风格
+      formattedText = formatDefaultStyle(formattedText);
+  }
+
+  return formattedText;
+};
+
+// 默认风格格式化
+const formatDefaultStyle = (text: string) => {
+  return text;
+};
+
+// 水墨风格格式化 - 添加书法元素
+const formatInkStyle = (text: string) => {
+  // 为段落添加书法类名
+  text = text.replace(/<p>/g, '<p class="ink-paragraph">');
+  // 检测诗词格式并添加样式
+  text = text.replace(
+    /<p>([^<]{2}(?:\s+[^<]{2}){2,})<\/p>/g,
+    '<p class="ink-poetry">$1</p>'
+  );
+  return text;
+};
+
+// 古典风格格式化 - 添加古典元素
+const formatAntiqueStyle = (text: string) => {
+  // 为段落添加古典类名
+  text = text.replace(/<p>/g, '<p class="antique-paragraph">');
+  // 检测古典名言等并添加样式
+  text = text.replace(
+    /<p>(?:子曰|诗云|古语有云)：?([^<]+)<\/p>/g,
+    '<p class="antique-quote">□ $1</p>'
+  );
+  return text;
+};
+
+// 现代风格格式化 - 添加现代元素
+const formatModernStyle = (text: string) => {
+  // 为段落添加现代类名
+  text = text.replace(/<p>/g, '<p class="modern-paragraph">');
+  // 检测列表项并添加样式
+  text = text.replace(
+    /<p>([•·\-]\s*[^<]+)<\/p>/g,
+    '<p class="modern-list-item">$1</p>'
+  );
+  return text;
+};
 // 常量定义
 const DEFAULT_AVATAR =
   "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png";
@@ -754,16 +805,33 @@ const currentTypeText = computed(
 // 编辑相关方法
 const startEditing = () => {
   isEditing.value = true;
-  // 如果已经是编辑状态 再次点击有提示
-  if (originalContent.value) {
-    ElMessage.info("当前已处于编辑状态");
-  }
-  // 根据内容类型初始化编辑数据
   editData.value = {
     title: content.value.title || "",
     label: content.value.label || "",
     content: content.value.content || "",
   };
+};
+// 添加风格相关的数据和方法
+const currentStyle = ref("default");
+
+const changeStyle = (style: string) => {
+  currentStyle.value = style;
+  document.body.className = `style-${style}`;
+
+  // 保存用户选择到localStorage
+  localStorage.setItem("contentStyle", style);
+
+  // ElMessage.success(`已切换到${getStyleName(style)}风格`);
+};
+
+const getStyleName = (style: string) => {
+  const styleNames: { [key: string]: string } = {
+    default: "默认",
+    ink: "水墨",
+    antique: "古典",
+    modern: "现代",
+  };
+  return styleNames[style] || style;
 };
 
 const cancelEditing = () => {
@@ -822,9 +890,6 @@ const saveEditing = async () => {
       updateData.label = editData.value.label;
     } else if (contentType.value === "notes") {
       updateData.title = editData.value.title;
-    } else if (contentType.value === "photography") {
-      // 摄影作品只需要内容
-      updateData.content = editData.value.content;
     }
 
     const response = await axiosConfig.put(`${endpoint}/${id}`, updateData);
@@ -847,7 +912,6 @@ const saveEditing = async () => {
 // 内容处理方法
 const getRelatedExcerpt = (contentText: string) => {
   if (!contentText) return "暂无描述";
-  // 移除HTML标签
   const text = contentText.replace(/<[^>]*>/g, "");
   return text.length > 60 ? text.substring(0, 60) + "..." : text;
 };
@@ -871,20 +935,68 @@ const formatDate = (dateString: string) => {
   }
 };
 
-const formatContent = (text: string) => {
-  return text || "";
-};
-
 // 导航函数
 const goBack = () => {
   router.back();
 };
+// 在分享按钮点击事件中添加
+const handleShare = async () => {
+  if (!content.value || !content.value.id) {
+    ElMessage.error("无法分享：内容不存在");
+    return;
+  }
 
-// 交互函数
-const handleShare = () => {
-  ElMessage.success("分享功能开发中...");
+  try {
+    // 调用后端分享接口生成分享链接
+    const response = await axiosConfig.post(
+      `${ENDPOINTS[contentType.value as keyof typeof ENDPOINTS]}/${
+        content.value.id
+      }/share`
+    );
+
+    if (response.data.code === 200) {
+      const shareLink = `${window.location.origin}${response.data.data.shareLink}`;
+
+      // 尝试使用现代 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareLink);
+          ElMessage.success("分享链接已复制到剪贴板");
+        } catch (e) {
+          console.warn("Clipboard API 失败:", e);
+          // 如果失败，使用备用方案
+          copyToClipboard(shareLink);
+        }
+      } else {
+        // 使用备用方案
+        copyToClipboard(shareLink);
+      }
+    } else {
+      ElMessage.error(response.data.message || "分享失败");
+    }
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || error?.message || "分享失败";
+    ElMessage.error(errorMessage);
+  }
 };
 
+// 备用复制方法
+const copyToClipboard = (text: string) => {
+  const input = document.createElement("input");
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+
+  try {
+    document.execCommand("copy");
+    ElMessage.success("分享链接已复制到剪贴板");
+  } catch (e) {
+    ElMessage.warning("分享链接复制失败，请手动复制");
+  }
+
+  document.body.removeChild(input);
+};
 // 删除处理
 const handleDelete = async (contentId: number) => {
   try {
@@ -911,7 +1023,12 @@ const handleDelete = async (contentId: number) => {
     }
 
     ElMessage.success(response.data.message || "删除成功");
-    router.push({ path: "/share/essay" });
+
+    // 使用 replace 而不是 push，并添加刷新参数
+    router.replace({
+      path: "/share/essay",
+      query: { refresh: Date.now().toString() },
+    });
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "删除失败";
@@ -1018,7 +1135,6 @@ const deleteOldImage = async (imageUrl: string) => {
     ElMessage.success(response.data.message || "删除旧图片成功");
   } catch (error: any) {
     console.warn("删除旧图片失败:", error);
-    // 不提示错误，继续上传新图片
   }
 };
 
@@ -1353,7 +1469,11 @@ onMounted(async () => {
     const contentKey = CONTENT_KEYS[type as keyof typeof CONTENT_KEYS];
 
     const response = await axiosConfig.get(endpoint);
-
+    const savedStyle = localStorage.getItem("contentStyle");
+    if (savedStyle) {
+      currentStyle.value = savedStyle;
+      document.body.className = `style-${savedStyle}`;
+    }
     if (response?.data?.data) {
       const fetchedContent = response.data.data[contentKey];
       if (fetchedContent) {
@@ -1375,7 +1495,1400 @@ onMounted(async () => {
   }
 });
 </script>
+<style scoped lang="scss">
+.ov-page {
+  // padding: 24px 16px;
+  position: relative;
+  overflow-x: hidden;
+  // background: linear-gradient(180deg, #f8f9fe 0%, #eff2f9 100%);
+}
 
-<style scoped lang="less">
-@import "../../base-ui/overview.less";
+.ov-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  // background: linear-gradient(
+  //   135deg,
+  //   rgba(99, 102, 241, 0.08),
+  //   rgba(139, 92, 246, 0.08)
+  // );
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%);
+  z-index: 0;
+}
+
+.ov-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.ov-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.ov-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ov-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #1573e4;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.ov-crumb-sep {
+  color: #cbd5e1;
+}
+.ov-crumb.active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+  font-weight: 600;
+}
+.ov-actions {
+  display: flex;
+  gap: 10px;
+}
+.ov-btn {
+  border-radius: 999px;
+}
+
+.ov-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+.ov-layout.full {
+  grid-template-columns: 1fr;
+}
+
+.ov-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  position: relative;
+}
+.ov-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.ov-head {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.ov-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0b1220;
+  position: relative;
+  padding-bottom: 15px;
+}
+.ov-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+}
+.ov-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.ov-badge {
+  border: none;
+  font-weight: 700;
+  position: relative;
+  overflow: hidden;
+}
+.ov-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+.ov-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #64748b;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+}
+
+.ov-edit {
+  padding: 24px;
+}
+.ov-field {
+  margin-bottom: 16px;
+}
+.ov-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+.ov-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ov-media {
+  padding: 16px 24px 0;
+}
+.ov-upload {
+  width: 100%;
+}
+.ov-media-box {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+.ov-media-img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 16/9;
+}
+.ov-media-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  opacity: 0;
+  transition: 0.3s;
+  background: linear-gradient(
+    to bottom,
+    rgba(2, 6, 23, 0.35),
+    rgba(2, 6, 23, 0.15)
+  );
+}
+.ov-media-box:hover .ov-media-mask {
+  opacity: 1;
+  backdrop-filter: blur(4px);
+}
+.ov-upload-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 0;
+}
+.ov-pill {
+  border-radius: 999px;
+}
+
+.ov-body {
+  padding: 16px 24px 24px;
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.9;
+  color: #0f172a;
+  position: relative;
+}
+.ov-body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -24px;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 0 5px 5px 0;
+}
+
+/* 默认风格 */
+.style-default {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
+}
+
+.style-default .ov-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.style-default .ov-card::before {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.style-default .ov-title {
+  color: #0b1220;
+  font-weight: 800;
+}
+
+.style-default .ov-body {
+  color: #0f172a;
+}
+
+.style-default .ov-body::before {
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 0 5px 5px 0;
+}
+
+/* 默认风格文字样式 */
+.style-default .ov-body :deep(p) {
+  margin: 0 0 1.15em;
+  text-align: justify;
+}
+
+.style-default .ov-body :deep(h2) {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 2em 0 0.75em;
+  color: #0f172a;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.style-default .ov-body :deep(h2)::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 1px;
+}
+
+.style-default .ov-body :deep(blockquote) {
+  margin: 2em 0;
+  padding: 1.5em 2em;
+  border-left: 4px solid #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: #4b5563;
+}
+
+/* 水墨风格 */
+.style-ink {
+  background: #f5f1e0;
+  font-family: "STKaiti", "KaiTi", serif;
+}
+
+.style-ink .ov-card {
+  background: #fdf6e3;
+  border: 1px solid #d5c4a1;
+  box-shadow: 0 4px 12px rgba(146, 128, 80, 0.2);
+  border-radius: 8px;
+}
+
+.style-ink .ov-card::before {
+  background: linear-gradient(90deg, #458588, #689d6a);
+  height: 6px;
+}
+
+.style-ink .ov-title {
+  color: #3c3836;
+  font-family: "STKaiti", "KaiTi", serif;
+  text-align: center;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.style-ink .ov-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, #458588, #689d6a);
+}
+
+.style-ink .ov-body {
+  color: #3c3836;
+  font-family: "STKaiti", "KaiTi", serif;
+  background-image: linear-gradient(
+      rgba(146, 128, 80, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(146, 128, 80, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.style-ink .ov-body::before {
+  background: linear-gradient(180deg, #458588, #689d6a);
+  border-radius: 0 3px 3px 0;
+}
+
+.style-ink .ov-meta-item {
+  background: #f0e6d2;
+  border: 1px solid #d5c4a1;
+}
+
+/* 水墨风格文字样式 */
+.style-ink .ov-body :deep(.ink-paragraph) {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+  text-indent: 2em;
+  margin: 0.8em 0;
+}
+
+.style-ink .ov-body :deep(.ink-poetry) {
+  font-family: "STKaiti", "KaiTi", serif;
+  text-align: center;
+  text-indent: 0;
+  font-size: 1.2em;
+  line-height: 2;
+  margin: 2em 0;
+  padding: 1.5em;
+  border-left: none;
+  border-top: 1px solid #d5c4a1;
+  border-bottom: 1px solid #d5c4a1;
+  background: rgba(240, 230, 210, 0.3);
+  border-radius: 0;
+}
+
+.style-ink .ov-body :deep(h2) {
+  font-family: "STKaiti", "KaiTi", serif;
+  text-align: center;
+  font-size: 1.8rem;
+  margin: 2em 0 1em;
+  color: #3c3836;
+  border-bottom: 1px solid #d5c4a1;
+}
+
+.style-ink .ov-body :deep(h2)::after {
+  display: none;
+}
+
+.style-ink .ov-body :deep(blockquote) {
+  font-family: "STKaiti", "KaiTi", serif;
+  border-left: 3px solid #458588;
+  background: rgba(146, 128, 80, 0.05);
+  color: #3c3836;
+}
+
+/* 古典风格 */
+.style-antique {
+  background: #f0ebe6
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='%23f9f5f0'/%3E%3Cpath d='M20 20h60v60H20z' fill='none' stroke='%23d8cfc4' stroke-width='0.5'/%3E%3C/svg%3E");
+}
+
+.style-antique .ov-card {
+  background: #f9f5f0;
+  border: 1px solid #d8cfc4;
+  box-shadow: 0 4px 12px rgba(180, 150, 120, 0.25);
+  border-radius: 12px;
+}
+
+.style-antique .ov-card::before {
+  background: linear-gradient(90deg, #a86b4c, #c19a6b);
+  height: 6px;
+}
+
+.style-antique .ov-title {
+  color: #503930;
+  font-family: "STKaiti", "KaiTi", serif;
+  position: relative;
+  padding-left: 20px;
+}
+
+.style-antique .ov-body {
+  color: #503930;
+  font-family: "STSong", "SimSun", serif;
+  line-height: 1.8;
+}
+
+.style-antique .ov-body::before {
+  background: linear-gradient(180deg, #a86b4c, #c19a6b);
+  border-radius: 0 3px 3px 0;
+}
+
+.style-antique .ov-meta-item {
+  background: #f0e6d2;
+  border: 1px solid #d8cfc4;
+  border-radius: 12px;
+}
+
+/* 古典风格文字样式 */
+.style-antique .ov-body :deep(.antique-paragraph) {
+  font-family: "STSong", "SimSun", serif;
+  font-size: 1.05em;
+  line-height: 1.9;
+  text-indent: 2em;
+  margin: 0.8em 0;
+}
+
+.style-antique .ov-body :deep(.antique-quote) {
+  font-family: "STSong", "SimSun", serif;
+  font-style: italic;
+  padding: 1em 1.5em;
+  background: rgba(240, 230, 210, 0.4);
+  border-top: 1px solid #d8cfc4;
+  border-bottom: 1px solid #d8cfc4;
+  margin: 1.5em 0;
+}
+
+.style-antique .ov-body :deep(h2) {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 1.6rem;
+  margin: 2em 0 1em;
+  color: #503930;
+  border-bottom: 1px solid #d8cfc4;
+}
+
+.style-antique .ov-body :deep(h2)::after {
+  display: none;
+}
+
+.style-antique .ov-body :deep(blockquote) {
+  border-left: 3px solid #a86b4c;
+  background: rgba(180, 150, 120, 0.1);
+  color: #503930;
+}
+
+/* 现代风格 */
+.style-modern {
+  background: #f8f9fa;
+}
+
+.style-modern .ov-card {
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+}
+
+.style-modern .ov-card::before {
+  background: linear-gradient(90deg, #38b2ac, #4fd1c5);
+  height: 4px;
+}
+
+.style-modern .ov-title {
+  color: #2d3748;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.style-modern .ov-body {
+  color: #4a5568;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  line-height: 1.7;
+}
+
+.style-modern .ov-body::before {
+  background: linear-gradient(180deg, #38b2ac, #4fd1c5);
+  border-radius: 0 2px 2px 0;
+}
+
+.style-modern .ov-meta-item {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+}
+
+/* 现代风格文字样式 */
+.style-modern .ov-body :deep(.modern-paragraph) {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-size: 1em;
+  line-height: 1.7;
+  margin: 1em 0;
+  text-align: justify;
+}
+
+.style-modern .ov-body :deep(.modern-list-item) {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  margin: 0.5em 0 0.5em 1.5em;
+}
+
+.style-modern .ov-body :deep(h2) {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin: 2em 0 1em;
+  color: #2d3748;
+  border-bottom: none;
+  padding-left: 0.8em;
+  position: relative;
+}
+
+.style-modern .ov-body :deep(h2)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 4px;
+  height: 1.2em;
+  background: linear-gradient(180deg, #38b2ac, #4fd1c5);
+  border-radius: 2px;
+}
+
+.style-modern .ov-body :deep(h2)::after {
+  display: none;
+}
+
+.style-modern .ov-body :deep(blockquote) {
+  border-left: 4px solid #38b2ac;
+  background: rgba(56, 178, 172, 0.05);
+  color: #4a5568;
+  border-radius: 4px;
+}
+
+.ov-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 24px;
+  border-top: 1px solid #f1f5f9;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ov-cta {
+  display: flex;
+  gap: 10px;
+}
+
+/* 摄影 */
+.ov-photo-hero {
+  padding: 0;
+}
+.ov-photo-frame {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+  // border: 10px solid #fff;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 20px;
+}
+.ov-photo-frame:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.5);
+}
+.ov-photo-frame::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  // border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  z-index: 1;
+}
+.ov-photo-img {
+  width: 100%;
+  height: 80vh;
+  min-height: 500px;
+  object-fit: cover;
+  background: radial-gradient(1200px 600px at 50% 10%, #111827 0%, #000 60%);
+  transition: transform 0.5s ease;
+}
+.ov-photo-frame:hover .ov-photo-img {
+  transform: scale(1.03);
+}
+.ov-photo-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 30px;
+  opacity: 0;
+  transition: all 0.4s ease;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    transparent 100%
+  );
+}
+.ov-photo-frame:hover .ov-photo-mask {
+  opacity: 1;
+}
+.ov-photo-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ov-sections {
+  padding: 32px;
+}
+.ov-section {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.ov-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+.ov-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 16px 16px 0 0;
+}
+.ov-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(15, 23, 42, 0.15);
+}
+.ov-section-head h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.ov-desc {
+  margin: 0 0 24px;
+  color: #475569;
+  line-height: 1.8;
+  white-space: pre-line;
+  font-size: 1.05rem;
+}
+.ov-exif {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.ov-exif-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.ov-exif-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+.ov-exif-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.05),
+    rgba(139, 92, 246, 0.05)
+  );
+  pointer-events: none;
+}
+.ov-exif-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.ov-exif-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ov-exif-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ov-exif-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* 随笔 */
+.ov-note-cover {
+  padding: 0 24px;
+}
+/* 添加页边距和装订线效果 */
+.ov-note-frame {
+  position: relative;
+  height: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e6f0ff 0%, #d1e0ff 100%);
+  box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s ease;
+
+  /* 左侧装订线 */
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(0deg, #6366f1, #8b5cf6);
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+}
+
+.ov-note-frame:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px -15px rgba(99, 102, 241, 0.3);
+}
+
+.ov-note-frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      circle at 10% 20%,
+      rgba(99, 102, 241, 0.15) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(99, 102, 241, 0.15) 1px,
+      transparent 1px
+    );
+  background-size: 30px 30px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.ov-note-frame::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  // border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.ov-note-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.95) contrast(1.1) saturate(1.1);
+  transition: all 0.4s ease;
+}
+
+.ov-note-frame:hover .ov-note-img {
+  filter: brightness(1) contrast(1.1) saturate(1.2);
+}
+
+.ov-note-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 30px;
+  display: grid;
+  grid-template-areas: "br";
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  opacity: 0;
+  transition: all 0.4s ease;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.4) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(139, 92, 246, 0.5) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+.ov-note-frame:hover .ov-note-mask {
+  opacity: 1;
+}
+
+.ov-note-mask-row.bottom-right {
+  grid-area: br;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: all;
+}
+
+.ov-note-frame:hover .ov-note-mask {
+  opacity: 1;
+}
+
+.ov-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.9) 0%,
+    rgba(139, 92, 246, 0.9) 100%
+  );
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 30px;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ov-note-title {
+  margin: 0;
+  color: #1e293b;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  position: relative;
+  padding: 20px 40px;
+  text-align: center;
+  font-family: "STKaiti", "KaiTi", serif;
+  letter-spacing: 2px;
+}
+
+.ov-note-title::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 5px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 3px;
+}
+
+.ov-note-body {
+  font-size: 17px;
+  line-height: 1.9;
+  color: #2d3748;
+  padding: 28px 32px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  margin-top: 28px;
+  box-shadow: inset 0 0 15px rgba(99, 102, 241, 0.1),
+    0 5px 20px rgba(99, 102, 241, 0.15);
+
+  /* 横线稿纸背景 + 微弱纹理 */
+  background-image: linear-gradient(
+      rgba(99, 102, 241, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+
+  /* 添加行间距和段落样式 */
+  p {
+    margin: 0 0 1.4em;
+    text-align: justify;
+    font-family: "STSong", "SimSun", serif;
+    word-spacing: 1px;
+  }
+
+  /* 每行单独处理（模拟手写） */
+  :deep(p) {
+    display: block;
+    white-space: pre-line; /* 保留换行符 */
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* 增加轻微阴影，模拟纸张质感 */
+  &:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0.8)
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+.ov-note-body :deep(p) {
+  margin: 0 0 1.4em;
+  text-align: justify;
+  font-family: "STSong", "SimSun", serif;
+}
+
+.ov-note-body :deep(h2) {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 2em 0 1em;
+  color: #1a202c;
+  position: relative;
+  padding-left: 20px;
+  font-family: "STKaiti", "KaiTi", serif;
+}
+
+.ov-note-body :deep(h2)::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 24px;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+}
+
+.ov-note-body :deep(.poetry) {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 1.2em;
+  line-height: 2;
+  text-align: center;
+  margin: 2em 0;
+  padding: 1.5em;
+  border-left: 4px solid #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 0 8px 8px 0;
+}
+
+.ov-note-body :deep(.seal) {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 2px solid #e53e3e;
+  border-radius: 6px;
+  color: #e53e3e;
+  font-weight: bold;
+  font-family: "STKaiti", "KaiTi", serif;
+  transform: rotate(-5deg);
+  margin: 0 8px;
+  font-size: 1.1em;
+}
+
+/* 侧栏 */
+.ov-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 96px;
+  height: fit-content;
+}
+.ov-side-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+  padding: 16px;
+}
+.ov-side-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.ov-rel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ov-rel-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+  transition: 0.2s;
+}
+.ov-rel-item:hover {
+  transform: translateY(-2px);
+  background: #f8fafc;
+}
+.ov-rel-thumb {
+  position: relative;
+  width: 88px;
+  height: 66px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ov-rel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ov-rel-type {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  font-size: 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.ov-rel-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ov-rel-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ov-rel-excerpt {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ov-rel-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ov-rel-date {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.ov-rel-right {
+  display: flex;
+  gap: 8px;
+}
+.ov-rel-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.ov-side-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ov-side-tag {
+  border-color: rgba(99, 102, 241, 0.28);
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+.ov-author-card .ov-author-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.ov-author-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+.ov-author-info {
+  flex: 1;
+}
+.ov-author-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.ov-author-bio {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+.ov-author-stats {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  padding-top: 12px;
+}
+.ov-author-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.ov-author-stat .num {
+  font-size: 18px;
+  font-weight: 700;
+}
+.ov-author-stat .lab {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* 加载 */
+.ov-loading {
+  display: flex;
+  min-height: 420px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  gap: 16px;
+}
+.ov-spinner {
+  color: #6366f1;
+  animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .ov-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .ov-title {
+    font-size: 1.75rem;
+  }
+  .ov-photo-img {
+    height: 70vh;
+    min-height: 400px;
+  }
+  .ov-note-frame {
+    height: 380px;
+  }
+}
+@media (max-width: 480px) {
+  .ov-title {
+    font-size: 1.5rem;
+  }
+  .ov-photo-img {
+    height: 60vh;
+    min-height: 300px;
+  }
+  .ov-note-frame {
+    height: 320px;
+  }
+}
+
+/* 滚动条 */
+::deep(::-webkit-scrollbar) {
+  width: 6px;
+  height: 6px;
+}
+::deep(::-webkit-scrollbar-track) {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+::deep(::-webkit-scrollbar-thumb) {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::deep(::-webkit-scrollbar-thumb:hover) {
+  background: #94a3b8;
+}
+
+/* 添加传统文化元素样式 */
+.poetry-line {
+  text-align: center;
+  font-style: italic;
+  margin: 10px 0;
+  padding: 10px;
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+/* 添加书法字体支持 */
+.calligraphy {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 1.2em;
+  line-height: 2;
+}
+
+/* 添加古典边框 */
+.classical-border {
+  border: 1px solid #d1d5db;
+  border-image: linear-gradient(45deg, #6366f1, #8b5cf6) 1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 添加水墨画风格 */
+.ink-wash {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  position: relative;
+  overflow: hidden;
+}
+
+.ink-wash::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 70%
+  );
+  transform: rotate(30deg);
+  pointer-events: none;
+}
+
+/* 添加古典纹理 */
+.antique-paper {
+  background-image: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.03) 50%,
+      transparent 50%
+    ),
+    linear-gradient(rgba(0, 0, 0, 0.03) 50%, transparent 50%);
+  background-size: 20px 20px;
+}
+
+/* 添加印章样式 */
+.seal {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 2px solid #dc2626;
+  border-radius: 4px;
+  color: #dc2626;
+  font-weight: bold;
+  font-family: "STKaiti", "KaiTi", serif;
+  transform: rotate(-5deg);
+  margin: 0 5px;
+}
 </style>

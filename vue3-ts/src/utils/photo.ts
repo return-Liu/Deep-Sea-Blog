@@ -1,7 +1,7 @@
 export const photoCategories = [
   {
-    id: "自然风光",
-    name: "自然风光",
+    id: "全部",
+    name: "全部",
   },
   {
     id: "人文景观",

@@ -114,7 +114,7 @@
                 <span class="detail-label">参考登录地点</span>
                 <span
                   >{{ currentprovince }}
-                  {{ currentCity || "未知参考登录地点" }}</span
+                  {{ currentcity || "未知参考登录地点" }}</span
                 >
               </div>
               <div class="detail-row">
@@ -162,7 +162,7 @@
       :device="selectedDevice"
       @close="modalVisible = false"
       :currentprovince="currentprovince"
-      :currentCity="currentCity"
+      :currentCity="currentcity"
     />
   </div>
 </template>
@@ -181,7 +181,7 @@ import type { Device } from "../../types/device";
 import {
   getCity,
   currentprovince,
-  currentCity,
+  currentcity,
   loading,
 } from "../../utils/location";
 const devices = ref<Device[]>([]);
@@ -240,17 +240,25 @@ const logoutDevice = async (deviceId: string) => {
     const device = devices.value.find((device: any) => device.id === deviceId);
     if (!device) return;
 
-    await ElMessageBox.confirm(
-      `确定要登出设备 "${device.deviceName}" 吗？`,
-      "确认登出",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      }
-    );
+    // 根据是否为当前设备显示不同的确认消息
+    let confirmMessage = `确定要登出当前设备 "${device.deviceName} 吗"？此操作会立即强制您重新登录。`;
+
+    await ElMessageBox.confirm(confirmMessage, "确认登出", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
     device.actionLoading = true;
     const response = await axiosConfig.delete(`/device/devices/${deviceId}`);
+
+    // 检查是否删除的是当前设备，如果是则跳转到登录页
+    if (device.isCurrentDevice) {
+      // 清除认证信息并跳转到登录页
+      const userStore = useUserStore();
+      userStore.layout();
+      return;
+    }
+
     devices.value = devices.value.filter(
       (device: any) => device.id !== deviceId
     );
@@ -268,10 +276,6 @@ const logoutDevice = async (deviceId: string) => {
   }
 };
 const logoutAllDevices = async () => {
-  if ((devices.value || []).length === 0) {
-    ElMessage.info("暂无设备信息");
-    return;
-  }
   try {
     await ElMessageBox.confirm("确定要刷新当前设备列表吗？", "确认刷新", {
       confirmButtonText: "确定",
@@ -282,6 +286,18 @@ const logoutAllDevices = async () => {
     const response = await axiosConfig.post("/device/login/device");
     ElMessage.success(response.data.message);
     fetchDevices();
+
+    // 检查当前设备是否还在设备列表中，如果不在则跳转到登录页
+    const currentDeviceExists = devices.value.some(
+      (device) => device.isCurrentDevice
+    );
+    if (!currentDeviceExists) {
+      // 当前设备已被移除，跳转到登录页
+      const userStore = useUserStore();
+      userStore.layout();
+      window.location.href = "/login/index";
+      return;
+    }
   } catch (error: any) {
     const errorMessage =
       error?.response?.data?.message || error?.message || "未知错误";

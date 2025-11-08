@@ -143,7 +143,7 @@
             v-model="showReplyBg"
           >
             <template #reference>
-              <LinkOutlined
+              <PictureOutlined
                 style="color: #1890ff; cursor: pointer; font-size: 20px"
               />
             </template>
@@ -305,7 +305,7 @@ import {
   HeartOutlined,
   MessageOutlined,
   SmileOutlined,
-  LinkOutlined,
+  PictureOutlined,
 } from "@ant-design/icons-vue";
 
 const props = defineProps({

@@ -212,8 +212,9 @@
                 >
                   <template #default="{ row }">
                     <div class="action-buttons">
+                      <!-- 只有未处理时才显示“处理”按钮 -->
                       <el-button
-                        v-if="userStore.isAdmin"
+                        v-if="userStore.isAdmin && !row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'feedback')"
@@ -362,8 +363,9 @@
                 >
                   <template #default="{ row }">
                     <div class="action-buttons">
+                      <!-- 只有未处理时才显示“处理”按钮 -->
                       <el-button
-                        v-if="userStore.isAdmin"
+                        v-if="userStore.isAdmin && !row.status"
                         type="success"
                         size="small"
                         @click="openProcessDialog(row.id, 'report')"

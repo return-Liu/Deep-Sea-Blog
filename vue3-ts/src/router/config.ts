@@ -73,7 +73,7 @@ const routers = [
     component: () => import("../views/photowall/PhotoWall.vue"),
     props: (route: any) => ({
       tab: route.params.tab,
-      category: route.query.id || "自然风光",
+      category: route.query.id || "全部",
     }),
   },
   // 处理404问题

@@ -13,9 +13,9 @@ export const zh = {
     profile: {
       username: "用户名",
       nickname: "昵称",
-      phone: "请绑定你的手机号码",
+      phone: "请绑定手机号码",
       nicknamePlaceholder: "请输入你的昵称",
-      FeatureCode: "特征码（用于客户端唯一标识设备）",
+      FeatureCode: "设备特征码（用于客户端唯一标识设备）",
       gender: "性别",
       male: "男",
       female: "女",
@@ -24,7 +24,7 @@ export const zh = {
       birthday: "生日",
       constellation: "星座",
       signature: "个性签名",
-      signaturePlaceholder: "编辑个签,展示我的独特态度。",
+      signaturePlaceholder: "编辑个性签名，展现你的独特态度。",
       saveChanges: "保存修改",
       changeAvatar: "修改头像",
       uploadAvatar: "上传头像",
@@ -42,7 +42,7 @@ export const zh = {
     },
     security: {
       logout: "退出登录",
-      logoutDesc: "退出当前账号的登录状态",
+      logoutDesc: "退出当前账号",
       delete: "注销账号",
       deleteDesc: "永久删除你的账号和所有数据，此操作不可恢复，请谨慎操作",
       changePassword: "修改密码",
@@ -58,32 +58,28 @@ export const zh = {
       description: "夜间模式",
       followSystem: "夜间模式跟随系统",
       dayMode: "日间模式",
-      nightMode: "夜间模式 内测中",
+      nightMode: "夜间模式（内测）",
     },
     language: {
       title: "选择语言",
-      description: "选择你偏好的一种语言 此功能为内测功能，请及时反馈问题。",
+      description: "选择你偏好的语言（内测功能），如有问题请反馈。",
       zh: "简体中文",
       en: "English",
       zh_TW: "繁体中文",
-      ja: "通用日语", // 日语
-      ko: "通用韩语", // 韩语
+      ja: "日语",
+      ko: "韩语",
     },
     toggleaccount: {
       title: "切换账号",
-      description: "添加多个账号后，可同时进行管理和切换。 ",
-      currentAccount: "当前账号",
-      addNewAccount: "添加或注册新账号",
-    },
-    supercolorpalette: {
-      title: "超级调色盘",
-      description: "限时尝鲜 感受色彩活力 定制你的专属主题",
+      description: "添加多个账号后，可同时管理并快速切换。",
+      currentAccount: "当前账号（最多可添加 3 个）",
+      addNewAccount: "添加/注册新账号",
     },
   },
   // 侧边栏
   commonaside: {
     home: {
-      logo: "Deep Sea",
+      logo: "一刻时光",
       home: "首页",
       localResources: "本地文件",
       personalShare: "个人分享",

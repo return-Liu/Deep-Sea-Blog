@@ -104,7 +104,9 @@ export const useUserStore = defineStore("user", () => {
       params: { uuid: user.value.uuid },
     });
   };
-
+  const layout = () => {
+    router.push("/login/index");
+  };
   // 加载用户信息
   const loadUser = async (userId?: number) => {
     try {
@@ -134,5 +136,6 @@ export const useUserStore = defineStore("user", () => {
     openAuthorProfile,
     loadUser,
     updateUser,
+    layout,
   };
 });

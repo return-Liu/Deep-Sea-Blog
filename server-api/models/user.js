@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       phone: {
         type: DataTypes.STRING,
         allowNull: true,
+        unique: true,
         validate: {
           isValidPhone(value) {
             if (value && !/^1[3-9]\d{9}$/.test(value)) {

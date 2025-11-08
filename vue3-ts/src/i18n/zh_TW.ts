@@ -69,17 +69,13 @@ export const zh_TW = {
     toggleaccount: {
       title: "切換帳號",
       description: "添加多個帳號並隨時切換",
-      currentAccount: "當前帳號",
+      currentAccount: "當前帳號 最多可添加 3 個",
       addNewAccount: "添加或註冊新帳號",
-    },
-    supercolorpalette: {
-      title: "超級调色板",
-      description: "限時嘗鲜 體驗色彩活力 定義你的專屬主題",
     },
   },
   commonaside: {
     home: {
-      logo: "Deep Sea",
+      logo: "一刻時光",
       home: "首頁",
       localResources: "本地檔案",
       personalShare: "個人分享",

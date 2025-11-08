@@ -5,16 +5,22 @@
       <div class="header-container">
         <div class="user-profile-section">
           <div class="avatar-container" @click="openAuthorProfile">
-            <el-avatar
-              v-if="user?.avatar"
+            <img
+              v-if="
+                user?.avatar ||
+                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+              "
+              v-lazy="
+                user?.avatar ||
+                'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+              "
               :size="80"
-              :src="user.avatar"
               :alt="`用户${user?.nickname || '默认用户'}的头像`"
               class="user-avatar"
             />
-            <el-avatar v-else :size="80" class="user-avatar avatar-placeholder">
+            <h2 v-else :size="80" class="user-avatar avatar-placeholder">
               {{ user?.nickname?.charAt(0) || "U" }}
-            </el-avatar>
+            </h2>
             <div class="avatar-overlay">
               <a-icon type="camera" class="camera-icon" />
             </div>

@@ -5,10 +5,9 @@
         <div class="avatar" @click="openAuthorProfile">
           <img
             v-if="user?.avatar || DEFAULT_AVATAR"
-            v-lazy="userAvatarUrl"
+            v-lazy="user?.avatar || DEFAULT_AVATAR"
             alt="头像"
             :title="`用户${user?.nickname || '默认用户'}的头像`"
-            @error="handleAvatarError"
           />
         </div>
         <div class="user-info">
@@ -71,7 +70,7 @@
           }`"
         >
           <div class="card-media">
-            <img v-lazy="getItemImageUrl(item)" @error="handleImageError" />
+            <img v-lazy="item.image" />
             <div class="card-overlay">
               <span class="date">{{ formatDate(item.createdAt) }}</span>
             </div>
@@ -83,21 +82,18 @@
             </template>
             <div class="card-actions">
               <div class="left-actions">
-                <span v-if="item.type === 'essay'" class="tag">
-                  {{ getLabel(item) }}
-                </span>
+                <span v-if="item.type === 'essay'" class="tag">{{
+                  getLabel(item)
+                }}</span>
               </div>
               <div class="right-actions">
                 <button
                   v-if="item.type === 'essay'"
                   class="like-btn"
-                  :class="{ liked: getLikedStatus(item) }"
-                  :title="getLikedStatus(item) ? '取消喜欢' : '喜欢'"
+                  :title="getLikedStatus(item) ? '喜欢' : '取消喜欢'"
                   @click.stop="handleLike(item.id, getLikedStatus(item))"
                 >
-                  <HeartOutlined
-                    :class="{ 'liked-icon': getLikedStatus(item) }"
-                  />
+                  <HeartOutlined :class="{ liked: getLikedStatus(item) }" />
                   <span class="like-count">{{ getLikesCount(item) }}</span>
                 </button>
                 <button
@@ -106,7 +102,7 @@
                   @click.stop
                 >
                   <EyeOutlined />
-                  <span class="views-count">{{ item.views }}</span>
+                  <span class="views-count">浏览{{ item.views }}次</span>
                 </button>
               </div>
             </div>
@@ -120,24 +116,20 @@
         />
       </div>
       <div v-if="hasMoreContent" class="load-more">
-        <button class="load-more-btn" @click="loadMore" :disabled="isLoading">
-          <span v-if="!isLoading">加载更多</span>
-          <span v-else class="loading-text">
-            <span class="loading-dots"></span>
-            加载中
-          </span>
-        </button>
+        <p type="primary" @click="loadMore" :disabled="isLoading">加载更多</p>
       </div>
-
-      <div v-else-if="currentContent.length > 0" class="load-end">
-        <div class="end-line">
-          <span class="end-text">已经到底啦</span>
-        </div>
+      <div v-else-if="currentContent.length > 0" class="load-more">
+        <p>加载到底了</p>
       </div>
-
-      <div v-else class="no-content">
-        <div class="no-content-text">暂无内容</div>
+      <div v-else class="load-more">
+        <p>没有更多内容</p>
       </div>
+    </div>
+    <div v-if="selectedContent" class="content-detail">
+      <ContentDisplay
+        :content-type="selectedContent.type"
+        :content="selectedContent"
+      />
     </div>
   </div>
 </template>
@@ -182,6 +174,9 @@ const { openAuthorProfile } = useUserStore();
 const user = computed(() => userStore.user);
 const route = useRoute();
 const router = useRouter();
+
+// 引用定义
+const selectedContent = ref<Article | Photography | Note | null>(null);
 const essay = ref<Article[]>([]);
 const photography = ref<Photography[]>([]);
 const notes = ref<Note[]>([]);
@@ -222,18 +217,6 @@ const hasMoreContent = computed(() => {
   );
 });
 
-const userAvatarUrl = computed(() => {
-  if (!user.value?.avatar) return DEFAULT_AVATAR;
-
-  // 如果已经是完整URL，直接返回
-  if (user.value.avatar.startsWith("http")) {
-    return user.value.avatar;
-  }
-
-  // 否则构造OSS URL（假设OSS允许公开读）
-  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${user.value.avatar}`;
-});
-
 // 暴露方法
 defineExpose({
   fetchData,
@@ -250,29 +233,6 @@ const getTabName = (tab: string) => {
 
 const formatDate = (date: string) => {
   return formatDistanceToNow(new Date(date), { addSuffix: true, locale: zhCN });
-};
-
-// 图片处理函数
-const getItemImageUrl = (item: any): string => {
-  if (!item.image) return DEFAULT_AVATAR;
-
-  // 如果已经是完整URL，直接返回
-  if (item.image.startsWith("http")) {
-    return item.image;
-  }
-
-  // 否则构造OSS URL（假设OSS允许公开读）
-  return `http://deep-seas-oss-cn-beijing.aliyuncs.com/${item.image}`;
-};
-
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.src = DEFAULT_AVATAR;
-};
-
-const handleAvatarError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.src = DEFAULT_AVATAR;
 };
 
 // 内容处理函数
@@ -371,31 +331,20 @@ async function fetchData(currentPageNum: number = 1) {
   }
 }
 
+// 事件处理
 const handleMouseEnter = async (item: any) => {
   if (item.type === "essay" && !item.isViewed) {
     try {
-      const response = await axiosConfig.post(`/admin/article/views/${item.id}`);
+      await axiosConfig.post(`/admin/article/views/${item.id}`);
       const index = essay.value.findIndex((article) => article.id === item.id);
       if (index !== -1) {
-        // 只有在真正增加浏览量时才更新计数
-        if (response.data.message === "浏览量更新成功") {
-          essay.value[index].views += 1;
-        }
-        // 标记为已浏览
+        essay.value[index].views += 1;
         essay.value[index].isViewed = true;
       }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || "未知错误";
-      // 如果是已记录的情况，也标记为已浏览
-      if (error?.response?.data?.message === "浏览量已记录") {
-        const index = essay.value.findIndex((article) => article.id === item.id);
-        if (index !== -1) {
-          essay.value[index].isViewed = true;
-        }
-      } else {
-        ElMessage.error(errorMessage);
-      }
+      ElMessage.error(errorMessage);
     }
   }
 };
@@ -482,6 +431,14 @@ watch(
   () => route.params.tab,
   (newTab) => {
     activeTab.value = Array.isArray(newTab) ? newTab[0] : newTab || "essays";
+  }
+);
+
+// 添加对路由查询参数的监听，当检测到刷新参数时重新获取数据
+watch(
+  () => route.query.refresh,
+  () => {
+    fetchData();
   }
 );
 </script>

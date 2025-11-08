@@ -117,7 +117,7 @@ const messages = ref<{ text: string; isUser: boolean }[]>([]);
 const messageContainer = ref<HTMLElement | null>(null);
 const isThinking = ref(false); // 控制"正在思考中"提示的显示
 const botAvatar =
-  "https://tse2-mm.cn.bing.net/th/id/OIP-C.c6XX36qUmH-ucd5vMsLqjQHaHa?w=143&h=180&c=7&r=0&o=7&cb=12&dpr=1.3&pid=1.7&rm=3";
+  "https://ts4.tc.mm.bing.net/th/id/OADD2.8246467932249_17L4X7T1HZQ09ASA5N?w=32&h=32&o=6&pid=21.2";
 const userAvatar = ref("");
 let ws: WebSocket | null = null;
 const APPID = modelID;

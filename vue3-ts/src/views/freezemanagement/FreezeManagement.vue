@@ -594,6 +594,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import {
   Search,
@@ -605,7 +606,7 @@ import {
   Close,
 } from "@element-plus/icons-vue";
 import axiosConfig from "../../utils/request";
-
+const router = useRouter();
 interface User {
   id: number;
   username: string;
@@ -844,6 +845,7 @@ const confirmFreeze = async () => {
     ElMessage.success(response.data.message);
     freezeDialogVisible.value = false;
     searchedUser.value = null;
+    router.push({ path: "/login/index" });
     fetchFrozenUsers();
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || "冻结操作失败");

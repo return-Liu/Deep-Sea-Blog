@@ -1,4 +1,4 @@
-import { ref, onMounted, watch, computed, defineProps } from "vue";
+import { ref } from "vue";
 import { useUserStore } from "../store/userStore";
 import { predefinedColors } from "../utils/wallbackground";
 const userStore = useUserStore();

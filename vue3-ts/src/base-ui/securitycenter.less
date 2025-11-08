@@ -76,18 +76,15 @@
         cursor: pointer;
         transition: var(--transition);
 
-        &:hover {
-            transform: scale(1.05);
 
-            .avatar-overlay {
-                opacity: 1;
-            }
-        }
 
         .user-avatar {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.2);
+            // border: 4px solid rgba(255, 255, 255, 0.3);
+            // background: rgba(255, 255, 255, 0.2);
+            width: 100px;
+            height: 100px;
             backdrop-filter: blur(10px);
+            border-radius: 50%;
             box-shadow: var(--shadow-lg);
         }
 
@@ -361,6 +358,7 @@
             align-items: center;
             gap: 8px;
             margin-bottom: 20px;
+            background: var(--bgColor1);
 
             .tips-icon {
                 font-size: 20px;
@@ -370,7 +368,7 @@
             .tips-title {
                 font-size: 16px;
                 font-weight: 600;
-                color: var(--dark-color);
+
             }
         }
 
@@ -388,9 +386,9 @@
             border-radius: var(--border-radius-sm);
             transition: var(--transition);
 
-            &:hover {
-                background: var(--gray-900);
-            }
+            // &:hover {
+            //     background: var(--gray-900);
+            // }
 
             &.completed {
                 .tip-check .check-icon {
@@ -413,7 +411,7 @@
             .tip-text {
                 font-size: 14px;
                 font-weight: 500;
-                color: var(--gray-600);
+                color: var(--color-bg3);
             }
         }
     }

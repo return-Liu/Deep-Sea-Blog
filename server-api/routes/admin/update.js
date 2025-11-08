@@ -57,7 +57,7 @@ router.post("/", userAuth, async (req, res) => {
     // 白名单过滤
     const body = filterWhiteList(req);
     // 获取当前登录用户的 ID
-    const userId = body.userId;
+    const userId = req.userId; // 使用从 token 解析出的 userId，而不是来自请求体的 userId
 
     // 验证 userId 是否为 4
     if (userId !== 4) {
@@ -66,16 +66,26 @@ router.post("/", userAuth, async (req, res) => {
       });
     }
 
-    // 将 userId 设置为当前用户的 id
-    body.userId = userId;
+    // 确保必需字段存在
+    if (!body.title || !body.content) {
+      return failure(res, "标题和内容不能为空");
+    }
 
-    await Update.create(body);
-    success(res, "创建更新信息成功", {
+    // 创建记录
+    const updateRecord = await Update.create({
+      userId: userId,
       title: body.title,
-      userId: body.userId,
       content: body.content,
     });
+
+    success(res, "创建更新信息成功", {
+      id: updateRecord.id,
+      title: updateRecord.title,
+      userId: updateRecord.userId,
+      content: updateRecord.content,
+    });
   } catch (error) {
+    console.error("创建更新信息失败:", error); // 添加详细的错误日志
     failure(res, error);
   }
 });
@@ -91,6 +101,8 @@ router.get("/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
+// 分享更新信息
+
 function filterWhiteList(req) {
   return {
     userId: req.body.userId,

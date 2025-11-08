@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { User } = require("../models");
 const { success, failure } = require("../utils/responses");
-const { createSixNum, send } = require("../utils/email");
+const { createSixNum, sendPasswordReset } = require("../utils/email"); // 修改这里：使用正确的函数名
 const bcrypt = require("bcryptjs");
 const { canSendCode } = require("../utils/rateLimiter");
 const userAuth = require("../middlewares/user-auth");
@@ -70,33 +70,11 @@ router.post("/getemail", async (req, res) => {
       codeExpire: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await send(email, code);
+    await sendPasswordReset(email, code); // 修改这里：使用正确的函数名
 
     success(res, "验证码已发送，请查收您的邮箱");
   } catch (error) {
     console.error(error);
-    failure(res, error);
-  }
-});
-
-// 验证邮箱
-router.post("/checkemail", async (req, res) => {
-  try {
-    const { email, code } = req.body;
-    if (!email) throw new Error("邮箱不能为空");
-    if (!code) throw new Error("验证码不能为空");
-    const user = await User.findOne({ where: { email } });
-    if (!user) throw new Error("用户不存在");
-
-    console.log("Stored code:", user.code);
-    console.log("Code expire time:", user.codeExpire);
-
-    if (new Date() > user.codeExpire) throw new Error("验证码已过期");
-    if (user.code !== code) throw new Error("验证码错误");
-
-    success(res, "验证成功");
-  } catch (error) {
-    console.error("Error in checkemail:", error.message);
     failure(res, error);
   }
 });

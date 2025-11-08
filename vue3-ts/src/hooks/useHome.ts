@@ -70,17 +70,20 @@ export default function useHome(uploadRef: any) {
 
   const submitUpload = () => {
     if (uploadRef.value) {
+      ElMessage.info({
+        message: "正在上传...",
+        duration: 0, // 不自动关闭
+      }); // 开始加载
       uploadRef.value.submit();
     } else {
-      console.error("uploadRef 未正确赋值");
       ElMessage.error("上传组件未正确初始化，请稍后再试");
     }
   };
 
   const handleChange = (file: File, fileList: File[]) => {
     showUploadButton.value = fileList.length > 0;
+    ElMessage.info(`已选择图片：${file.name}`);
   };
-
   const dialogTitle = computed(() => {
     const titles = {
       essay: "新增博客文章",
@@ -90,32 +93,32 @@ export default function useHome(uploadRef: any) {
     return titles[currentType.value];
   });
 
-  // 表单验证规则
-  const rules = computed<FormRules>(() => {
-    const baseRules: FormRules = {};
-    baseRules.title = [
-      { required: true, message: "请输入标题", trigger: "blur" },
-      { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" },
-    ];
-    baseRules.image = [
-      { required: true, message: "请上传图片", trigger: "change" },
-    ];
-    baseRules.content = [
-      { required: true, message: "请输入内容", trigger: "blur" },
-      {
-        min: 5,
-        max: 500,
-        message: "长度在 5 到 500 个字符",
-        trigger: "blur",
-      },
-    ];
-    if (currentType.value === "essay") {
-      baseRules.label = [
-        { required: true, message: "请输入标签", trigger: "blur" },
-      ];
-    }
-    return baseRules;
-  });
+  // // 表单验证规则
+  // const rules = computed<FormRules>(() => {
+  //   const baseRules: FormRules = {};
+  //   baseRules.title = [
+  //     { required: true, message: "请输入标题", trigger: "blur" },
+  //     { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" },
+  //   ];
+  //   baseRules.image = [
+  //     { required: true, message: "请上传图片", trigger: "change" },
+  //   ];
+  //   baseRules.content = [
+  //     { required: true, message: "请输入内容", trigger: "blur" },
+  //     {
+  //       min: 5,
+  //       max: 500,
+  //       message: "长度在 5 到 500 个字符",
+  //       trigger: "blur",
+  //     },
+  //   ];
+  //   if (currentType.value === "essay") {
+  //     baseRules.label = [
+  //       { required: true, message: "请输入标签", trigger: "blur" },
+  //     ];
+  //   }
+  //   return baseRules;
+  // });
 
   const beforeUpload = (file: File): boolean => {
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -152,6 +155,8 @@ export default function useHome(uploadRef: any) {
     uploadRef.value.clearFiles();
     // 隐藏上传按钮
     showUploadButton.value = false;
+    // ... 处理逻辑
+    ElMessage.closeAll(); // 关闭 loading
   };
   // 假设用户已经上传了图片 再次上传一张新图片 把旧图片删除
   const deleteNewImage = async (isReupload: boolean = false) => {
@@ -220,29 +225,6 @@ export default function useHome(uploadRef: any) {
       // 检查图片是否上传
       if (!formData.value.image) {
         ElMessage.error("请上传图片");
-        return;
-      }
-
-      // 根据不同类型进行特定验证
-      if (currentType.value === "essay") {
-        if (!formData.value.title?.trim()) {
-          ElMessage.error("请输入文章标题");
-          return;
-        }
-        if (!formData.value.label?.trim()) {
-          ElMessage.error("请输入文章标签");
-          return;
-        }
-      } else if (currentType.value === "notes") {
-        if (!formData.value.title?.trim()) {
-          ElMessage.error("请输入随笔标题");
-          return;
-        }
-      }
-
-      // 所有类型都需要内容
-      if (!formData.value.content?.trim()) {
-        ElMessage.error("请输入内容");
         return;
       }
 
@@ -407,7 +389,7 @@ export default function useHome(uploadRef: any) {
     dialogTitle,
     dialogVisible,
     formData,
-    rules,
+
     userId,
   };
 }

@@ -388,18 +388,18 @@ export default function useMessageWall() {
   // 统一的提交方法
   const handleSubmit = async () => {
     try {
-      if (!messageForm.value.content) {
-        ElMessage.error("请输入留言内容");
-        return;
-      }
-      if (!messageForm.value.name) {
-        ElMessage.error("请输入留言签名");
-        return;
-      }
-      if (!messageForm.value.category) {
-        ElMessage.error("请选择留言分类");
-        return;
-      }
+      // if (!messageForm.value.content) {
+      //   ElMessage.error("请输入留言内容");
+      //   return;
+      // }
+      // if (!messageForm.value.name) {
+      //   ElMessage.error("请输入留言签名");
+      //   return;
+      // }
+      // if (!messageForm.value.category) {
+      //   ElMessage.error("请选择留言分类");
+      //   return;
+      // }
       if (isEdit.value) {
         // 编辑模式
         await axiosConfig.put(`/admin/wall/${messageForm.value.id}`, {

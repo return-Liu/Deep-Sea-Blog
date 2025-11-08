@@ -39,6 +39,7 @@ const adminLikesWallRouter = require("./routes/admin/likeswall");
 const adminCommentRouter = require("./routes/admin/comment");
 const adminLikesCommentRouter = require("./routes/admin/likescomment");
 const adminAuthRouter = require("./routes/admin/auth");
+const adminPhotoRouter = require("./routes/admin/photo");
 const app = express();
 // 配置静态文件服务
 app.use(express.static(path.join(__dirname, "public")));
@@ -103,7 +104,7 @@ app.use("/search", searchRouter);
 app.use("/auth", authRouter);
 app.use("/email", emailRouter);
 app.use("/theme", themeRouter);
-app.use("/location", userAuth, locationRouter);
+app.use("/location", locationRouter);
 app.use("/device", userAuth, deviceRouter);
 
 // 后台路由配置
@@ -112,7 +113,7 @@ app.use("/admin/photography", userAuth, adminPhotographyRouter);
 app.use("/admin/note", userAuth, adminNoteRouter);
 app.use("/admin/likes", userAuth, adminLikesRouter);
 app.use("/admin/uploadavatar", userAuth, adminUploadAvatarRouter);
-app.use("/admin/upload", userAuth, adminUploadRouter);
+app.use("/admin/upload", adminUploadRouter);
 app.use("/admin/feedback", userAuth, adminFeedbackRouter);
 app.use("/admin/update", adminUpdateRouter);
 app.use("/admin/wall", userAuth, adminWallRouter);
@@ -120,4 +121,5 @@ app.use("/admin/likeswall", userAuth, adminLikesWallRouter);
 app.use("/admin/comment", userAuth, adminCommentRouter);
 app.use("/admin/likescomment", userAuth, adminLikesCommentRouter);
 app.use("/admin/auth", userAuth, adminAuthRouter);
+app.use("/admin/photo", userAuth, adminPhotoRouter);
 module.exports = app;

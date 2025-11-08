@@ -43,7 +43,7 @@
               v-lazy="selectedNode.image ?? ''"
               :alt="getFileName(selectedNode.image ?? '')"
               class="resource-image"
-              @click="handleClick(selectedNode.image ?? '')"
+              @click="previewImage(selectedNode.image ?? '', 0)"
             />
             <div class="resource-info">
               <p>{{ getFileName(selectedNode.image ?? "") }}</p>
@@ -57,7 +57,7 @@
           </div>
           <div v-else>
             <div
-              v-for="item in selectedNode.children"
+              v-for="(item, index) in selectedNode.children"
               :key="item.id"
               class="resource-item"
             >
@@ -65,7 +65,7 @@
                 v-lazy="item.image ?? ''"
                 :alt="getFileName(item.image ?? '')"
                 class="resource-image"
-                @click="handleClick(item.image ?? '')"
+                @click="previewImage(item.image ?? '', index)"
               />
               <div class="resource-info">
                 <p>{{ getFileName(item.image ?? "") }}</p>
@@ -82,6 +82,13 @@
         </div>
       </div>
     </div>
+    <!-- 图片预览组件 -->
+    <ImagePreview
+      :visible="showImageViewer"
+      :images="imagePreviewList"
+      :initial-index="initialIndex"
+      @close="showImageViewer = false"
+    />
   </div>
 </template>
 <script setup lang="ts" name="localResources">
@@ -90,6 +97,7 @@ import { ElMessage } from "element-plus";
 import axiosConfig from "../../utils/request";
 import { useUserStore } from "../../store/userStore";
 import { useResources } from "../../hooks/useResources";
+import ImagePreview from "../../components/imagepreview/ImagePreview.vue";
 const { formatFileSize, getFileName } = useResources();
 import { type ResourceItem, type TreeNode } from "../../types/localresources";
 const resources: ResourceItem[] = [];
@@ -100,10 +108,16 @@ const totalSize = ref(0);
 const userId = ref<number | null>(null);
 userId.value = user.value?.id || null;
 
+// 图片预览相关状态
+const showImageViewer = ref(false);
+const imagePreviewList = ref<string[]>([]);
+const initialIndex = ref(0);
+
 const defaultProps = {
   children: "children",
   label: "label",
 };
+
 function groupResourcesByDate(resources: ResourceItem[]): TreeNode[] {
   const yearMap = new Map<string, TreeNode>();
   resources.forEach((resource) => {
@@ -160,6 +174,7 @@ function groupResourcesByDate(resources: ResourceItem[]): TreeNode[] {
   });
   return Array.from(yearMap.values());
 }
+
 async function addEssay(currentPage: number = 1) {
   try {
     const limit = 9;
@@ -240,12 +255,33 @@ async function addEssay(currentPage: number = 1) {
   }
 }
 
-const handleClick = (url: string) => {
-  window.open(url);
+// 图片预览方法
+const previewImage = (url: string, index: number) => {
+  // 收集当前所有可预览的图片URL
+  let images: string[] = [];
+
+  if (selectedNode.value?.type === "file") {
+    // 单个文件情况
+    images = [selectedNode.value.image ?? ""];
+    initialIndex.value = 0;
+  } else if (selectedNode.value?.children) {
+    // 多个文件情况
+    images = selectedNode.value.children
+      .filter((item) => item.image)
+      .map((item) => item.image as string);
+
+    // 设置点击图片的索引
+    initialIndex.value = index;
+  }
+
+  imagePreviewList.value = images;
+  showImageViewer.value = true;
 };
+
 onMounted(() => {
   addEssay();
 });
+
 // 定义时间转换函数
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);

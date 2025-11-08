@@ -89,7 +89,7 @@ router.post("/login/device", userAuth, async (req, res) => {
 });
 
 // 获取用户所有登录设备
-router.get("/devices", userAuth, async (req, res) => {
+router.get("/devices", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     const currentDeviceInfo = await extractDeviceInfo(req);
@@ -98,43 +98,29 @@ router.get("/devices", userAuth, async (req, res) => {
       currentDeviceInfo.userAgent
     );
 
-    // 先检查并更新过期设备状态
-    const now = new Date();
-    await Device.update(
-      { status: "未登录" },
-      {
-        where: {
-          userId: currentUser.id,
-          status: "已登录",
-          loginExpire: { [Op.lt]: now },
-        },
-      }
-    );
-
-    // 查询更新后的设备列表
+    // 查询所有设备，不仅限于"已登录"状态
     const devices = await Device.findAll({
-      where: {
-        userId: currentUser.id,
-        status: "已登录",
-      },
+      where: { userId: currentUser.id },
       order: [["lastLoginTime", "DESC"]],
     });
 
     const formattedDevices = devices.map((device) => ({
-      id: device.deviceId, // 保持一致，使用 deviceId
+      id: device.deviceId,
       deviceName: device.deviceName,
       deviceType: device.deviceType,
       os: device.os,
       browser: device.browser,
       lastLoginTime: device.lastLoginTime,
+      isTrusted: device.isTrusted,
       location: device.location,
       city: device.city,
       province: device.province,
+      trustExpire: device.trustExpire,
       isCurrentDevice: device.deviceId === currentDeviceId,
       loginMethod: device.loginMethod || "未知登录方式",
       status: device.status,
-      lastActiveAt: device.lastActiveAt,
       loginExpire: device.loginExpire,
+      lastActiveAt: device.lastActiveAt,
     }));
 
     success(res, "获取设备列表成功", formattedDevices);
@@ -144,25 +130,29 @@ router.get("/devices", userAuth, async (req, res) => {
 });
 
 // 删除登录设备
-router.delete("/device/:deviceId", userAuth, async (req, res) => {
+router.delete("/devices/:deviceId", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     const { deviceId } = req.params;
 
+    // 检查设备是否属于当前用户
     const device = await Device.findOne({
       where: {
         deviceId: deviceId,
         userId: currentUser.id,
       },
     });
+
     if (!device) {
-      throw new NotFoundError("设备不存在");
+      throw new NotFoundError("设备不存在或不属于当前用户");
     }
+
+    // 直接删除设备，实现强制下线
     await device.destroy();
+
     success(res, "设备删除成功");
   } catch (error) {
     failure(res, error);
   }
 });
-
 module.exports = router;
