@@ -24,71 +24,97 @@ const AUTH_ERRORS = {
   DEVICE_NOT_FOUND: "登录设备不存在，请重新登录", // 添加设备不存在错误消息
 };
 
+// 通用错误处理函数
+function handleAuthError(errorType) {
+  throw new UnauthorizedError(AUTH_ERRORS[errorType]);
+}
+
 module.exports = async (req, res, next) => {
   try {
-    // 判断是否有token
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw new UnauthorizedError(AUTH_ERRORS.MISSING_AUTH_HEADER);
-    }
+    // 验证并提取 token
+    const token = extractAndValidateToken(req.headers.authorization);
+    const decoded = verifyToken(token);
 
-    // 提取token
-    const tokenParts = authHeader.split(" ");
-    if (tokenParts[0] !== "Bearer" || !tokenParts[1]) {
-      throw new UnauthorizedError(AUTH_ERRORS.INVALID_AUTH_FORMAT);
-    }
+    // 查询用户信息
+    const user = await fetchUserById(decoded.userId);
+    validateUserStatus(user);
 
-    const token = tokenParts[1];
+    // 验证设备信息
+    const device = await validateDevice(user.id, req.get("User-Agent"));
+    attachUserInfoToRequest(req, user, decoded.userId);
 
-    // 验证token是否有效
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.SECRET);
-    } catch (err) {
-      if (err instanceof jwt.TokenExpiredError) {
-        throw new UnauthorizedError(AUTH_ERRORS.TOKEN_EXPIRED);
-      } else if (err instanceof jwt.JsonWebTokenError) {
-        throw new UnauthorizedError(AUTH_ERRORS.INVALID_TOKEN);
-      } else {
-        throw new UnauthorizedError(AUTH_ERRORS.TOKEN_VERIFICATION_FAILED);
-      }
-    }
-
-    // 查询用户是否存在
-    const { userId } = decoded;
-    if (!userId) {
-      throw new UnauthorizedError(AUTH_ERRORS.INCOMPLETE_TOKEN_INFO);
-    }
-
-    const user = await User.findByPk(userId);
-    if (!user) {
-      throw new UnauthorizedError(AUTH_ERRORS.USER_NOT_FOUND);
-    }
-
-    // 检查用户冻结状态
-    if (user.isFrozen === 1) {
-      throw new UnauthorizedError(AUTH_ERRORS.USER_FROZEN);
-    }
-
-    // 检查设备是否存在（用于强制下线功能）
-    const deviceInfo = req.get("User-Agent") || "";
-    const deviceId = generateDeviceId(userId, deviceInfo);
-    const device = await Device.findOne({
-      where: {
-        deviceId: deviceId,
-        userId: userId,
-      },
-    });
-
-    if (!device) {
-      throw new UnauthorizedError(AUTH_ERRORS.DEVICE_NOT_FOUND);
-    }
-
-    // 将用户信息附加到请求对象
-    req.userId = userId;
-    req.user = user;
     next();
   } catch (error) {
     failure(res, error);
   }
 };
+
+// 提取并验证 Authorization Header
+function extractAndValidateToken(authHeader) {
+  if (!authHeader) {
+    handleAuthError("MISSING_AUTH_HEADER");
+  }
+
+  const tokenParts = authHeader.split(" ");
+  if (tokenParts[0] !== "Bearer" || !tokenParts[1]) {
+    handleAuthError("INVALID_AUTH_FORMAT");
+  }
+
+  return tokenParts[1];
+}
+
+// 验证 JWT Token
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, process.env.SECRET);
+  } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
+      handleAuthError("TOKEN_EXPIRED");
+    } else if (err instanceof jwt.JsonWebTokenError) {
+      handleAuthError("INVALID_TOKEN");
+    } else {
+      handleAuthError("TOKEN_VERIFICATION_FAILED");
+    }
+  }
+}
+
+// 查询用户信息
+async function fetchUserById(userId) {
+  if (!userId) {
+    handleAuthError("INCOMPLETE_TOKEN_INFO");
+  }
+
+  const user = await User.findByPk(userId);
+  if (!user) {
+    handleAuthError("USER_NOT_FOUND");
+  }
+
+  return user;
+}
+
+// 检查用户状态
+function validateUserStatus(user) {
+  if (user.isFrozen === 1) {
+    handleAuthError("USER_FROZEN");
+  }
+}
+
+// 验证设备信息
+async function validateDevice(userId, userAgent) {
+  const deviceId = generateDeviceId(userId, userAgent);
+  const device = await Device.findOne({
+    where: { deviceId, userId },
+  });
+
+  if (!device) {
+    handleAuthError("DEVICE_NOT_FOUND");
+  }
+
+  return device;
+}
+
+// 将用户信息附加到请求对象
+function attachUserInfoToRequest(req, user, userId) {
+  req.userId = userId;
+  req.user = user;
+}

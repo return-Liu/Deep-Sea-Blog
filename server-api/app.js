@@ -1,20 +1,20 @@
+// 核心模块
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const cors = require("cors"); // 引入 cors 中间件
+const cors = require("cors");
+
+// 加载环境变量
+require("dotenv").config();
+
+// 自定义中间件和服务
 const userAuth = require("./middlewares/user-auth");
-const AutoUnfreezeService = require("./utils/autoUnfreeze");
+const autoUnfreezeMiddleware = require("./middlewares/autoUnfreezeMiddleware");
 const deviceTrackerMiddleware = require("./middlewares/deviceTrackerMiddleware");
 const DeviceCleanupScheduler = require("./utils/deviceCleanupScheduler");
-const { createServer } = require("http");
-const WebSocket = require("ws");
+const AutoUnfreezeService = require("./utils/autoUnfreeze");
 
-// 启动定时任务
-DeviceCleanupScheduler.start(); // 清理未登录设备
-AutoUnfreezeService.start();
-const autoUnfreezeMiddleware = require("./middlewares/autoUnfreezeMiddleware");
-require("dotenv").config();
 // 前台路由
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
@@ -24,8 +24,8 @@ const emailRouter = require("./routes/email");
 const themeRouter = require("./routes/theme");
 const locationRouter = require("./routes/location");
 const deviceRouter = require("./routes/device");
+
 // 后台路由
-// const adminAuthRouter = require("./routes/admin/auth");
 const adminArticleRouter = require("./routes/admin/article");
 const adminPhotographyRouter = require("./routes/admin/photography");
 const adminNoteRouter = require("./routes/admin/note");
@@ -40,8 +40,11 @@ const adminCommentRouter = require("./routes/admin/comment");
 const adminLikesCommentRouter = require("./routes/admin/likescomment");
 const adminAuthRouter = require("./routes/admin/auth");
 const adminPhotoRouter = require("./routes/admin/photo");
+
+// 初始化应用
 const app = express();
-// 配置静态文件服务
+
+// 静态文件服务与中间件配置
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "./dist")));
 app.use(logger("dev"));
@@ -50,41 +53,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(autoUnfreezeMiddleware);
 app.use(deviceTrackerMiddleware);
-const server = createServer(app);
 
-const wss = new WebSocket.Server({ server });
-
-wss.on("connection", (ws) => {
-  console.log("用户已连接");
-
-  // 处理消息
-  ws.on("message", (message) => {
-    console.log("接收到原始消息:", message);
-
-    try {
-      const data = JSON.parse(message);
-      console.log("解析后的消息:", data);
-
-      // 广播给除发送者外的所有客户端
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(data));
-        }
-      });
-    } catch (err) {
-      console.error("解析消息错误:", err);
-    }
-  });
-
-  // 处理断开连接
-  ws.on("close", () => {
-    console.log("用户已断开连接");
-  });
-});
-server.listen(3001, () => {
-  console.log("WebSocket 服务已启动");
-});
-// 全局配置 CORS
+// 全局 CORS 配置
 app.use(
   cors({
     origin: [
@@ -97,6 +67,7 @@ app.use(
     allowedHeaders: "Content-Type,Authorization", // 允许的请求头
   })
 );
+
 // 前台路由配置
 app.use("/index", indexRouter);
 app.use("/users", userAuth, usersRouter);
@@ -122,4 +93,105 @@ app.use("/admin/comment", userAuth, adminCommentRouter);
 app.use("/admin/likescomment", userAuth, adminLikesCommentRouter);
 app.use("/admin/auth", userAuth, adminAuthRouter);
 app.use("/admin/photo", userAuth, adminPhotoRouter);
+
+// WebSocket 配置
+const { createServer } = require("http");
+const WebSocket = require("ws");
+const server = createServer(app);
+const wss = new WebSocket.Server({ server, path: "/websocket" });
+
+// 封装 WebSocket 逻辑
+function setupWebSocket(wss) {
+  const allowedOrigins = new Set([
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ]);
+
+  wss.on("connection", (ws, req) => {
+    const origin = req.headers.origin;
+    if (origin && !allowedOrigins.has(origin)) {
+      console.warn("拒绝不受信任的 origin:", origin);
+      try {
+        ws.close(1008, "Origin not allowed");
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
+
+    console.log("用户已连接", req.socket.remoteAddress || "unknown");
+
+    ws.on("message", (message) => {
+      console.log(
+        "接收到原始消息:",
+        typeof message === "string" ? message : "<binary>"
+      );
+      try {
+        const data = JSON.parse(message);
+        console.log("解析后的消息:", data);
+
+        // 简单防护：只广播白名单字段，并限制内容长度
+        const out = {
+          type: data.type || "message",
+          payload: null,
+        };
+
+        if (data.payload) {
+          if (typeof data.payload === "string") {
+            out.payload = data.payload.slice(0, 10000);
+          } else if (data.payload.text) {
+            out.payload = { text: String(data.payload.text).slice(0, 10000) };
+          } else {
+            out.payload = { raw: String(data.payload).slice(0, 10000) };
+          }
+        }
+
+        const outStr = JSON.stringify(out);
+
+        // 广播给除发送者外的所有客户端
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            try {
+              client.send(outStr);
+            } catch (e) {
+              console.error("发送到 client 失败", e);
+            }
+          }
+        });
+      } catch (err) {
+        console.error("解析消息错误:", err);
+        try {
+          ws.send(JSON.stringify({ type: "error", message: "消息格式错误" }));
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    });
+
+    ws.on("error", (err) => {
+      console.error("ws client error:", err);
+    });
+
+    ws.on("close", (code, reason) => {
+      console.log("用户已断开连接", code, reason && reason.toString());
+    });
+  });
+
+  wss.on("error", (err) => {
+    console.error("wss error:", err);
+  });
+}
+
+// 启动 WebSocket
+setupWebSocket(wss);
+
+// 启动定时任务
+DeviceCleanupScheduler.start(); // 清理未登录设备
+AutoUnfreezeService.start();
+
+// 启动服务器
+server.listen(3001, () => {
+  console.log("WebSocket 服务已启动: ws://localhost:3001/websocket");
+});
+
 module.exports = app;
