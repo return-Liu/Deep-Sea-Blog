@@ -32,9 +32,5 @@ export const photos = ref<
     size: number;
     loaded: boolean;
     selected: boolean;
-    position: {
-      x: number;
-      y: number;
-    };
   }[]
 >([]);

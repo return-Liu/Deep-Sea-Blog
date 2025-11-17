@@ -72,6 +72,9 @@ export default function useMessageWall() {
   const contentRef = ref<HTMLDivElement>();
   userId.value = user.value?.uuid || null;
   const search = ref("");
+  const currentPage = ref<number>(1); // 当前页码
+  const pageSize = ref<number>(9); // 每页数量
+  const total = ref<number>(0); // 总数量
 
   const updateContent = (e: Event) => {
     const target = e.target as HTMLDivElement;
@@ -132,9 +135,12 @@ export default function useMessageWall() {
   };
 
   // 获取留言墙
-  const fetchWallData = async (category?: string, currentPage: number = 1) => {
+  const fetchWallData = async (category?: string) => {
     try {
-      const params: any = {};
+      const params: any = {
+        currentPage: currentPage.value,
+        pageSize: pageSize.value,
+      };
       if (category) {
         params.category = category;
       }
@@ -149,9 +155,14 @@ export default function useMessageWall() {
         isLiked: false,
         date: wall.createdAt,
         backgroundColor: wall.backgroundColor,
-        nicknameColor: wall.User?.nicknameColor || "#000000", // 安全访问并提供默认值
+        nicknameColor: wall.User?.nicknameColor || "#000000",
       }));
-      console.log(wallResponse);
+
+      // 更新分页信息
+      const pagination = wallResponse.data.data.pagination;
+      currentPage.value = pagination.currentPage;
+      pageSize.value = pagination.pageSize;
+      total.value = pagination.total;
 
       // 获取每个留言的评论数据
       const counts = await Promise.all(
@@ -160,6 +171,8 @@ export default function useMessageWall() {
       messages.value.forEach((message, index) => {
         commentCounts.value[message.id] = counts[index];
       });
+
+      return pagination; // 返回分页信息
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || "未知错误";
@@ -167,6 +180,11 @@ export default function useMessageWall() {
     }
   };
 
+  // 切换页码
+  const changePage = (newPage: number) => {
+    currentPage.value = newPage;
+    fetchWallData(activeCategory.value);
+  };
   onMounted(() => {
     fetchWallData();
     if (route.params.tab) {
@@ -550,5 +568,12 @@ export default function useMessageWall() {
     commentCounts,
     handleColorSelect,
     reportQQ,
+    pagination: computed(() => ({
+      // 添加分页计算属性
+      currentPage: currentPage.value,
+      pageSize: pageSize.value,
+      total: total.value,
+    })),
+    changePage,
   };
 }

@@ -1,5 +1,11 @@
 <template>
   <div class="walls-container">
+    <el-alert
+      title="留言墙承载了每一份真挚的情感与故事。您可以自由浏览，感受每一份共鸣。（创作者可编辑或删除自己的留言，共同维护这片温暖的空间。）"
+      type="success"
+      :closable="false"
+      class="alert"
+    ></el-alert>
     <nav class="walls-nav">
       <ul class="nav-list">
         <li
@@ -99,6 +105,17 @@
         <yk-empty description="暂无留言，快来留下第一个足迹吧~" />
       </div>
     </main>
+    <!-- 分页控件 -->
+    <el-pagination
+      v-if="activeTab === 'messages' && filteredMessages.length"
+      background
+      layout="prev, pager, next"
+      :total="pagination.total"
+      :current-page="pagination.currentPage"
+      :page-size="pagination.pageSize"
+      @current-change="changePage"
+      style="margin-top: 20px; text-align: center"
+    />
     <div class="floating-actions">
       <el-tooltip
         effect="dark"
@@ -302,6 +319,8 @@ const {
   commentCounts,
   handleColorSelect,
   reportQQ,
+  pagination,
+  changePage,
 } = useMessageWall();
 </script>
 <style lang="less" scoped>

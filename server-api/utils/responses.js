@@ -1,4 +1,3 @@
-// utils/responses.js
 const {
   BadRequestError,
   UnauthorizedError,
@@ -6,28 +5,27 @@ const {
 } = require("./errors");
 
 /**
-  请求成功
-  @param res
-  @param message
-  @param data
-  @param code
+ * 请求成功
+ * @param {Object} res - Express 响应对象
+ * @param {string} message - 成功消息
+ * @param {Object} data - 返回的数据，默认为空对象
+ * @param {number} code - HTTP 状态码，默认为 200
  */
 function success(res, message, data = {}, code = 200) {
   const response = {
-    status: 200, // 将 true 改为 200
+    status: true,
     message,
   };
-  // 只有当 data 不是空对象时才添加 data 字段
   if (Object.keys(data).length > 0) {
-    response.data = data;
+    response.data = data; // 只有非空数据才添加 data 字段
   }
   return res.status(code).json(response);
 }
 
 /**
-  请求失败
-  @param res
-  @param error
+ * 请求失败
+ * @param {Object} res - Express 响应对象
+ * @param {Error} error - 错误对象
  */
 function failure(res, error) {
   let message = "系统错误";
@@ -35,73 +33,74 @@ function failure(res, error) {
   let statusCode = error.statusCode || 500;
   let responseData = null;
 
-  // 处理 Joi 校验错误
-  if (error.isJoi) {
-    message = "请求参数错误";
-    errors = error.details.map((d) => d.message);
-    statusCode = 400;
-  }
-  // 处理 Sequelize 校验错误
-  else if (error.name === "SequelizeValidationError") {
-    message = "请求参数错误";
-    errors = error.errors.map((e) => e.message);
-    statusCode = 400;
-  }
-  // 处理自定义错误类
-  else if (
-    error instanceof BadRequestError ||
-    error instanceof UnauthorizedError ||
-    error instanceof NotFoundError
-  ) {
-    message = error.message || message;
-    errors = [message];
-    statusCode = error.statusCode || statusCode;
+  // 错误处理逻辑
+  switch (true) {
+    case error.isJoi:
+      message = "请求参数错误";
+      errors = error.details.map((d) => d.message);
+      statusCode = 400;
+      break;
 
-    // 如果有额外数据（如冻结信息），保存起来
-    if (error.data) {
-      responseData = error.data;
-    }
-  }
-  // 处理 JWT Token 相关错误
-  else if (error.name === "JsonWebTokenError") {
-    message = "认证失败：token 错误";
-    errors = ["你提交的 token 错误"];
-    statusCode = 401;
-  } else if (error.name === "TokenExpiredError") {
-    message = "认证失败：token 已过期";
-    errors = ["你提交的 token 过期"];
-    statusCode = 401;
-  }
-  // 处理 Sequelize 唯一约束错误
-  else if (error.name === "SequelizeUniqueConstraintError") {
-    message = "数据已存在";
-    errors = error.errors.map((e) => e.message);
-    statusCode = 400;
-  }
-  // 处理 Sequelize 外键错误
-  else if (error.name === "SequelizeForeignKeyConstraintError") {
-    message = "关联数据错误";
-    errors = ["关联的数据不存在"];
-    statusCode = 400;
-  }
-  // 兜底通用错误
-  else {
-    message = error.message || message;
-    errors = [message];
+    case error.name === "SequelizeValidationError":
+      message = "请求参数错误";
+      errors = error.errors.map((e) => e.message);
+      statusCode = 400;
+      break;
+
+    case error instanceof BadRequestError ||
+      error instanceof UnauthorizedError ||
+      error instanceof NotFoundError:
+      message = error.message || message;
+      errors = [message];
+      statusCode = error.statusCode || statusCode;
+      if (error.data) {
+        responseData = error.data; // 保存额外数据
+      }
+      break;
+
+    case error.name === "JsonWebTokenError":
+      message = "认证失败：token 错误";
+      errors = ["你提交的 token 错误"];
+      statusCode = 401;
+      break;
+
+    case error.name === "TokenExpiredError":
+      message = "认证失败：token 已过期";
+      errors = ["你提交的 token 过期"];
+      statusCode = 401;
+      break;
+
+    case error.name === "SequelizeUniqueConstraintError":
+      message = "数据已存在";
+      errors = error.errors.map((e) => e.message);
+      statusCode = 400;
+      break;
+
+    case error.name === "SequelizeForeignKeyConstraintError":
+      message = "关联数据错误";
+      errors = ["关联的数据不存在"];
+      statusCode = 400;
+      break;
+
+    default:
+      message = error.message || message;
+      errors = [message];
+      console.error("未处理的错误:", error); // 记录未处理的错误
+      break;
   }
 
+  // 构建响应结构
   const response = {
     status: false,
     message,
     errors,
   };
 
-  // 如果有额外数据（如冻结信息），添加到响应中
   if (responseData) {
-    response.data = responseData;
+    response.data = responseData; // 添加额外数据
   }
 
-  res.status(statusCode).json(response);
+  return res.status(statusCode).json(response);
 }
 
 module.exports = {

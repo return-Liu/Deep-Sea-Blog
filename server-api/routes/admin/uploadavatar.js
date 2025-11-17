@@ -6,7 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const sharp = require("sharp");
 const { client } = require("../../utils/oss");
-
+// const { deleteFromOSS } = require("../../utils/ossUtils");
 // 自定义请求头
 const headers = {
   "x-oss-storage-class": "Standard",
@@ -225,7 +225,6 @@ router.delete("/avatar/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
 
-    // 从OSS删除文件
     await deleteFromOSS(`avatar/${filename}`);
 
     success(res, "删除头像成功");
@@ -237,5 +236,4 @@ router.delete("/avatar/:filename", async (req, res) => {
     failure(res, 500, "服务器内部错误");
   }
 });
-
 module.exports = router;

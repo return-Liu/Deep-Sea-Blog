@@ -6,6 +6,7 @@ const { Op } = require("sequelize");
 const userAuth = require("../../middlewares/user-auth");
 const { client } = require("../../utils/oss");
 const cache = require("memory-cache");
+const jwt = require("jsonwebtoken");
 
 // 查询文章列表
 router.get("/", userAuth, async (req, res) => {
@@ -235,10 +236,12 @@ router.post("/views/:id", userAuth, async (req, res) => {
     failure(res, error);
   }
 });
-// 添加分享文章接口
+// 添加分享文章接口（支持自定义文案）
 router.post("/:id/share", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const { title, description, imageUrl } = req.body; // 自定义文案
+
     const article = await Article.findByPk(id, {
       include: [
         {
@@ -252,18 +255,36 @@ router.post("/:id/share", userAuth, async (req, res) => {
       return failure(res, "文章不存在", 404);
     }
 
-    // 生成分享链接或分享码
-    // 这里我们生成一个带有文章ID的分享标识符
-    const shareToken = `${id}-${Date.now().toString(36)}-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    // 构造 payload
+    const payload = {
+      articleId: id,
+      title: title || article.title,
+      description: description || article.content.substring(0, 160),
+      imageUrl: imageUrl || article.image,
+      exp: Math.floor(Date.now() / 1000) + 86400, // 24小时过期
+    };
 
-    // 在实际应用中，你可能想要将这个token存储到数据库中，并设置过期时间
-    // 这样可以更好地控制分享链接的有效性
+    // 生成 JWT token
+    const shareToken = jwt.sign(
+      payload,
+      process.env.SHARE_SECRET_KEY || "your-secret-key-here"
+    );
+
+    // 缓存 token 配置（用于后续验证和统计）
+    const cacheKey = `share:${shareToken}`;
+    cache.put(
+      cacheKey,
+      {
+        ...payload,
+        viewsCount: 0,
+        createdAt: new Date().toISOString(),
+      },
+      86400 * 1000
+    ); // 24小时过期
 
     success(res, "生成分享链接成功", {
       shareLink: `/share/article/${shareToken}`,
-      shareToken: shareToken,
+      shareToken,
       article: {
         id: article.id,
         title: article.title,
@@ -271,25 +292,39 @@ router.post("/:id/share", userAuth, async (req, res) => {
         image: article.image,
         createdAt: article.createdAt,
       },
+      custom: {
+        title: payload.title,
+        description: payload.description,
+        imageUrl: payload.imageUrl,
+      },
     });
   } catch (error) {
     failure(res, error);
   }
 });
-
 // 获取分享的文章内容（公开接口，无需认证）
 router.get("/share/:token", async (req, res) => {
   try {
     const { token } = req.params;
 
-    // 解析token获取文章ID
-    const articleId = token.split("-")[0];
+    // 检查缓存中是否存在该 token
+    const cacheKey = `share:${token}`;
+    const shareData = cache.get(cacheKey);
 
-    if (!articleId) {
+    if (!shareData) {
       return failure(res, "无效的分享链接", 400);
     }
 
-    const article = await Article.findByPk(articleId, {
+    // 增加访问次数
+    const updatedViews = shareData.viewsCount + 1;
+    cache.put(
+      cacheKey,
+      { ...shareData, viewsCount: updatedViews },
+      86400 * 1000
+    );
+
+    // 查询文章
+    const article = await Article.findByPk(shareData.articleId, {
       include: [
         {
           model: User,
@@ -310,6 +345,13 @@ router.get("/share/:token", async (req, res) => {
         image: article.image,
         createdAt: article.createdAt,
         views: article.views,
+      },
+      shareInfo: {
+        title: shareData.title,
+        description: shareData.description,
+        imageUrl: shareData.imageUrl,
+        viewsCount: updatedViews,
+        createdAt: shareData.createdAt,
       },
     });
   } catch (error) {

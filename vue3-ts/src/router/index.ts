@@ -1,4 +1,3 @@
-// router/index.ts
 import {
   createRouter,
   createWebHashHistory,
@@ -61,17 +60,37 @@ const router = createRouter({
     {
       path: "/userprotocol",
       name: "UserProtocol",
+      meta: { requiresAuth: false },
       component: () => import("../views/userprotocol/UserProtocol.vue"),
     },
     {
       path: "/privacy",
       name: "Privacy",
+      meta: { requiresAuth: false },
       component: () => import("../views/privacy/Privacy.vue"),
     },
   ],
 });
 
 let isDynamicRoutesAdded = false;
+
+async function refreshToken(): Promise<string | null> {
+  try {
+    const refreshToken = Cookies.get("/auth/ds-refresh-token");
+    if (!refreshToken) return null;
+
+    const response = await axiosConfig.post("/auth/refresh", {
+      refreshToken,
+    });
+
+    const { token } = response.data;
+    Cookies.set("ds-token", token, { expires: 7 }); // 设置新 token
+    return token;
+  } catch (error) {
+    console.error("刷新 token 失败:", error);
+    return null;
+  }
+}
 
 // 验证token是否有效
 async function validateToken(token: string): Promise<boolean> {
@@ -81,9 +100,14 @@ async function validateToken(token: string): Promise<boolean> {
         Authorization: `Bearer ${token}`,
       },
     });
-
     return true;
   } catch (error) {
+    // 尝试刷新 token
+    const newToken = await refreshToken();
+    if (newToken) {
+      // 刷新成功，重新验证
+      return await validateToken(newToken);
+    }
     return false;
   }
 }
@@ -193,6 +217,7 @@ router.beforeEach(async (to, from, next) => {
   // 所有检查通过，允许导航
   next();
 });
+
 router.afterEach(() => {
   NProgress.done();
 });

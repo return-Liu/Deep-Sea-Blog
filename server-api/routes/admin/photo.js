@@ -8,8 +8,10 @@ const userAuth = require("../../middlewares/user-auth");
 router.get("/", userAuth, async (req, res) => {
   const query = req.query;
   const currentPage = Math.abs(Number(query.currentPage)) || 1;
-  const pageSize = Math.min(Math.abs(Number(query.pageSize)) || 200, 200);
+  const pageSize = Math.min(Math.abs(Number(query.pageSize)) || 20, 200); // 默认值改为 20
   const offset = (currentPage - 1) * pageSize;
+
+  // 构建基础查询条件
   const condition = {
     order: [["id", "DESC"]],
     limit: pageSize,
@@ -20,43 +22,29 @@ router.get("/", userAuth, async (req, res) => {
         attributes: ["id"],
       },
     ],
+    where: {}, // 初始化 where 条件
   };
-  //   添加过滤条件
+
+  // 动态添加过滤条件
   if (query.userId) {
-    condition.where = {
-      userId: query.userId,
-    };
-    if (query.title) {
-      condition.where = {
-        ...condition.where,
-        title: { [Op.like]: `%${query.title}%` },
-      };
-    }
-    if (query.category) {
-      condition.where = {
-        ...condition.where,
-        category: { [Op.like]: `%${query.category}%` },
-      };
-    }
-    if (query.size) {
-      condition.where = {
-        ...condition.where,
-        size: { [Op.like]: `%${query.size}%` },
-      };
-    }
-    if (query.description) {
-      condition.where = {
-        ...condition.where,
-        description: { [Op.like]: `%${query.description}%` },
-      };
-    }
-    if (query.photo) {
-      condition.where = {
-        ...condition.where,
-        photo: { [Op.like]: `%${query.photo}%` },
-      };
-    }
+    condition.where.userId = query.userId;
   }
+  if (query.title) {
+    condition.where.title = { [Op.like]: `%${query.title}%` };
+  }
+  if (query.category) {
+    condition.where.category = { [Op.like]: `%${query.category}%` };
+  }
+  if (query.size) {
+    condition.where.size = { [Op.like]: `%${query.size}%` };
+  }
+  if (query.description) {
+    condition.where.description = { [Op.like]: `%${query.description}%` };
+  }
+  if (query.photo) {
+    condition.where.photo = { [Op.like]: `%${query.photo}%` };
+  }
+
   try {
     const { count, rows } = await Photo.findAndCountAll(condition);
     success(res, "查询照片墙列表成功", {

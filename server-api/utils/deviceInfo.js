@@ -1,55 +1,97 @@
 const UAParser = require("ua-parser-js");
 const os = require("os");
 
+/**
+ * 提取设备信息
+ * @param {Object} req - Express 请求对象
+ * @returns {Object} - 包含设备信息的对象
+ */
 async function extractDeviceInfo(req) {
   const userAgent = req.get("User-Agent") || "";
   // 使用 ua-parser-js 解析 User-Agent
   const parser = new UAParser(userAgent);
   const result = parser.getResult();
 
-  // 提取操作系统信息（优先使用 UA 解析结果，备选使用 os 模块）
-  const osInfo = `Deep Sea ${result.os.name} 版`;
-  const browser = `${result.browser.name}浏览器`;
+  // 提取设备类型
+  const deviceType = getDeviceType(result.device.type);
+
+  // 提取操作系统信息
+  const osInfo = getOSInfo(result.os);
+
+  // 提取浏览器信息
+  const browserInfo = getBrowserInfo(result.browser);
+
   // 获取设备名称（主机名）
   const deviceName = os.hostname();
-  // 设备类型检测（优先使用 UA 解析结果，备选使用平台信息）
-  let deviceType = "pc";
-  if (result.device.type) {
-    // 使用 UA 解析的设备类型
-    switch (result.device.type) {
-      case "mobile":
-        deviceType = "mobile";
-        break;
-      case "tablet":
-        deviceType = "tablet";
-        break;
-      case "smarttv":
-        deviceType = "tv";
-        break;
-      case "wearable":
-        deviceType = "wearable";
-        break;
-      case "console":
-        deviceType = "game-console";
-        break;
-      default:
-        deviceType = getDeviceTypeFromPlatform();
-    }
-  } else {
-    // 当 UA 无法提供设备类型时，使用平台信息判断
-    deviceType = getDeviceTypeFromPlatform();
-  }
 
   return {
     deviceType,
     os: osInfo,
-    browser,
+    browser: browserInfo,
     deviceName,
     userAgent,
   };
 }
 
-// 根据平台信息获取操作系统名称
+/**
+ * 获取设备类型
+ * @param {string} deviceTypeFromUA - 从 User-Agent 中解析出的设备类型
+ * @returns {string} - 设备类型
+ */
+function getDeviceType(deviceTypeFromUA) {
+  if (deviceTypeFromUA) {
+    switch (deviceTypeFromUA) {
+      case "mobile":
+        return "mobile";
+      case "tablet":
+        return "tablet";
+      case "smarttv":
+        return "tv";
+      case "wearable":
+        return "wearable";
+      case "console":
+        return "game-console";
+      default:
+        return getDeviceTypeFromPlatform();
+    }
+  } else {
+    return getDeviceTypeFromPlatform();
+  }
+}
+
+/**
+ * 根据平台信息获取设备类型
+ * @returns {string} - 设备类型
+ */
+function getDeviceTypeFromPlatform() {
+  const platform = os.platform();
+
+  switch (platform) {
+    case "android":
+      return "mobile";
+    case "ios":
+      return "mobile";
+    default:
+      return "pc";
+  }
+}
+
+/**
+ * 获取操作系统信息
+ * @param {Object} osResult - 从 User-Agent 中解析出的操作系统信息
+ * @returns {string} - 操作系统信息
+ */
+function getOSInfo(osResult) {
+  const osName = osResult.name || getOSNameFromPlatform();
+  const osVersion = osResult.version || "未知版本";
+
+  return `${osName} ${osVersion}`;
+}
+
+/**
+ * 根据平台信息获取操作系统名称
+ * @returns {string} - 操作系统名称
+ */
 function getOSNameFromPlatform() {
   const platform = os.platform();
   const type = os.type();
@@ -66,22 +108,35 @@ function getOSNameFromPlatform() {
   }
 }
 
-// 根据平台信息判断设备类型
-function getDeviceTypeFromPlatform() {
-  const platform = os.platform();
+/**
+ * 获取浏览器信息（简化版）
+ * @param {Object} browserResult - 从 User-Agent 中解析出的浏览器信息
+ * @returns {string} - 简化后的浏览器名称
+ */
+function getBrowserInfo(browserResult) {
+  const browserName = browserResult.name || "未知浏览器";
 
-  // 基于平台信息粗略判断设备类型
-  switch (platform) {
-    case "android":
-      return "mobile";
-    case "ios":
-      return "mobile";
-    default:
-      // 默认为 PC，因为服务器通常运行在桌面系统上
-      return "pc";
-  }
+  // 自定义映射表：
+  const browserMap = {
+    QQBrowser: "QQ",
+    "Sogou Explorer": "Sogou",
+    Chrome: "Chrome",
+    Firefox: "Firefox",
+    Edge: "Edge",
+    Safari: "Safari",
+    Opera: "Opera",
+    "UC Browser": "UC",
+    "360 Browser": "360",
+    "Baidu Browser": "Baidu",
+    "Yandex Browser": "Yandex",
+    Brave: "Brave",
+    Vivaldi: "Vivaldi",
+    "Microsoft Edge": "Edge",
+    "Internet Explorer": "IE",
+  };
+
+  return browserMap[browserName] + "浏览器" || browserName + "浏览器"; // 如果没有匹配，则返回原名
 }
-
 module.exports = {
   extractDeviceInfo,
 };

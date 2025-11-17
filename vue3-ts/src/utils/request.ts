@@ -37,18 +37,18 @@ axiosConfig.interceptors.response.use(
       // 原有的错误处理逻辑
       const statusHandlers: StatusHandler = {
         400: () => {
-          ElMessage.error("请求错误");
+          console.log("请求错误");
         },
         401: handleTokenExpired,
         402: () => {
-          ElMessage.error("请求失败");
+          console.log("请求失败");
         },
         404: () => {
-          ElMessage.error("请求的资源不存在");
+          console.log("请求的资源不存在");
         },
 
         408: () => {
-          ElMessage.error("请求超时");
+          console.log("请求超时");
         },
         500: () => {
           const isTokenExpired =
@@ -65,7 +65,7 @@ axiosConfig.interceptors.response.use(
         statusHandlers[400];
       handler();
     } else {
-      ElMessage.error("网络错误，请检查您的网络连接");
+      console.log("网络错误，请检查您的网络连接");
     }
 
     return Promise.reject(error);

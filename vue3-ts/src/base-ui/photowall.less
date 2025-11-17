@@ -175,6 +175,7 @@
   padding: 0.25rem;
 
   .photo-card {
+    transition: all 0.3s ease;
     break-inside: avoid;
     /* 防止图片被分割 */
     margin-bottom: 0.75rem;
@@ -191,7 +192,7 @@
     position: relative;
 
     &:hover {
-      transform: translateY(-3px);
+      transform: scale(1.05) translateY(-5px);
       box-shadow: @shadow-lg;
 
       .photo-overlay {
@@ -209,7 +210,36 @@
         height: auto;
         display: block;
         border-radius: @radius-lg;
-        transition: transform 0.4s ease;
+
+        transition: transform 0.3s ease;
+
+        &.loaded {
+          opacity: 1;
+        }
+      }
+
+      /* 添加loading动画 */
+      .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        margin: -20px 0 0 -20px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid @primary-color;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       .photo-placeholder {

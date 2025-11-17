@@ -34,7 +34,8 @@ const storage = multer.memoryStorage();
 
 // 设置文件过滤器，只允许上传图片
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
+  if (file.mimetype.startsWith("photo/")) {
+    // 修改为 "photo/"
     cb(null, true);
   } else {
     cb(new Error("只允许上传图片文件"), false);
@@ -48,11 +49,11 @@ const limits = {
 
 const upload = multer({ storage, fileFilter, limits });
 // 获取图片签名URL
-router.get("/image/sign", async (req, res) => {
+router.get("/photo/sign", async (req, res) => {
   try {
     const { filename } = req.query;
     // 确保只使用文件名，而不是完整路径
-    const url = await client.signatureUrl(`images/${filename}`, {
+    const url = await client.signatureUrl(`photos/${filename}`, {
       method: "GET",
       expires: 315360000, // 设置过期时间为10年（单位为秒）
     });
@@ -63,7 +64,7 @@ router.get("/image/sign", async (req, res) => {
   }
 });
 // 上传图片
-router.post("/", upload.single("image"), async (req, res) => {
+router.post("/", upload.single("photo"), async (req, res) => {
   try {
     const { userId } = req.body;
     const user = await User.findByPk(userId);
@@ -80,17 +81,17 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     // 生成OSS文件名
     const ext = path.extname(req.file.originalname);
-    const ossFileName = `images/${Date.now()}${ext}`;
+    const ossFileName = `photos/${Date.now()}${ext}`;
 
     // 直接从内存上传到OSS
     await uploadToOSS(req.file.buffer, ossFileName);
 
     // 更新用户上传的图片（保存OSS路径）
-    user.image = ossFileName;
+    user.photo = ossFileName;
     await user.save();
 
     success(res, "图片上传成功", {
-      image: ossFileName,
+      photo: ossFileName,
     });
   } catch (error) {
     if (error instanceof multer.MulterError) {
@@ -104,7 +105,7 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 // 删除图片 - 修复版本
-router.delete("/image/*", userAuth, async (req, res) => {
+router.delete("/photo/*", userAuth, async (req, res) => {
   try {
     let filename = req.params[0];
 
@@ -136,9 +137,9 @@ router.delete("/user/:id", userAuth, async (req, res) => {
     }
 
     // 删除用户在 OSS 中的所有图片资源
-    if (user.image) {
+    if (user.photo) {
       try {
-        await client.delete(user.image);
+        await client.delete(user.photo);
       } catch (ossError) {
         console.error("删除用户图片失败:", ossError);
       }
@@ -147,10 +148,10 @@ router.delete("/user/:id", userAuth, async (req, res) => {
     // 删除用户数据
     await user.destroy();
 
-    success(res, "用户删除成功"); // 修改为正确的信息
+    success(res, "照片墙删除成功"); // 修改为正确的信息
   } catch (error) {
-    console.error("删除用户失败:", error);
-    failure(res, 500, "删除用户失败");
+    console.error("删除照片墙失败:", error);
+    failure(res, 500, "删除照片墙失败");
   }
 });
 module.exports = router;

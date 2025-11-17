@@ -71,13 +71,15 @@
                 <el-form-item label="邮箱">
                   <el-input
                     v-model="smsForm.email"
-                    placeholder="请输入你的邮箱/手机号"
+                    placeholder="请输入你的邮箱"
+                    @blur="validateEmailFormat"
                   />
                 </el-form-item>
-                <el-form-item label="验证码">
+
+                <el-form-item label="邮箱验证码">
                   <el-input
                     v-model="smsForm.code"
-                    placeholder="请输入你的邮箱/手机号验证码"
+                    placeholder="请输入邮箱验证码"
                     @focus="isInputFocused = true"
                     @blur="isInputFocused = false"
                   />
@@ -85,8 +87,8 @@
                     :style="
                       isSending ? 'pointer-events: none; opacity: 0.6;' : ''
                     "
-                    @click="sendSmsCode"
-                    :disabled="isSending"
+                    @click="handleSendCodeClick"
+                    :disabled="isSending || !canSendEmailCode"
                     class="send-code-btn"
                   >
                     {{ isSending ? `${countdown}秒后重新发送` : "获取验证码" }}
@@ -167,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from "vue";
+import { ref, onUnmounted, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import debounce from "lodash.debounce";
@@ -182,6 +184,9 @@ import FrozenContainer from "../frozencontainer/FrozenContainer.vue";
 import { useI18n } from "vue-i18n";
 import Cookies from "js-cookie";
 
+let loginAttempts = ref(0);
+let isAccountLocked = ref(false);
+let lockTimeout: any = null;
 const isFrozen = ref(false);
 const freezeInfo = ref({
   username: "",
@@ -199,28 +204,151 @@ let isSending = ref(false);
 let countdown = ref(60);
 let loading = ref(false);
 
-const accountsclientFeatureCode = Cookies.get("userFeatureCode");
+// 行为验证码相关变量
+const captchaVerified = ref(false);
+const captchaSessionId = ref("");
 const countdownTimer = ref<number | null>(null);
 let activeTab = ref("password");
 let loginForm = ref({
   email: "",
   password: "",
 });
-let smsForm = ref({ email: "", code: "" });
+let smsForm = ref({
+  email: "",
+  code: "",
+});
 let showPassword = ref(false);
+
+// 计算属性：是否可以发送邮箱验证码
+const canSendEmailCode = computed(() => {
+  return smsForm.value.email && validateEmail(smsForm.value.email);
+});
+
+const handleLoginFailure = () => {
+  loginAttempts.value++;
+  if (loginAttempts.value >= 5) {
+    isAccountLocked.value = true;
+    ElMessage.error("多次登录失败，账户已被锁定，请稍后再试");
+
+    lockTimeout = setTimeout(() => {
+      isAccountLocked.value = false;
+      loginAttempts.value = 0;
+    }, 60 * 1000);
+  }
+};
+
+// 监听tab切换
+watch(activeTab, (newTab) => {
+  if (newTab === "password") {
+    // 切换到密码登录时重置验证状态
+    captchaVerified.value = false;
+    captchaSessionId.value = "";
+  }
+});
 
 let validateEmail = (email: string) => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailPattern.test(email);
 };
 
+// 邮箱格式验证
+const validateEmailFormat = () => {
+  if (smsForm.value.email && !validateEmail(smsForm.value.email)) {
+    ElMessage.error("请输入正确的邮箱格式");
+    return false;
+  }
+  return true;
+};
+
+// 直接调用腾讯验证码
+const showTencentCaptcha = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    // 检查腾讯验证码JS是否已加载
+    if (!(window as any).TencentCaptcha) {
+      reject(new Error("腾讯验证码JS未加载，请刷新页面重试"));
+      return;
+    }
+
+    try {
+      const captcha = new (window as any).TencentCaptcha(
+        "193647721", // 您的CaptchaAppId
+        (res: any) => {
+          if (res.ret === 0) {
+            // 验证成功
+            resolve({
+              ticket: res.ticket,
+              randstr: res.randstr,
+              captchaAppId: "193647721",
+            });
+          } else if (res.ret === 2) {
+            // 用户取消验证
+            reject(new Error("用户取消验证"));
+          } else {
+            // 验证失败
+            reject(new Error(`验证失败，请重试 (错误码: ${res.ret})`));
+          }
+        },
+        {
+          themeColor: "#00a1d6",
+          enableDarkMode: false,
+        }
+      );
+
+      // 显示验证码
+      captcha.show();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+// 点击获取验证码按钮
+const handleSendCodeClick = async () => {
+  if (!smsForm.value.email) {
+    ElMessage.error("请输入你的邮箱~");
+    return;
+  }
+  if (!validateEmail(smsForm.value.email)) {
+    ElMessage.error("邮箱格式不正确~");
+    return;
+  }
+
+  if (isSending.value) {
+    return;
+  }
+
+  try {
+    // 显示腾讯验证码
+    const captchaData = await showTencentCaptcha();
+
+    // 验证通过，调用后端验证接口
+    const verifyResponse = await axiosConfig.post(
+      "/auth/verify-tencent-captcha",
+      {
+        ticket: captchaData.ticket,
+        randstr: captchaData.randstr,
+        captchaAppId: captchaData.captchaAppId,
+        email: smsForm.value.email, // 传递邮箱
+      }
+    );
+    ElMessage.success("验证成功，请稍等...");
+    ElMessage.success(verifyResponse.data.message);
+    // 启动倒计时
+    startCountdown();
+  } catch (error) {
+    // 验证失败，处理错误
+    ElMessage.error("验证失败，请重试");
+    return;
+  }
+};
+
 let validate = () => {
   if (!loginForm.value.email) {
-    ElMessage.error("请你的输入账号/邮箱/手机号~");
+    ElMessage.error("请输入账号/邮箱~");
     return false;
   }
   if (!loginForm.value.password) {
-    ElMessage.error("请你的输入密码~");
+    ElMessage.error("请输入密码~");
     return false;
   }
   return true;
@@ -232,7 +360,7 @@ let validateEmailAndCode = () => {
     return false;
   }
   if (!smsForm.value.code) {
-    ElMessage.error("请输入你的邮箱/手机号验证码~");
+    ElMessage.error("请输入你的邮箱验证码~");
     return false;
   }
   return true;
@@ -254,6 +382,7 @@ let login = debounce(async () => {
   try {
     let response;
     if (activeTab.value === "password") {
+      // 直接发送明文密码（已移除加密）
       response = await axiosConfig.post("/auth/sign_in", {
         login: loginForm.value.email,
         password: loginForm.value.password,
@@ -273,8 +402,6 @@ let login = debounce(async () => {
         response.data.data.isFrozen === 1 ||
         response.data.data.frozen === true)
     ) {
-      ElMessage.error(response.data.data.message || "账户已被冻结");
-
       const freezeData = response.data.data;
       freezeInfo.value = {
         username:
@@ -296,6 +423,9 @@ let login = debounce(async () => {
     // 用户未冻结，正常登录
     handlePostLogin(response, locale.value, router);
   } catch (error: any) {
+    handleLoginFailure();
+    handleLoginError(error);
+
     // 处理冻结错误
     if (
       error?.response?.data?.code === "USER_FROZEN" ||
@@ -303,7 +433,6 @@ let login = debounce(async () => {
       error?.response?.data?.data?.isFrozen === true ||
       error?.response?.data?.data?.isFrozen === 1
     ) {
-      ElMessage.error("账户已被冻结");
       const freezeData = error.response.data.data || error.response.data || {};
       freezeInfo.value = {
         username:
@@ -320,16 +449,22 @@ let login = debounce(async () => {
       loading.value = false;
       return;
     }
-    handleLoginError(error);
   } finally {
     loading.value = false;
   }
 }, 1000);
 
+const accountsclientFeatureCode = Cookies.get("userFeatureCode");
+
+// 启动倒计时
 const startCountdown = () => {
+  isSending.value = true;
+  countdown.value = 60;
+
   if (countdownTimer.value) {
     clearInterval(countdownTimer.value);
   }
+
   countdownTimer.value = window.setInterval(() => {
     countdown.value--;
     if (countdown.value <= 0) {
@@ -343,53 +478,45 @@ const startCountdown = () => {
   }, 1000);
 };
 
-let sendSmsCode = debounce(async () => {
-  if (isSending.value) return;
-
-  if (!smsForm.value.email) {
-    ElMessage.error("请输入你的邮箱/手机号~");
-    return;
-  }
-  if (!validateEmail(smsForm.value.email)) {
-    ElMessage.error("邮箱格式不正确~");
-    return;
-  }
-
-  let clientFeatureCode = accountsclientFeatureCode;
-  if (!clientFeatureCode || clientFeatureCode.trim() === "") {
-    clientFeatureCode = undefined;
-  }
-  isSending.value = true;
-  try {
-    const response = await axiosConfig.post("/auth/email/verify", {
-      email: smsForm.value.email,
-      clientFeatureCode: clientFeatureCode,
-    });
-    ElMessage.success(response.data.message);
-    startCountdown();
-  } catch (error: any) {
-    isSending.value = false;
-    const errorMessage =
-      error?.response?.data?.message || error?.message || "未知错误";
-    ElMessage.error(errorMessage);
-
-    if (errorMessage.includes("UUID 已存在")) {
-      ElMessage.warning("UUID 已存在，请稍后再试或清除缓存重试。");
-    }
-  }
-}, 1000);
-
 onUnmounted(() => {
   if (countdownTimer.value) {
     clearInterval(countdownTimer.value!);
   }
+  if (lockTimeout) {
+    clearTimeout(lockTimeout);
+  }
 });
 
-const openQQLoginDialog = async () => {};
-const openWeChatLoginDialog = async () => {};
-const openWeBlogLoginDialog = async () => {};
+const openQQLoginDialog = async () => {
+  ElMessage.info("QQ登录功能即将上线，敬请期待！");
+};
+const openWeChatLoginDialog = async () => {
+  ElMessage.info("微信登录功能即将上线，敬请期待！");
+};
+const openWeBlogLoginDialog = async () => {
+  ElMessage.info("微博登录功能即将上线，敬请期待！");
+};
 </script>
 
 <style lang="less" scoped>
 @import "../../base-ui/login.less";
+
+// 动画效果
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.other-login-options {
+  color: #000;
+}
 </style>

@@ -1,12 +1,17 @@
 <template>
   <div class="photos-container">
-    <!-- 顶部提示 -->
+    <!-- 提示信息 -->
     <el-alert
-      title="照片墙功能正在开发中，敬请期待..."
-      type="warning"
-      :closable="false"
+      title="照片墙记录了用户的独特故事与美好瞬间。您可以自由浏览，感受每一份感动。（创作者可编辑或删除自己的作品，共同维护这片温暖的空间。）"
+      type="primary"
+      :closable="true"
       show-icon
-      style="margin-bottom: 20px"
+      style="
+        margin-bottom: 20px;
+        color: #409eff;
+        line-height: 1.8;
+        font-family: 'Georgia', serif;
+      "
     ></el-alert>
 
     <!-- 导航区域 -->
@@ -15,7 +20,7 @@
         <li
           v-for="tab in tabs"
           :key="tab.id"
-          class="nav-item"
+          class="nav-item ripple"
           :class="{ active: activeTab === tab.id }"
           @click="activeTab = tab.id"
         >
@@ -32,7 +37,7 @@
         <button
           v-for="category in photoCategories"
           :key="category.id"
-          class="filter-btn"
+          class="filter-btn ripple"
           :class="{ active: activeCategory === category.id }"
           @click="handlePhotoClick(category)"
         >
@@ -95,12 +100,27 @@
           </div>
         </article>
       </transition-group>
-    </main>
 
+      <!-- 当前分类无照片时的提示 -->
+      <div
+        v-if="
+          activeTab === 'photos' &&
+          activeCategory !== '全部' &&
+          filteredPhotos.length === 0
+        "
+        class="no-photos-message"
+      >
+        <p>选择一张你喜欢的一张照片上传吧</p>
+        <button @click="showAddMessage" class="upload-btn">
+          <el-icon><Plus /></el-icon>
+          <span>上传照片</span>
+        </button>
+      </div>
+    </main>
     <!-- 浮动操作按钮 -->
     <div class="floating-actions">
       <el-tooltip effect="dark" content="上传照片" placement="left">
-        <button class="fab-button" @click="showAddMessage">
+        <button class="fab-button ripple" @click="showAddMessage">
           <el-icon :size="24">
             <Plus />
           </el-icon>
@@ -201,7 +221,7 @@
               v-if="isEditable && PhotoForm.id && userId === PhotoForm.userId"
               type="danger"
               class="delete-btn"
-              @click="DeletePhoto()"
+              @click="DeletePhoto(PhotoForm.id)"
               :loading="deleteLoadingRef"
             >
               <el-icon><Delete /></el-icon>
@@ -234,8 +254,6 @@
         </form>
       </div>
     </el-drawer>
-
-    <!-- 自定义模态框 -->
     <div v-if="showCustomModal" class="custom-modal-overlay">
       <div class="custom-modal">
         <div class="modal-header">
@@ -246,7 +264,7 @@
           <img
             :src="viewingPhoto?.photoImages"
             :alt="viewingPhoto?.title"
-            class="viewer-image"
+            class="viewer-image zoomable"
           />
           <p>{{ viewingPhoto?.description || "暂无描述" }}</p>
           <div class="viewer-meta">
@@ -257,18 +275,36 @@
           </div>
           <div v-if="userId === viewingPhoto?.userId" class="viewer-actions">
             <button @click="handleEditPhoto(viewingPhoto)">编辑</button>
-            <button @click="DeletePhoto()">删除</button>
+            <button @click="DeletePhoto(viewingPhoto.id)">删除</button>
           </div>
         </div>
       </div>
     </div>
+    <div v-if="isNoMore && !isLoading" class="no-more">
+      <p>已加载全部内容</p>
+    </div>
+
+    <div v-else-if="isLoading" class="loading">
+      <el-loading />
+    </div>
+    <!-- 分页控件 -->
+    <el-pagination
+      v-if="activeTab === 'photos' && filteredPhotos.length"
+      background
+      layout="prev, pager, next"
+      :total="pagination.total"
+      :current-page="pagination.currentPage"
+      :page-size="pagination.pageSize"
+      @current-change="changePage"
+      style="margin-top: 20px; text-align: center"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import usePhotoWall from "../../hooks/usePhotoWall";
 import { YkEmpty } from "@yike-design/ui";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import {
   Search,
   Picture,
@@ -309,6 +345,8 @@ const {
   isEditable,
   beforeUpload,
   handleChange,
+  isLoading,
+  isNoMore,
   handleSuccess,
   handleTagClick,
   DeleteOutlined,
@@ -328,6 +366,8 @@ const {
   refreshPhotos,
   handleImageLoad,
   DeletePhoto,
+  pagination,
+  changePage,
 } = usePhotoWall();
 
 // 懒加载图片
@@ -349,6 +389,20 @@ const lazyLoadImages = () => {
 
 onMounted(() => {
   lazyLoadImages();
+});
+
+// 图片放大缩小功能
+const toggleZoom = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains("zoomable")) {
+    target.classList.toggle("zoomed");
+  }
+};
+
+document.addEventListener("click", toggleZoom);
+
+onUnmounted(() => {
+  document.removeEventListener("click", toggleZoom);
 });
 </script>
 
@@ -380,6 +434,7 @@ onMounted(() => {
   transform: scale(0.95);
   animation: modalFadeIn 0.4s ease-out forwards;
 
+  /* 增加内边距和圆角 */
   .modal-header {
     display: flex;
     justify-content: space-between;
@@ -389,6 +444,7 @@ onMounted(() => {
     h3 {
       font-size: 24px;
       color: #333;
+      font-weight: 500;
     }
 
     button {
@@ -408,15 +464,19 @@ onMounted(() => {
 
   .modal-body {
     .viewer-image {
-      max-width: 100%;
+      max-width: 800px;
+      max-height: 600px;
       height: auto;
       margin-bottom: 10px;
       cursor: zoom-in;
       transition: transform 0.3s ease;
+      border-radius: 12px;
 
       &.zoomed {
         transform: scale(1.2);
         cursor: zoom-out;
+        max-width: 900px;
+        max-height: 700px;
       }
     }
 
@@ -467,30 +527,68 @@ onMounted(() => {
     }
   }
 }
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.no-more {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
 }
 
-.custom-modal.fade-out {
-  animation: modalFadeOut 0.3s ease-in forwards;
+.loading {
+  text-align: center;
+  padding: 20px;
 }
+.el-pagination {
+  margin-top: 20px;
+  text-align: center;
 
-@keyframes modalFadeOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
+  .btn-prev,
+  .btn-next {
+    background-color: #f5f7fa;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
   }
-  to {
-    opacity: 0;
-    transform: scale(0.8);
+
+  .el-pager li {
+    background-color: #fff;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    margin: 0 5px;
+
+    &.active {
+      background-color: #409eff;
+      color: #fff;
+      border-color: #409eff;
+    }
+  }
+}
+.no-photos-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+
+  p {
+    margin-bottom: 20px;
+  }
+
+  .upload-btn {
+    background-color: #409eff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #3a8ee6;
+    }
   }
 }
 </style>

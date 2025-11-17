@@ -35,6 +35,7 @@
     "vue-i18n": "^12.0.0-alpha.3",
     "vue-lazyload": "^3.0.0",
     "vue-router": "^4.5.0",
+    "vue-slider-captcha": "^0.1.2",
     "yike-ui": "^0.1.0"
   },
   "devDependencies": {

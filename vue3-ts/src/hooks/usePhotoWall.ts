@@ -1,4 +1,4 @@
-import { ref, onMounted, watch, computed, defineProps } from "vue";
+import { ref, onMounted, watch, computed, defineProps, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { photoCategories } from "../utils/photo";
 import { Plus, Edit, SuccessFilled } from "@element-plus/icons-vue";
@@ -42,26 +42,45 @@ export default function usePhotoWall(
   const isLoading = ref(false);
   const isRefreshing = ref(false);
   const isNoMore = ref(false);
-  const page = ref(1);
-  const pageSize = ref(Math.ceil(window.innerHeight / 300) * 10);
+
   const columns = ref(4);
   const showCustomModal = ref(false);
   const errorMessage = ref<string | null>(null);
+  const currentPage = ref<number>(1); // 当前页码
+  const pageSize = ref<number>(10); // 每页数量
+  const total = ref<number>(0); // 总数量
 
   // 存储照片
   const photoImages = ref("");
-  // 动态计算列数
+
+  // 切换分页
+  const changePage = (newPage: number) => {
+    currentPage.value = newPage;
+    fetchPhotos(activeCategory.value || undefined);
+  }; // 动态计算列数
   const calculateColumns = () => {
     const containerWidth =
       document.querySelector(".photos-main")?.clientWidth || 0;
     columns.value = Math.max(1, Math.floor(containerWidth / 300)); // 每列宽度约为300px
+  };
+  const cacheKey = computed(() => {
+    return `photo-wall-${activeCategory.value}-${search.value}`;
+  });
+
+  // 保存缓存数据
+  const saveToCache = (photos: any[]) => {
+    const cacheData = {
+      photos,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(cacheKey.value, JSON.stringify(cacheData));
   };
 
   // 获取照片墙列表
   const fetchPhotos = async (category?: string) => {
     try {
       const params: any = {
-        page: page.value,
+        currentPage: currentPage.value,
         pageSize: pageSize.value,
       };
 
@@ -82,28 +101,21 @@ export default function usePhotoWall(
         title: photo.title,
         description: photo.description,
         category: photo.category,
-        photoImages: photo.photo, // 确保这里正确映射
+        photoImages: photo.photo,
         userId: photo.userId,
         date: new Date(photo.createdAt),
         loaded: false,
       }));
 
-      if (page.value === 1) {
-        photos.value = newPhotos;
-      } else {
-        const existingIds = new Set(photos.value.map((p: any) => p.id));
-        const uniqueNewPhotos = newPhotos.filter(
-          (p: any) => !existingIds.has(p.id)
-        );
-        photos.value = [...photos.value, ...uniqueNewPhotos];
-      }
-
+      const pagination = response.data.data.pagination;
+      currentPage.value = pagination.currentPage;
+      pageSize.value = pagination.pageSize;
+      total.value = pagination.total;
+      photos.value = newPhotos;
       isNoMore.value = newPhotos.length < pageSize.value;
-
-      // 调试：打印图片URL
-      console.log("加载的图片数据:", newPhotos);
+      return pagination;
     } catch (error) {
-      console.error("获取照片墙列表失败:", error);
+      console.error(error);
       errorMessage.value = "获取照片失败，请稍后重试";
       ElMessage.error("获取照片失败");
     } finally {
@@ -117,7 +129,7 @@ export default function usePhotoWall(
     if (isRefreshing.value) return;
 
     isRefreshing.value = true;
-    page.value = 1; // 重置为第一页
+    currentPage.value = 1; // 重置为第一页
     await fetchPhotos(activeCategory.value || undefined);
   };
 
@@ -126,7 +138,7 @@ export default function usePhotoWall(
     if (isLoading.value || isNoMore.value || isRefreshing.value) return;
 
     isLoading.value = true;
-    page.value += 1;
+    currentPage.value += 1;
 
     try {
       await fetchPhotos(activeCategory.value || undefined);
@@ -149,7 +161,7 @@ export default function usePhotoWall(
   };
 
   const handleSearch = async () => {
-    page.value = 1;
+    currentPage.value = 1;
     await fetchPhotos(activeCategory.value || undefined);
   };
 
@@ -385,7 +397,7 @@ export default function usePhotoWall(
       };
       handleCloseDrawer();
       // 刷新
-      page.value = 1;
+      currentPage.value = 1;
       fetchPhotos();
     } catch (error) {
       console.error("提交照片墙表单失败:", error);
@@ -410,11 +422,14 @@ export default function usePhotoWall(
     if (!scrollContainer) return;
 
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const threshold = 300; // 提前 300px 加载
+
     if (
-      scrollHeight - scrollTop <= clientHeight + 10 &&
+      scrollHeight - scrollTop <= clientHeight + threshold &&
       !isLoading.value &&
       !isNoMore.value
     ) {
+      // 预加载下一页
       loadMorePhotos();
     }
   };
@@ -517,16 +532,16 @@ export default function usePhotoWall(
     console.log("编辑照片数据:", PhotoForm.value); // 调试用
   };
 
-  const DeletePhoto = async () => {
+  const DeletePhoto = async (photoId?: string | number) => {
     try {
       const response = await axiosConfig.delete(
-        `${apiUrl}/admin/photo/${PhotoForm.value.id}`
+        `${apiUrl}/admin/photo/${photoId}`
       );
       ElMessage.success(response.data.message);
       handleCloseDrawer();
       closeCustomModal();
       // 刷新列表
-      page.value = 1;
+      currentPage.value = 1;
       fetchPhotos();
     } catch (error) {
       console.error("删除图片失败:", error);
@@ -586,5 +601,11 @@ export default function usePhotoWall(
     errorMessage,
     showCustomModal,
     closeCustomModal,
+    pagination: computed(() => ({
+      total: total.value,
+      currentPage: currentPage.value,
+      pageSize: pageSize.value,
+    })),
+    changePage,
   };
 }

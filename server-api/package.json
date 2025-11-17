@@ -8,6 +8,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@fingerprintjs/fingerprintjs-pro": "^3.12.3",
     "ali-oss": "^6.23.0",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
@@ -21,7 +22,9 @@
     "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "geoip-lite": "^1.4.10",
+    "http-proxy-middleware": "^3.0.5",
     "jest": "^27.0.0",
+    "jimp": "^0.15.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "memory-cache": "^0.2.0",
@@ -31,12 +34,17 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.10.0",
     "qrcode": "^1.5.4",
+    "redis": "^5.9.0",
     "sequelize": "^6.37.5",
     "sequelize-cli": "^6.6.2",
     "sharp": "^0.34.3",
     "socket.io": "^4.8.1",
+    "svg-captcha": "^1.4.0",
+    "tencentcloud-sdk-nodejs": "^4.1.144",
+    "tencentcloud-sdk-nodejs-captcha": "^4.1.71",
     "ua-parser-js": "^2.0.4",
     "uuid": "^11.1.0",
+    "winston": "^3.18.3",
     "ws": "^8.18.2"
   }
 }

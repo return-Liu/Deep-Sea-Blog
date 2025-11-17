@@ -591,6 +591,15 @@
         </div>
       </div>
     </div>
+    <!-- 自定义我的布局 -->
+
+    <div class="my-layout">
+      <div class="my-layout-content">
+        <div class="my-layout-header">
+          <div class="my-layout-title">自定义我的布局</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts" name="Setting">
@@ -925,7 +934,7 @@ const fetchUserInfo = async () => {
 const changeLanguage = (lang: string) => {
   if (uuid.value) {
     locale.value = lang;
-    localStorage.setItem(`language-style-${uuid.value}`, lang);
+    localStorage.setItem(`language-${uuid.value}`, lang);
   }
 };
 
@@ -1159,5 +1168,25 @@ onMounted(async () => {
 :deep(.el-textarea__inner) {
   background: var(--bgColor1);
   color: var(--color-bg3);
+}
+.my-layout {
+  color: var(--color-bg3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .my-layout-content {
+    width: 200px;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    padding: 16px;
+    background: var(--bgColor1);
+    .my-layout-header {
+      text-align: center;
+      .my-layout-title {
+        font-size: 18px;
+        font-weight: bold;
+      }
+    }
+  }
 }
 </style>

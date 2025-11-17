@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Wall, User, Report, LikesWall } = require("../../models");
+const { Wall, User, Report, LikesWall, Comment } = require("../../models");
 const { success, failure } = require("../../utils/responses");
 const { Op } = require("sequelize");
 const { notifyWallOwner } = require("../../utils/email");
@@ -8,9 +8,10 @@ const userAuth = require("../../middlewares/user-auth");
 // 查询留言墙列表
 router.get("/", userAuth, async (req, res) => {
   const query = req.query;
-  const currentPage = Math.abs(Number(query.currentPage)) || 1;
-  const pageSize = Math.min(Math.abs(Number(query.pageSize)) || 200, 200);
+  const currentPage = Math.abs(Number(query.currentPage)) || 1; // 当前页码，默认为1
+  const pageSize = Math.min(Math.abs(Number(query.pageSize)) || 20, 200); // 每页数量，默认20，最大200
   const offset = (currentPage - 1) * pageSize;
+
   const condition = {
     order: [["id", "DESC"]],
     limit: pageSize,
@@ -22,7 +23,8 @@ router.get("/", userAuth, async (req, res) => {
       },
     ],
   };
-  //   添加过滤条件
+
+  // 添加过滤条件
   if (query.userId) {
     condition.where = {
       userId: query.userId,
@@ -52,6 +54,7 @@ router.get("/", userAuth, async (req, res) => {
       };
     }
   }
+
   try {
     const { count, rows } = await Wall.findAndCountAll(condition);
     success(res, "查询留言墙列表成功", {
@@ -89,9 +92,36 @@ router.post("/", userAuth, async (req, res) => {
   }
 });
 // 删除留言墙列表
+// 删除留言墙列表
 router.delete("/:id", userAuth, async (req, res) => {
   try {
     const id = req.params.id;
+
+    // 查询点赞记录
+    const likes = await LikesWall.findAll({
+      where: { wallsId: id },
+      attributes: ["id", "userId"], // 只查询点赞 ID 和用户 ID
+    });
+
+    // 查询评论记录
+    const comments = await Comment.findAll({
+      where: { wallId: id },
+      attributes: ["id", "content", "userId"], // 查询评论 ID、内容和用户 ID
+    });
+
+    // 返回点赞和评论信息
+    if (likes.length > 0 || comments.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: "该留言存在点赞或评论记录，请确认是否继续删除。",
+        data: {
+          likes,
+          comments,
+        },
+      });
+    }
+
+    // 如果没有点赞和评论记录，则直接删除
     // 先删除关联的点赞记录
     await LikesWall.destroy({
       where: { wallsId: id },
@@ -101,10 +131,12 @@ router.delete("/:id", userAuth, async (req, res) => {
     const deleted = await Wall.destroy({
       where: { id },
     });
+
     if (!deleted) {
       failure(res, 404, "留言不存在");
+    } else {
+      success(res, "删除留言墙及关联点赞记录成功");
     }
-    success(res, "删除留言墙及关联点赞记录成功");
   } catch (error) {
     failure(res, error);
   }

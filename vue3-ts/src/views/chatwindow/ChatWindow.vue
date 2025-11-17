@@ -223,21 +223,21 @@ const connectWebSocket = () => {
         if (msg) {
           addMessage(msg, false);
         }
-      } catch (error) {
-        console.error("消息处理错误:", error);
-        ElMessage.error({
-          message: "消息处理失败",
-          duration: 3000,
-        });
+      } catch (error: any) {
+        console.error("消息解析错误:", error, event.data);
+        ElMessage.error("消息处理失败: " + (error?.message || "解析异常"));
+
+        // 清理状态
+        isThinking.value = false;
+        loading.value = false;
+        replyContent.value = "";
+        currentReply.value = "";
+        try {
+          socket.close();
+        } catch (e) {
+          /* ignore */
+        }
       }
-    };
-
-    ws.onerror = (error) => {
-      console.error("Socket连接失败", error);
-      ElMessage.error("连接失败");
-    };
-
-    ws.onclose = () => {
       console.log("Socket连接关闭");
       // 添加重连限制，避免无限重连
       setTimeout(() => {
@@ -245,7 +245,7 @@ const connectWebSocket = () => {
         connectWebSocket();
       }, 3000);
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("WebSocket初始化失败:", error);
   }
 };
@@ -259,6 +259,7 @@ const scrollToBottom = () => {
   }
 };
 
+// 发送消息
 // 发送消息
 const sendMessage = async () => {
   const userMsg = inputText.value.trim();
@@ -279,6 +280,12 @@ const sendMessage = async () => {
 
     socket.addEventListener("open", () => {
       // 构建请求参数
+      // 注意：有些后端/第三方 API 期望 text 为字符串数组（或单条字符串），
+      // 避免直接发送对象数组（{role,content}）导致路由/格式错误。
+      const textPayload = historyList.value.map((h) =>
+        typeof h === "string" ? h : h.content
+      );
+
       const params = {
         header: {
           app_id: APPID,
@@ -306,7 +313,8 @@ const sendMessage = async () => {
         },
         payload: {
           message: {
-            text: [...historyList.value],
+            // 发送为字符串数组，兼容多数 chat API 的历史记录格式
+            text: textPayload,
           },
         },
       };
@@ -316,46 +324,77 @@ const sendMessage = async () => {
     socket.addEventListener("message", (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.header.code === 0) {
-          if (data.payload.choices?.text) {
-            const content = data.payload.choices.text[0]?.content;
-            if (content !== undefined) {
-              replyContent.value += content;
-            }
-            if (data.header.status === 2) {
-              // 启动打字机效果
-              clearTypeWriter();
-              let i = 0;
-              const fullText = replyContent.value;
+        // 先记录完整响应，便于排查后端返回的具体错误
+        console.debug("收到消息（原始）:", data);
 
-              typeWriterTimer = window.setInterval(() => {
-                if (i < fullText.length) {
-                  currentReply.value += fullText.charAt(i);
-                  i++;
-                } else {
-                  clearTypeWriter();
-                  addMessage(currentReply.value, false);
-                  historyList.value.push({
-                    role: "assistant",
-                    content: currentReply.value,
-                  });
-                  currentReply.value = "";
-                  replyContent.value = "";
-                  socket.close();
-                  isThinking.value = false;
-                }
-              }, 70); // 每20毫秒显示一个字符，可根据需要调整速度
+        // 如果后端返回非0 code，优雅处理并展示后端信息
+        if (data.header && data.header.code !== 0) {
+          const serverMsg = data.header.message || "API 返回错误";
+          console.warn("后端返回错误：", serverMsg, data);
+          ElMessage.error(serverMsg);
+          // 关闭 socket 并清理状态
+          isThinking.value = false;
+          loading.value = false;
+          replyContent.value = "";
+          try {
+            socket.close();
+          } catch (e) {
+            /* ignore */
+          }
+          return;
+        }
+
+        // 正常处理（code === 0）
+        if (data.payload?.choices?.text) {
+          // 支持数组或单对象形式
+          const textArr = Array.isArray(data.payload.choices.text)
+            ? data.payload.choices.text
+            : [data.payload.choices.text];
+
+          const content = textArr[0]?.content;
+          if (content !== undefined) {
+            replyContent.value += content;
+            // 实时显示正在接收的内容（currentReply 用于打字机效果）
+            currentReply.value = replyContent.value;
+          }
+
+          if (data.header && data.header.status === 2) {
+            // 完成
+            addMessage(replyContent.value, false);
+            historyList.value.push({
+              role: "assistant",
+              content: replyContent.value,
+            });
+            // 清理并关闭
+            replyContent.value = "";
+            currentReply.value = "";
+            isThinking.value = false;
+            loading.value = false;
+            try {
+              socket.close();
+            } catch (e) {
+              /* ignore */
             }
           }
         } else {
-          throw new Error(data.header.message || "API返回错误");
+          // 无 payload.choices.text 的情况，依然记录并显示原始消息
+          console.warn("未知消息格式:", data);
+          if (typeof data === "string") addMessage(data, false);
         }
       } catch (error) {
-        console.error("消息解析错误:", error);
-        ElMessage.error("消息处理失败");
-        clearTypeWriter();
+        console.error("消息解析错误:", error, event.data);
+        // ElMessage.error("消息处理失败: " + (error?.messages || "解析异常"));
+
+        // 清理状态
         isThinking.value = false;
-        socket.close();
+        loading.value = false;
+        replyContent.value = "";
+        currentReply.value = "";
+        try {
+          socket.close();
+        } catch (e) {
+          /* ignore */
+        }
       }
     });
     // 添加重试逻辑
@@ -371,8 +410,6 @@ const sendMessage = async () => {
         sendMessage(); // 重试发送
       } else {
         ElMessage.error("连接失败,请稍后重试");
-        // 消息不发送
-        socket.close();
         loading.value = false;
       }
     });
@@ -380,7 +417,7 @@ const sendMessage = async () => {
     socket.addEventListener("close", () => {
       loading.value = false;
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("发送消息失败:", error);
     ElMessage.error("发送消息失败,请稍后重试");
     loading.value = false;
@@ -388,7 +425,6 @@ const sendMessage = async () => {
 
   inputText.value = "";
 };
-
 const handleEnter = (e: KeyboardEvent) => {
   if (e.shiftKey) return; // Shift+Enter 换行
   e.preventDefault();

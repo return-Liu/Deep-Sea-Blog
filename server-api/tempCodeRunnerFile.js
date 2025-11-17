@@ -40,7 +40,7 @@ const adminCommentRouter = require("./routes/admin/comment");
 const adminLikesCommentRouter = require("./routes/admin/likescomment");
 const adminAuthRouter = require("./routes/admin/auth");
 const adminPhotoRouter = require("./routes/admin/photo");
-const adminUploadPhotoRouter = require("./routes/admin/uploadphoto");
+
 // 初始化应用
 const app = express();
 
@@ -93,7 +93,6 @@ app.use("/admin/comment", userAuth, adminCommentRouter);
 app.use("/admin/likescomment", userAuth, adminLikesCommentRouter);
 app.use("/admin/auth", userAuth, adminAuthRouter);
 app.use("/admin/photo", userAuth, adminPhotoRouter);
-app.use("/admin/uploadphoto", adminUploadPhotoRouter);
 
 // WebSocket 配置
 const { createServer } = require("http");
