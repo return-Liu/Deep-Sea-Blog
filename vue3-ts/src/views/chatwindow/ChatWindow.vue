@@ -87,7 +87,7 @@
       </p>
       <p>
         <strong style="color: #ff0000">用户提示：</strong>
-        如在使用过程中遇到任何问题或有任何建议，欢迎前往“建议与反馈”模块提交反馈，我们将持续优化服务并为您提供支持。
+        如在使用过程中遇到任何问题或有任何建议，欢迎前往"建议与反馈"模块提交反馈，我们将持续优化服务并为您提供支持。
       </p>
       <p>
         <strong style="color: #ff0000">网络问题: </strong>
@@ -117,7 +117,7 @@ const messages = ref<{ text: string; isUser: boolean }[]>([]);
 const messageContainer = ref<HTMLElement | null>(null);
 const isThinking = ref(false); // 控制"正在思考中"提示的显示
 const botAvatar =
-  "https://ts4.tc.mm.bing.net/th/id/OADD2.8246467932249_17L4X7T1HZQ09ASA5N?w=32&h=32&o=6&pid=21.2";
+  "https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-8.png";
 const userAvatar = ref("");
 let ws: WebSocket | null = null;
 const APPID = modelID;
@@ -178,75 +178,66 @@ const getWebsocketUrl = () => {
 };
 const connectWebSocket = () => {
   try {
-    const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-    const host = window.location.hostname; // 使用主机名而不是完整地址
-    const port = "3001"; // 指定后端服务端口
-    const wsUrl = `${protocol}${host}:${port}/websocket`;
+    const wsUrl = `ws://localhost:3001?uuid=${userStore.user?.uuid}`;
+    console.log("连接 WebSocket:", wsUrl);
 
     ws = new WebSocket(wsUrl);
-
     ws.onopen = () => {
       console.log("Socket连接成功");
       ElMessage.success("开始与智能体深度推理模型X1的对话吧");
     };
 
     ws.onmessage = (event) => {
-      let msg: string;
       try {
-        // 1. 先尝试解析JSON
-        let data;
-        try {
-          data = JSON.parse(event.data);
-        } catch (e) {
-          // 如果解析失败，直接使用原始字符串
-          msg = event.data;
-          addMessage(msg, false);
+        // 添加更详细的错误处理
+        if (!event.data) {
+          console.warn("收到空消息");
           return;
         }
 
-        // 2. 根据数据结构处理消息
-        if (typeof data === "string") {
-          msg = data;
-        } else if (data.payload?.choices?.text) {
-          // 检查是否是数组
-          const textContent = Array.isArray(data.payload.choices.text)
-            ? data.payload.choices.text[0].content
-            : data.payload.choices.text.content;
+        let data;
+        try {
+          data = JSON.parse(event.data);
+        } catch (parseError) {
+          console.warn("消息不是JSON格式:", event.data);
+          // 如果是纯文本消息，直接显示
+          if (typeof event.data === "string") {
+            addMessage(event.data, false);
+          }
+          return;
+        }
 
-          msg = textContent || "无效的消息内容";
+        // 检查数据结构
+        if (data && data.header) {
+          if (data.header.code !== 0) {
+            console.error("API返回错误:", data.header);
+            ElMessage.error(`服务错误: ${data.header.message || "未知错误"}`);
+            return;
+          }
+
+          // 处理正常消息
+          if (data.payload?.choices?.text) {
+            const textContent = Array.isArray(data.payload.choices.text)
+              ? data.payload.choices.text[0]?.content
+              : data.payload.choices.text?.content;
+
+            if (textContent) {
+              addMessage(textContent, false);
+            }
+          }
         } else {
           console.warn("未知的消息格式:", data);
-          msg = "收到未知格式的消息";
         }
-
-        // 3. 添加消息到聊天窗口
-        if (msg) {
-          addMessage(msg, false);
-        }
-      } catch (error: any) {
-        console.error("消息解析错误:", error, event.data);
-        ElMessage.error("消息处理失败: " + (error?.message || "解析异常"));
-
-        // 清理状态
-        isThinking.value = false;
-        loading.value = false;
-        replyContent.value = "";
-        currentReply.value = "";
-        try {
-          socket.close();
-        } catch (e) {
-          /* ignore */
-        }
+      } catch (error) {
+        console.error("消息处理错误:", error);
+        ElMessage.error("消息处理失败");
       }
-      console.log("Socket连接关闭");
-      // 添加重连限制，避免无限重连
-      setTimeout(() => {
-        if (!userStore.user) return; // 用户退出则不重连
-        connectWebSocket();
-      }, 3000);
     };
-  } catch (error: any) {
+
+    // 其他事件处理保持不变...
+  } catch (error) {
     console.error("WebSocket初始化失败:", error);
+    ElMessage.error("连接初始化失败");
   }
 };
 const addMessage = (text: string, isUser: boolean) => {
@@ -260,7 +251,6 @@ const scrollToBottom = () => {
 };
 
 // 发送消息
-// 发送消息
 const sendMessage = async () => {
   const userMsg = inputText.value.trim();
   if (!userMsg || loading.value) return;
@@ -268,6 +258,7 @@ const sendMessage = async () => {
   loading.value = true;
   addMessage(userMsg, true);
   isThinking.value = true;
+
   // 保存用户消息到历史记录
   historyList.value.push({
     role: "user",
@@ -276,151 +267,111 @@ const sendMessage = async () => {
 
   try {
     const auUrl = await getWebsocketUrl();
+    console.log("连接讯飞星火API:", auUrl);
+
     const socket = new WebSocket(auUrl as string);
 
     socket.addEventListener("open", () => {
-      // 构建请求参数
-      // 注意：有些后端/第三方 API 期望 text 为字符串数组（或单条字符串），
-      // 避免直接发送对象数组（{role,content}）导致路由/格式错误。
-      const textPayload = historyList.value.map((h) =>
-        typeof h === "string" ? h : h.content
-      );
+      console.log("讯飞星火WebSocket连接成功");
 
+      // 确保参数格式正确
       const params = {
         header: {
           app_id: APPID,
-          uid: String(userStore.user?.id || "anonymous"), // 添加默认值
-          protocol_type: "spark",
+          uid: String(userStore.user?.id || "anonymous"),
         },
         parameter: {
           chat: {
             domain: "x1",
-            temperature: 0.7, // 调整温度参数
-            max_tokens: 2048, // 增加token上限
-            top_k: 5,
-            presence_penalty: 1.0,
-            frequency_penalty: 0.02,
-            tools: [
-              {
-                type: "web_search",
-                web_search: {
-                  enable: true,
-                  search_mode: "normal",
-                },
-              },
-            ],
+            temperature: 0.7,
+            max_tokens: 2048,
           },
         },
         payload: {
           message: {
-            // 发送为字符串数组，兼容多数 chat API 的历史记录格式
-            text: textPayload,
+            text: historyList.value.map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            })),
           },
         },
       };
+
+      // console.log("发送请求参数:", JSON.stringify(params, null, 2));
       socket.send(JSON.stringify(params));
     });
-    // 改进消息处理
+
     socket.addEventListener("message", (event) => {
       try {
+        // console.log("收到消息:", event.data);
         const data = JSON.parse(event.data);
-        // 先记录完整响应，便于排查后端返回的具体错误
-        console.debug("收到消息（原始）:", data);
 
-        // 如果后端返回非0 code，优雅处理并展示后端信息
-        if (data.header && data.header.code !== 0) {
-          const serverMsg = data.header.message || "API 返回错误";
-          console.warn("后端返回错误：", serverMsg, data);
-          ElMessage.error(serverMsg);
-          // 关闭 socket 并清理状态
-          isThinking.value = false;
-          loading.value = false;
-          replyContent.value = "";
-          try {
-            socket.close();
-          } catch (e) {
-            /* ignore */
-          }
-          return;
+        // 检查错误码
+        if (data.header.code !== 0) {
+          const errorMsg = data.header.message || `错误码: ${data.header.code}`;
+          throw new Error(errorMsg);
         }
 
-        // 正常处理（code === 0）
-        if (data.payload?.choices?.text) {
-          // 支持数组或单对象形式
-          const textArr = Array.isArray(data.payload.choices.text)
-            ? data.payload.choices.text
-            : [data.payload.choices.text];
-
-          const content = textArr[0]?.content;
+        if (data.payload.choices?.text) {
+          const content = data.payload.choices.text[0]?.content;
           if (content !== undefined) {
             replyContent.value += content;
-            // 实时显示正在接收的内容（currentReply 用于打字机效果）
-            currentReply.value = replyContent.value;
           }
 
-          if (data.header && data.header.status === 2) {
-            // 完成
-            addMessage(replyContent.value, false);
-            historyList.value.push({
-              role: "assistant",
-              content: replyContent.value,
-            });
-            // 清理并关闭
-            replyContent.value = "";
-            currentReply.value = "";
-            isThinking.value = false;
-            loading.value = false;
-            try {
-              socket.close();
-            } catch (e) {
-              /* ignore */
-            }
+          // 检查会话是否结束
+          if (data.header.status === 2) {
+            clearTypeWriter();
+            let i = 0;
+            const fullText = replyContent.value;
+
+            typeWriterTimer = window.setInterval(() => {
+              if (i < fullText.length) {
+                currentReply.value += fullText.charAt(i);
+                i++;
+                scrollToBottom();
+              } else {
+                clearTypeWriter();
+                addMessage(currentReply.value, false);
+                historyList.value.push({
+                  role: "assistant",
+                  content: currentReply.value,
+                });
+                currentReply.value = "";
+                replyContent.value = "";
+                socket.close();
+                isThinking.value = false;
+                loading.value = false;
+              }
+            }, 20);
           }
-        } else {
-          // 无 payload.choices.text 的情况，依然记录并显示原始消息
-          console.warn("未知消息格式:", data);
-          if (typeof data === "string") addMessage(data, false);
         }
-      } catch (error) {
-        console.error("消息解析错误:", error, event.data);
-        // ElMessage.error("消息处理失败: " + (error?.messages || "解析异常"));
-
-        // 清理状态
+      } catch (error: any) {
+        console.error("消息解析错误:", error);
+        ElMessage.error(error.message);
+        clearTypeWriter();
         isThinking.value = false;
         loading.value = false;
-        replyContent.value = "";
-        currentReply.value = "";
-        try {
-          socket.close();
-        } catch (e) {
-          /* ignore */
-        }
+        socket.close();
       }
     });
-    // 添加重试逻辑
-    let retryCount = 0;
-    const maxRetries = 3;
 
-    socket.addEventListener("error", async (error) => {
+    socket.addEventListener("error", (error) => {
       console.error("WebSocket错误:", error);
-      if (retryCount < maxRetries) {
-        retryCount++;
-        console.log(`正在进行第 ${retryCount} 次重试...`);
-        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
-        sendMessage(); // 重试发送
-      } else {
-        ElMessage.error("连接失败,请稍后重试");
-        loading.value = false;
-      }
+      ElMessage.error("连接错误，请检查网络或配置");
+      clearTypeWriter();
+      isThinking.value = false;
+      loading.value = false;
     });
 
     socket.addEventListener("close", () => {
+      console.log("WebSocket连接关闭");
       loading.value = false;
     });
   } catch (error: any) {
     console.error("发送消息失败:", error);
-    ElMessage.error("发送消息失败,请稍后重试");
+    ElMessage.error("发送消息失败: " + error.message);
     loading.value = false;
+    isThinking.value = false;
   }
 
   inputText.value = "";
@@ -447,6 +398,7 @@ const handleAvatar = (isUser: boolean) => {
 
 <style scoped lang="less">
 @import "../../base-ui/chatWindow.less";
+
 .deep-container {
   width: 110px;
   height: 35px;
@@ -458,7 +410,6 @@ const handleAvatar = (isUser: boolean) => {
 
   &.selected {
     background-color: #2196f3;
-    /* 选中时的背景颜色 */
     color: var(--color-bg8);
     border-radius: 50px;
   }
