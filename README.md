@@ -4,7 +4,7 @@
 
 Deep Sea 管理端是一套基于 Vue3 + TypeScript + Element Plus 构建的企业级后台管理系统，面向一刻时光博客平台提供全链路业务管理与用户数据运营能力。项目采用 Vite 构建工具、Pinia 状态管理、Vue Router 路由权限控制，严格遵循组件化、模块化工程规范，具备高可维护性与扩展性。
 
-## 下载方式
+## 下载方式 克隆项目
 git clone https://github.com/return-Liu/Deep-Sea-blog.git
 
 ## 核心功能模块
